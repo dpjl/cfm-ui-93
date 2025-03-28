@@ -34,15 +34,9 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
     setKey(prevKey => prevKey + 1);
   }, [items.length, columnCount, containerKey]);
   
-  // Force grid to re-render when key changes
+  // Force grid to re-render when key changes - plus besoin de resetAfterIndices
   useEffect(() => {
-    if (gridRef.current) {
-      gridRef.current.resetAfterIndices({
-        columnIndex: 0,
-        rowIndex: 0,
-        shouldForceUpdate: true
-      });
-    }
+    // Rien à faire ici, le changement de clé forcera un re-rendu complet
   }, [key]);
 
   const cellRenderer = useCallback(({ columnIndex, rowIndex, style }: any) => {

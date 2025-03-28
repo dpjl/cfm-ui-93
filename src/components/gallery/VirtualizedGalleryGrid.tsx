@@ -54,14 +54,9 @@ const VirtualizedGalleryGrid = memo(({
       prevInfoPanelState.current = infoPanelOpen;
       // Attendre un peu que le DOM se stabilise après l'animation du panneau
       setTimeout(() => {
+        // Au lieu d'appeler resetAfterIndices qui n'existe pas sur FixedSizeGrid,
+        // nous utilisons une clé pour forcer un re-rendu complet
         setGridKey(k => k + 1);
-        if (gridRef.current) {
-          gridRef.current.resetAfterIndices({
-            columnIndex: 0,
-            rowIndex: 0,
-            shouldForceUpdate: true
-          });
-        }
       }, 50);
     }
   }, [infoPanelOpen]);
@@ -86,14 +81,8 @@ const VirtualizedGalleryGrid = memo(({
     // If no selection changes, nothing to do
     if (changedIds.size === 0) return;
     
-    // Force full grid update to properly handle all changed items
-    if (gridRef.current) {
-      gridRef.current.resetAfterIndices({
-        columnIndex: 0,
-        rowIndex: 0,
-        shouldForceUpdate: true
-      });
-    }
+    // Force full grid update by incrementing key
+    setGridKey(prevKey => prevKey + 1);
   }, [selectedIds]);
   
   // Memoized version of onSelectId to prevent unnecessary renders when selecting items
@@ -169,8 +158,8 @@ const VirtualizedGalleryGrid = memo(({
               rowHeight={itemHeight}
               width={width}
               itemData={itemData}
-              overscanRowCount={3} // Augmenter légèrement pour améliorer le défilement
-              overscanColumnCount={1}
+              overscanRowCount={5} // Augmenter pour améliorer le défilement
+              overscanColumnCount={2}
               // Use a stable itemKey to improve render efficiency
               itemKey={({ columnIndex, rowIndex }) => {
                 const index = rowIndex * columnsCount + columnIndex;
