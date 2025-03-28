@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -110,23 +109,36 @@
   
   /* Customized scrollbar styles */
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
   }
   
   ::-webkit-scrollbar-track {
     @apply bg-muted/50;
-    border-radius: 5px;
+    border-radius: 6px;
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/40;
-    border-radius: 5px;
+    @apply bg-muted-foreground/50;
+    border-radius: 6px;
     transition: background-color 0.2s;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/60;
+    @apply bg-muted-foreground/70;
+  }
+  
+  /* Scrollbar Button (poignée) */
+  ::-webkit-scrollbar-button {
+    display: none;
+  }
+  
+  /* Coin où les scrollbars se rencontrent */
+  ::-webkit-scrollbar-corner {
+    @apply bg-transparent;
   }
   
   .dark ::-webkit-scrollbar-track {
@@ -134,11 +146,12 @@
   }
   
   .dark ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30;
+    @apply bg-muted-foreground/40;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
   }
   
   .dark ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
+    @apply bg-muted-foreground/60;
   }
 
   /* Custom sidebar background */
@@ -153,8 +166,27 @@
   /* Mobile-specific styles */
   @media (max-width: 640px) {
     ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      border-width: 1px;
+      border-radius: 4px;
+    }
+    
+    /* Améliorer la visibilité de la scrollbar sur mobile */
+    .gallery-container {
+      scrollbar-width: thin;
+    }
+    
+    .gallery-container::-webkit-scrollbar-thumb {
+      @apply bg-primary/50;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .gallery-container::-webkit-scrollbar-thumb:hover {
+      @apply bg-primary/70;
     }
     
     body {
@@ -225,6 +257,51 @@
     
     .glass-panel {
       @apply rounded-lg;
+    }
+  }
+  
+  /* Style spécifique pour les scrollbars dans les galeries */
+  .gallery-scrollbar {
+    @apply relative;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .gallery-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-primary/30;
+  }
+  
+  .gallery-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/60;
+  }
+  
+  /* Ajouter une petite languette pour rendre le défilement plus facile sur mobile */
+  .scrollbar-pull-indicator {
+    position: absolute;
+    width: 36px;
+    height: 5px;
+    background-color: rgba(128, 128, 128, 0.25);
+    border-radius: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+  }
+  
+  .scrollbar-pull-indicator.top {
+    top: 8px;
+  }
+  
+  .scrollbar-pull-indicator.bottom {
+    bottom: 8px;
+  }
+  
+  /* Mobile version */
+  @media (max-width: 640px) {
+    .scrollbar-pull-indicator {
+      width: 40px;
+      height: 6px;
+      background-color: rgba(128, 128, 128, 0.4);
     }
   }
 }

@@ -33,6 +33,21 @@ const VirtualizedGalleryGrid = memo(({
   const previousSizeRef = useRef({ width: 0, height: 0 });
   const prevMediaIdsRef = useRef<string[]>(mediaIds);
   const prevSelectedIdsRef = useRef<string[]>(selectedIds);
+  const scrollPositionRef = useRef(0);
+  
+  // Sauvegarder la position de défilement actuelle
+  const saveScrollPosition = useCallback(() => {
+    if (gridRef.current) {
+      scrollPositionRef.current = gridRef.current.state.scrollTop;
+    }
+  }, []);
+  
+  // Restaurer la position de défilement
+  const restoreScrollPosition = useCallback(() => {
+    if (gridRef.current && scrollPositionRef.current > 0) {
+      gridRef.current.scrollTo({ scrollTop: scrollPositionRef.current });
+    }
+  }, []);
   
   // Détecter les changements de dimensions du conteneur parent
   useEffect(() => {
@@ -44,9 +59,16 @@ const VirtualizedGalleryGrid = memo(({
           Math.abs(previousSizeRef.current.width - width) > 5 || 
           Math.abs(previousSizeRef.current.height - height) > 5
         ) {
+          // Sauvegarder d'abord la position
+          saveScrollPosition();
+          
           previousSizeRef.current = { width, height };
+          
           // Forcer la réinitialisation complète de la grille
           setGridKey(prev => prev + 1);
+          
+          // Restaurer la position après que la grille soit mise à jour
+          setTimeout(restoreScrollPosition, 50);
         }
       }
     });
@@ -58,25 +80,33 @@ const VirtualizedGalleryGrid = memo(({
     return () => {
       resizeObserver.disconnect();
     };
-  }, []);
+  }, [saveScrollPosition, restoreScrollPosition]);
   
   // Détecter les changements de données qui nécessitent une réinitialisation
   useEffect(() => {
-    // Si les médias ou le nombre de colonnes change, réinitialiser la grille
-    if (
-      prevMediaIdsRef.current.length !== mediaIds.length ||
-      columnsCount !== prevMediaIdsRef.current.length / Math.ceil(prevMediaIdsRef.current.length / columnsCount)
-    ) {
+    // Si le nombre de médias change significativement, réinitialiser la grille
+    if (Math.abs(prevMediaIdsRef.current.length - mediaIds.length) > 5) {
+      // Sauvegarder la position avant de réinitialiser
+      saveScrollPosition();
+      
       prevMediaIdsRef.current = mediaIds;
       setGridKey(prev => prev + 1);
       
-      if (gridRef.current) {
-        gridRef.current.scrollTo({ scrollTop: 0, scrollLeft: 0 });
+      // Si c'est un nouvel ensemble d'IDs complètement différent, revenir en haut
+      const intersection = mediaIds.filter(id => prevMediaIdsRef.current.includes(id));
+      if (intersection.length < Math.min(mediaIds.length, prevMediaIdsRef.current.length) * 0.5) {
+        scrollPositionRef.current = 0;
       }
+      
+      // Restaurer la position ou revenir en haut
+      setTimeout(restoreScrollPosition, 50);
+    } else {
+      // Juste mettre à jour la référence, pas besoin de reset complet
+      prevMediaIdsRef.current = mediaIds;
     }
-  }, [mediaIds, columnsCount]);
+  }, [mediaIds, saveScrollPosition, restoreScrollPosition]);
   
-  // Force re-render of only the cells that changed selection state
+  // Mettre à jour uniquement les cellules qui ont changé de statut de sélection
   useEffect(() => {
     if (!gridRef.current) return;
     
@@ -90,9 +120,10 @@ const VirtualizedGalleryGrid = memo(({
     );
     
     // Mettre à jour la référence pour la prochaine comparaison
-    prevSelectedIdsRef.current = selectedIds;
+    prevSelectedIdsRef.current = [...selectedIds];
     
     // Si des sélections ont changé, forcer la mise à jour de la grille
+    // MAIS NE PAS réinitialiser la position de défilement
     if (changedIds.length > 0) {
       // Utiliser forceUpdate au lieu de resetAfterIndices
       if (gridRef.current) {
@@ -101,15 +132,15 @@ const VirtualizedGalleryGrid = memo(({
     }
   }, [selectedIds, mediaIds]);
   
-  // Calculate rows needed
+  // Calculer le nombre de lignes nécessaires
   const rowCount = Math.ceil(mediaIds.length / columnsCount);
   
-  // Memoized version of onSelectId to prevent unnecessary renders when selecting items
+  // Version mémorisée de onSelectId pour éviter les rendus inutiles
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
     onSelectId(id, extendSelection);
   }, [onSelectId]);
   
-  // Memoize ItemData to prevent unnecessary renders
+  // Mémoriser ItemData pour éviter les rendus inutiles
   const itemData = React.useMemo(() => ({
     mediaIds,
     selectedIds,
@@ -121,7 +152,7 @@ const VirtualizedGalleryGrid = memo(({
     gap: 8
   }), [mediaIds, selectedIds, handleSelectItem, showDates, updateMediaInfo, position, columnsCount]);
   
-  // Memoize the Cell component to prevent unnecessary re-renders
+  // Mémoriser le composant Cell pour éviter les re-rendus inutiles
   const Cell = useCallback(({ columnIndex, rowIndex, style, data }: { 
     columnIndex: number; 
     rowIndex: number; 
@@ -134,7 +165,7 @@ const VirtualizedGalleryGrid = memo(({
     const id = data.mediaIds[index];
     const isSelected = data.selectedIds.includes(id);
     
-    // N'ajustez que la largeur et la hauteur, pas les positions
+    // N'ajuster que la largeur et la hauteur, pas les positions
     const adjustedStyle = {
       ...style,
       width: `${parseFloat(style.width as string) - data.gap}px`,
@@ -162,10 +193,10 @@ const VirtualizedGalleryGrid = memo(({
     <div className="w-full h-full p-2 gallery-container">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // Calculate item size based on available width
+          // Calculer la taille des éléments en fonction de la largeur disponible
           const gap = 8;
           const itemWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
-          const itemHeight = itemWidth + (showDates ? 40 : 0); // Add space for date display if needed
+          const itemHeight = itemWidth + (showDates ? 40 : 0); // Ajouter de l'espace pour l'affichage de la date si nécessaire
           
           return (
             <FixedSizeGrid
@@ -185,6 +216,12 @@ const VirtualizedGalleryGrid = memo(({
                 const index = rowIndex * columnsCount + columnIndex;
                 return index < mediaIds.length ? mediaIds[index] : `empty-${rowIndex}-${columnIndex}`;
               }}
+              // Sauvegarder la position de défilement lors des événements de défilement
+              onScroll={({ scrollTop }) => {
+                scrollPositionRef.current = scrollTop;
+              }}
+              // Maintenir la position de défilement après les rendus
+              initialScrollTop={scrollPositionRef.current}
             >
               {Cell}
             </FixedSizeGrid>
@@ -195,7 +232,7 @@ const VirtualizedGalleryGrid = memo(({
   );
 });
 
-// Set display name for debugging
+// Définir un nom d'affichage pour le débogage
 VirtualizedGalleryGrid.displayName = 'VirtualizedGalleryGrid';
 
 export default VirtualizedGalleryGrid;

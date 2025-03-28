@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckSquare, Square, Calendar, CalendarOff } from 'lucide-react';
+import { CheckSquare, Square, Calendar, CalendarOff, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -29,23 +29,36 @@ const GallerySelectionBar: React.FC<GallerySelectionBarProps> = ({
   const isMobile = useIsMobile();
   const isCompactMode = isMobile && viewMode === 'split';
   
+  // Vérifier si le bouton "sélectionner tout" doit être désactivé
+  const isTooManyItems = mediaIds.length > 100;
+  
   return (
     <div className="flex items-center justify-between w-full bg-background/90 backdrop-blur-sm py-1.5 px-3 rounded-md z-10 shadow-sm border border-border/30">
       <div className="flex items-center gap-2">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                onClick={onSelectAll}
-                variant="outline"
-                size="icon"
-                className="h-7 w-7"
-              >
-                <CheckSquare className="h-3.5 w-3.5" />
-              </Button>
+              <div> {/* Wrapper pour permettre au Tooltip de fonctionner avec un bouton désactivé */}
+                <Button
+                  onClick={onSelectAll}
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={isTooManyItems}
+                >
+                  <CheckSquare className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </TooltipTrigger>
             <TooltipContent side="top">
-              <p>{t('select_all')}</p>
+              {isTooManyItems ? (
+                <div className="flex items-center gap-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                  <p>{t('too_many_items_to_select')}</p>
+                </div>
+              ) : (
+                <p>{t('select_all')}</p>
+              )}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

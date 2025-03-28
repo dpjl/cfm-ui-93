@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useMemo, useRef } from 'react';
 
 export type SelectionMode = 'single' | 'multiple';
@@ -19,22 +20,22 @@ export function useGallerySelection({
   const [selectionMode, setSelectionMode] = useState<SelectionMode>(initialSelectionMode);
   const processingBatchRef = useRef(false);
 
-  // More optimized selection handler with useCallback to maintain reference stability
+  // Gestionnaire de sélection plus optimisé avec useCallback pour maintenir la stabilité de référence
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
-    // If we're already processing a batch selection, don't start another one
+    // Si nous traitons déjà une sélection par lots, n'en commencez pas une autre
     if (processingBatchRef.current && extendSelection) return;
 
-    // For single selection mode and not forcing extension
+    // Pour le mode de sélection unique et sans extension forcée
     if (selectionMode === 'single' && !extendSelection) {
-      // If the item is already selected, deselect it
+      // Si l'élément est déjà sélectionné, désélectionnez-le
       if (selectedIds.includes(id)) {
         onSelectId(id);
       } 
-      // Otherwise, deselect all others and select this item
+      // Sinon, désélectionnez tous les autres et sélectionnez cet élément
       else {
-        // Create a local cache of currently selected IDs to avoid multiple state updates
+        // Créer un cache local des ID actuellement sélectionnés pour éviter les mises à jour d'état multiples
         const currentSelected = [...selectedIds];
-        // Only deselect others if we have multiple items selected
+        // Ne désélectionnez les autres que si nous avons plusieurs éléments sélectionnés
         if (currentSelected.length > 0) {
           processingBatchRef.current = true;
           currentSelected.forEach(selectedId => {
@@ -44,62 +45,69 @@ export function useGallerySelection({
           });
           processingBatchRef.current = false;
         }
-        // Select the new item
+        // Sélectionner le nouvel élément
         onSelectId(id);
       }
     }
-    // For multiple selection mode or if extension is forced
+    // Pour le mode de sélection multiple ou si l'extension est forcée
     else {
-      // If Shift is used to extend selection
+      // Si Shift est utilisé pour étendre la sélection
       if (extendSelection && lastSelectedId) {
-        // Find indices
+        // Trouver les indices
         const lastIndex = mediaIds.indexOf(lastSelectedId);
         const currentIndex = mediaIds.indexOf(id);
         
         if (lastIndex !== -1 && currentIndex !== -1) {
-          // Define selection range
+          // Définir la plage de sélection
           const start = Math.min(lastIndex, currentIndex);
           const end = Math.max(lastIndex, currentIndex);
           
-          // Select all items in the range
+          // Sélectionnez tous les éléments de la plage
           const idsToSelect = mediaIds.slice(start, end + 1);
           
-          // Create a new selection set keeping already selected items
+          // Créer un nouvel ensemble de sélection en conservant les éléments déjà sélectionnés
           const newSelection = new Set([...selectedIds]);
           
-          // Process as a batch operation
+          // Traiter en tant qu'opération par lots
           processingBatchRef.current = true;
           
-          // Add all items in the range
+          // Ajouter tous les éléments de la plage
           idsToSelect.forEach(mediaId => {
             if (!newSelection.has(mediaId)) {
               newSelection.add(mediaId);
-              onSelectId(mediaId); // Inform parent of each newly selected item
+              onSelectId(mediaId); // Informer le parent de chaque élément nouvellement sélectionné
             }
           });
           
           processingBatchRef.current = false;
         }
       } 
-      // Toggle the selection of this item in multiple mode
+      // Basculer la sélection de cet élément en mode multiple
       else {
         onSelectId(id);
       }
     }
     
-    // Keep track of the last selected item for Shift functionality
+    // Gardez une trace du dernier élément sélectionné pour la fonctionnalité Shift
     setLastSelectedId(id);
   }, [mediaIds, selectedIds, onSelectId, selectionMode, lastSelectedId]);
 
-  // Optimized select all handler
+  // Gestionnaire de sélection tout optimisé
   const handleSelectAll = useCallback(() => {
-    // Create set of currently selected IDs for faster lookup
+    // Vérifier la limite de performance
+    if (mediaIds.length > 100) {
+      // Nous pourrions alerter l'utilisateur ici
+      console.warn("Trop d'éléments à sélectionner (>100)");
+      return;
+    }
+    
+    // Créer un ensemble d'ID actuellement sélectionnés pour une recherche plus rapide
     const selectedIdSet = new Set(selectedIds);
     
-    // Process as a batch operation
+    // Traiter en tant qu'opération par lots
     processingBatchRef.current = true;
     
-    // Select all media not already selected
+    // Sélectionner tous les médias non déjà sélectionnés
     mediaIds.forEach(id => {
       if (!selectedIdSet.has(id)) {
         onSelectId(id);
@@ -109,28 +117,28 @@ export function useGallerySelection({
     processingBatchRef.current = false;
   }, [mediaIds, selectedIds, onSelectId]);
 
-  // Optimized deselect all handler
+  // Gestionnaire désélectionner tout optimisé
   const handleDeselectAll = useCallback(() => {
-    // Process as a batch operation
+    // Traiter en tant qu'opération par lots
     processingBatchRef.current = true;
     
-    // Deselect all media
+    // Désélectionner tous les médias
     selectedIds.forEach(id => onSelectId(id));
     
     processingBatchRef.current = false;
   }, [selectedIds, onSelectId]);
 
-  // Optimized selection mode toggle
+  // Bascule du mode de sélection optimisée
   const toggleSelectionMode = useCallback(() => {
     setSelectionMode(prev => {
       const newMode = prev === 'single' ? 'multiple' : 'single';
       
-      // When switching from multiple to single, deselect all items except the last
+      // Lors du passage de multiple à single, désélectionnez tous les éléments sauf le dernier
       if (prev === 'multiple' && selectedIds.length > 1) {
         const lastIndex = selectedIds.length - 1;
         const keepId = selectedIds[lastIndex];
         
-        // Process as a batch operation
+        // Traiter en tant qu'opération par lots
         processingBatchRef.current = true;
         
         selectedIds.forEach((id, index) => {
@@ -141,11 +149,11 @@ export function useGallerySelection({
         
         processingBatchRef.current = false;
         
-        // If no item was selected, do nothing
+        // Si aucun élément n'était sélectionné, ne faites rien
         if (selectedIds.length === 0) {
           return newMode;
         }
-        // If the last selected item wasn't already selected, select it
+        // Si le dernier élément sélectionné n'était pas déjà sélectionné, sélectionnez-le
         if (!selectedIds.includes(keepId)) {
           onSelectId(keepId);
         }

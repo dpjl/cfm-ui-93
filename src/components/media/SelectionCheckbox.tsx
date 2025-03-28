@@ -8,10 +8,10 @@ interface SelectionCheckboxProps {
   selected: boolean;
   onSelect: (e: React.MouseEvent) => void;
   loaded: boolean;
-  mediaId: string; // Added for accessibility
+  mediaId: string;
 }
 
-// Optimize with memo to prevent unnecessary re-renders
+// Optimisé avec memo pour éviter les rendus inutiles
 const SelectionCheckbox = memo(({
   selected,
   onSelect,
@@ -20,18 +20,18 @@ const SelectionCheckbox = memo(({
 }: SelectionCheckboxProps) => {
   const isMobile = useIsMobile();
   
-  // Prevent event propagation and handle selection with useCallback
+  // Empêcher la propagation d'événements et gérer la sélection avec useCallback
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onSelect(e);
   }, [onSelect]);
   
-  // Handle touch events for mobile with useCallback
+  // Gérer les événements tactiles pour mobile avec useCallback
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Create a synthetic mouse event
+    // Créer un événement souris synthétique
     const mouseEvent = new MouseEvent('click', {
       bubbles: true,
       cancelable: true,
@@ -40,7 +40,7 @@ const SelectionCheckbox = memo(({
     onSelect(mouseEvent as unknown as React.MouseEvent);
   }, [onSelect]);
   
-  // Handle keyboard interactions for accessibility with useCallback
+  // Gérer les interactions clavier pour l'accessibilité avec useCallback
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -54,7 +54,7 @@ const SelectionCheckbox = memo(({
     }
   }, [onSelect]);
   
-  // Use style instead of className for critical styles to reduce re-renders
+  // Utiliser style au lieu de className pour les styles critiques
   const checkboxStyle = selected 
     ? "border-primary bg-primary shadow-md" 
     : "border-white bg-white/30 shadow-sm";
@@ -64,7 +64,7 @@ const SelectionCheckbox = memo(({
       className={cn(
         "absolute z-20",
         isMobile ? "top-1 left-1" : "top-2 left-2",
-        !loaded && "opacity-0", // Hide checkbox until media is loaded
+        !loaded && "opacity-0", // Masquer la checkbox jusqu'à ce que le média soit chargé
       )}
       onClick={handleClick}
       onTouchEnd={handleTouchEnd}
@@ -82,12 +82,12 @@ const SelectionCheckbox = memo(({
           checkboxStyle,
           "transition-all duration-200 ease-out"
         )}
-        tabIndex={-1} // We want the parent div to receive focus, not the checkbox itself
+        tabIndex={-1} // Nous voulons que le div parent reçoive le focus, pas la checkbox elle-même
       />
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Custom equality check to avoid re-renders when props haven't meaningfully changed
+  // Vérification d'égalité personnalisée pour éviter les re-rendus
   return (
     prevProps.selected === nextProps.selected &&
     prevProps.loaded === nextProps.loaded &&
@@ -95,7 +95,7 @@ const SelectionCheckbox = memo(({
   );
 });
 
-// Set display name for debugging
+// Définir un nom d'affichage pour le débogage
 SelectionCheckbox.displayName = 'SelectionCheckbox';
 
 export default SelectionCheckbox;

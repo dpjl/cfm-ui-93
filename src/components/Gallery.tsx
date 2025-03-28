@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import VirtualizedGalleryGrid from './gallery/VirtualizedGalleryGrid';
 import GalleryEmptyState from './gallery/GalleryEmptyState';
@@ -11,6 +11,7 @@ import { useGalleryPreviewHandler } from '@/hooks/use-gallery-preview-handler';
 import GalleryToolbar from './gallery/GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from './media/MediaInfoPanel';
+import { useIsMobile } from '@/hooks/use-breakpoint';
 
 export interface ImageItem {
   id: string;
@@ -58,21 +59,23 @@ const Gallery: React.FC<GalleryProps> = ({
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
   const [galleryKey, setGalleryKey] = useState(0); // Clé pour forcer le rendu complet
   const { t } = useLanguage();
+  const isMobile = useIsMobile();
+  const containerRef = useRef<HTMLDivElement>(null);
   
-  // Initialize gallery selection features
+  // Initialiser les fonctionnalités de sélection de la galerie
   const selection = useGallerySelection({
     mediaIds,
     selectedIds,
     onSelectId
   });
   
-  // Initialize preview features
+  // Initialiser les fonctionnalités d'aperçu
   const preview = useGalleryPreviewHandler({
     mediaIds,
     onPreviewMedia
   });
   
-  // Initialize media operations
+  // Initialiser les opérations sur les médias
   const mediaHandler = useGalleryMediaHandler(
     selectedIds,
     position
@@ -88,7 +91,7 @@ const Gallery: React.FC<GalleryProps> = ({
     return () => clearTimeout(timer);
   }, [selectedIds.length > 0]);
 
-  // Collect media info from child components
+  // Collecter les informations sur les médias à partir des composants enfants
   const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
     setMediaInfoMap(prev => {
       const newMap = new Map(prev);
@@ -123,7 +126,7 @@ const Gallery: React.FC<GalleryProps> = ({
   }
   
   return (
-    <div className="flex flex-col h-full relative" key={`gallery-container-${galleryKey}`}>
+    <div className="flex flex-col h-full relative" key={`gallery-container-${galleryKey}`} ref={containerRef}>
       <GalleryToolbar
         selectedIds={selectedIds}
         mediaIds={mediaIds}
@@ -153,7 +156,15 @@ const Gallery: React.FC<GalleryProps> = ({
       {mediaIds.length === 0 ? (
         <GalleryEmptyState />
       ) : (
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden relative gallery-scrollbar">
+          {/* Indicateurs de défilement pour mobile */}
+          {isMobile && (
+            <>
+              <div className="scrollbar-pull-indicator top"></div>
+              <div className="scrollbar-pull-indicator bottom"></div>
+            </>
+          )}
+          
           <VirtualizedGalleryGrid
             mediaIds={mediaIds}
             selectedIds={selectedIds}
