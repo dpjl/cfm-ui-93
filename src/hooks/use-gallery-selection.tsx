@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 export type SelectionMode = 'single' | 'multiple';
 
@@ -19,9 +19,8 @@ export function useGallerySelection({
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState<SelectionMode>(initialSelectionMode);
 
+  // Optimized selection handler with useCallback to maintain reference stability
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
-    console.log(`Selecting item: ${id}, extend: ${extendSelection}, mode: ${selectionMode}`);
-    
     // Si nous sommes en mode de sélection unique et que l'extension n'est pas forcée
     if (selectionMode === 'single' && !extendSelection) {
       // Si l'élément est déjà sélectionné, le déselectionner
@@ -30,7 +29,8 @@ export function useGallerySelection({
       } 
       // Sinon, désélectionner tout et sélectionner cet élément
       else {
-        selectedIds.forEach(selectedId => {
+        const currentSelected = [...selectedIds];
+        currentSelected.forEach(selectedId => {
           if (selectedId !== id) {
             onSelectId(selectedId);
           }
@@ -74,7 +74,7 @@ export function useGallerySelection({
     
     // Garder une trace du dernier élément sélectionné pour la fonctionnalité Shift
     setLastSelectedId(id);
-  }, [mediaIds, selectedIds, onSelectId, selectionMode]);
+  }, [mediaIds, selectedIds, onSelectId, selectionMode, lastSelectedId]);
 
   const handleSelectAll = useCallback(() => {
     // Select all media
@@ -91,26 +91,31 @@ export function useGallerySelection({
   }, [selectedIds, onSelectId]);
 
   const toggleSelectionMode = useCallback(() => {
-    setSelectionMode(prev => prev === 'single' ? 'multiple' : 'single');
-    // Lorsque nous passons de multiple à unique, désélectionner tous les éléments sauf le dernier
-    if (selectionMode === 'multiple' && selectedIds.length > 1) {
-      const lastIndex = selectedIds.length - 1;
-      const keepId = selectedIds[lastIndex];
-      selectedIds.forEach((id, index) => {
-        if (index !== lastIndex) {
-          onSelectId(id);
+    setSelectionMode(prev => {
+      const newMode = prev === 'single' ? 'multiple' : 'single';
+      
+      // Lorsque nous passons de multiple à unique, désélectionner tous les éléments sauf le dernier
+      if (prev === 'multiple' && selectedIds.length > 1) {
+        const lastIndex = selectedIds.length - 1;
+        const keepId = selectedIds[lastIndex];
+        selectedIds.forEach((id, index) => {
+          if (index !== lastIndex) {
+            onSelectId(id);
+          }
+        });
+        // Si aucun élément n'était sélectionné, ne rien faire
+        if (selectedIds.length === 0) {
+          return newMode;
         }
-      });
-      // Si aucun élément n'était sélectionné, ne rien faire
-      if (selectedIds.length === 0) {
-        return;
+        // Si le dernier élément sélectionné n'était pas déjà sélectionné, le sélectionner
+        if (!selectedIds.includes(keepId)) {
+          onSelectId(keepId);
+        }
       }
-      // Si le dernier élément sélectionné n'était pas déjà sélectionné, le sélectionner
-      if (!selectedIds.includes(keepId)) {
-        onSelectId(keepId);
-      }
-    }
-  }, [selectionMode, selectedIds, onSelectId]);
+      
+      return newMode;
+    });
+  }, [selectedIds, onSelectId]);
 
   return {
     selectionMode,

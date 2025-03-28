@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -11,13 +11,48 @@ interface SelectionCheckboxProps {
   mediaId: string; // Added for accessibility
 }
 
-const SelectionCheckbox: React.FC<SelectionCheckboxProps> = ({
+// Optimize with memo to prevent unnecessary re-renders
+const SelectionCheckbox = memo(({
   selected,
   onSelect,
   loaded,
   mediaId
-}) => {
+}: SelectionCheckboxProps) => {
   const isMobile = useIsMobile();
+  
+  // Prevent event propagation and handle selection
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect(e);
+  };
+  
+  // Handle touch events for mobile
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Create a synthetic mouse event
+    const mouseEvent = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      view: window
+    });
+    onSelect(mouseEvent as unknown as React.MouseEvent);
+  };
+  
+  // Handle keyboard interactions for accessibility
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      const mouseEvent = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        view: window
+      });
+      onSelect(mouseEvent as unknown as React.MouseEvent);
+    }
+  };
   
   return (
     <div 
@@ -25,38 +60,13 @@ const SelectionCheckbox: React.FC<SelectionCheckboxProps> = ({
         "absolute z-20",
         isMobile ? "top-1 left-1" : "top-2 left-2"
       )}
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onSelect(e);
-      }}
-      onTouchEnd={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // Create a synthetic mouse event
-        const mouseEvent = new MouseEvent('click', {
-          bubbles: true,
-          cancelable: true,
-          view: window
-        });
-        onSelect(mouseEvent as unknown as React.MouseEvent);
-      }}
+      onClick={handleClick}
+      onTouchEnd={handleTouchEnd}
       role="checkbox"
       aria-checked={selected}
       aria-label={selected ? `Deselect media ${mediaId}` : `Select media ${mediaId}`}
       tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          e.stopPropagation();
-          const mouseEvent = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            view: window
-          });
-          onSelect(mouseEvent as unknown as React.MouseEvent);
-        }
-      }}
+      onKeyDown={handleKeyDown}
     >
       <Checkbox 
         checked={selected}
@@ -71,6 +81,9 @@ const SelectionCheckbox: React.FC<SelectionCheckboxProps> = ({
       />
     </div>
   );
-};
+});
+
+// Set display name for debugging
+SelectionCheckbox.displayName = 'SelectionCheckbox';
 
 export default SelectionCheckbox;

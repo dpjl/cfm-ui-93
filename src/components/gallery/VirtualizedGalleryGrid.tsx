@@ -1,9 +1,10 @@
 
-import React, { memo, useEffect, useState, useRef } from 'react';
+import React, { memo, useEffect, useState, useRef, useCallback } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import LazyMediaItem from '@/components/LazyMediaItem';
 import { DetailedMediaInfo } from '@/api/imageApi';
 import { useIsMobile } from '@/hooks/use-breakpoint';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 interface VirtualizedGalleryGridProps {
   mediaIds: string[];
@@ -29,42 +30,11 @@ const VirtualizedGalleryGrid = memo(({
   const isMobile = useIsMobile();
   const gridRef = useRef<FixedSizeGrid>(null);
   
-  // Calculate dimensions
-  const [containerSize, setContainerSize] = useState({ width: 1, height: 1 });
-  const parentRef = useRef<HTMLDivElement>(null);
-  
   // Calculate optimal item size
   const gap = 8; // 2rem converted to px (matches the gap-2 class)
-  const itemWidth = Math.floor((containerSize.width - (gap * (columnsCount - 1))) / columnsCount);
-  const itemHeight = itemWidth + (showDates ? 40 : 0); // Add space for date display if needed
   
   // Calculate rows needed
   const rowCount = Math.ceil(mediaIds.length / columnsCount);
-  
-  // Update container size on mount and when columns change
-  useEffect(() => {
-    const updateSize = () => {
-      if (parentRef.current) {
-        setContainerSize({
-          width: parentRef.current.offsetWidth,
-          height: parentRef.current.offsetHeight,
-        });
-      }
-    };
-    
-    updateSize();
-    
-    const resizeObserver = new ResizeObserver(updateSize);
-    if (parentRef.current) {
-      resizeObserver.observe(parentRef.current);
-    }
-    
-    return () => {
-      if (parentRef.current) {
-        resizeObserver.unobserve(parentRef.current);
-      }
-    };
-  }, [columnsCount]);
   
   // Reset scroll position when columns or data changes
   useEffect(() => {
@@ -73,12 +43,18 @@ const VirtualizedGalleryGrid = memo(({
     }
   }, [columnsCount, mediaIds]);
   
-  // Render each cell of the grid
-  const Cell = ({ columnIndex, rowIndex, style }: { columnIndex: number; rowIndex: number; style: React.CSSProperties }) => {
+  // Memoized version of onSelectId to prevent unnecessay renders when selecting items
+  const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
+    onSelectId(id, extendSelection);
+  }, [onSelectId]);
+  
+  // Memoize the Cell component to prevent unnecessary re-renders
+  const Cell = useCallback(({ columnIndex, rowIndex, style }: { columnIndex: number; rowIndex: number; style: React.CSSProperties }) => {
     const index = rowIndex * columnsCount + columnIndex;
     if (index >= mediaIds.length) return null;
     
     const id = mediaIds[index];
+    const isSelected = selectedIds.includes(id);
     
     // Apply gap spacing to the style
     const adjustedStyle = {
@@ -95,8 +71,8 @@ const VirtualizedGalleryGrid = memo(({
         <LazyMediaItem
           key={id}
           id={id}
-          selected={selectedIds.includes(id)}
-          onSelect={onSelectId}
+          selected={isSelected}
+          onSelect={handleSelectItem}
           index={index}
           showDates={showDates}
           updateMediaInfo={updateMediaInfo}
@@ -104,25 +80,33 @@ const VirtualizedGalleryGrid = memo(({
         />
       </div>
     );
-  };
+  }, [mediaIds, columnsCount, selectedIds, handleSelectItem, showDates, updateMediaInfo, position, gap]);
   
   return (
-    <div ref={parentRef} className="w-full h-full p-2">
-      {containerSize.width > 1 && (
-        <FixedSizeGrid
-          ref={gridRef}
-          columnCount={columnsCount}
-          columnWidth={itemWidth}
-          height={containerSize.height}
-          rowCount={rowCount}
-          rowHeight={itemHeight}
-          width={containerSize.width}
-          itemData={mediaIds}
-          overscanRowCount={2}
-        >
-          {Cell}
-        </FixedSizeGrid>
-      )}
+    <div className="w-full h-full p-2">
+      <AutoSizer>
+        {({ height, width }) => {
+          // Calculate item size based on available width
+          const itemWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
+          const itemHeight = itemWidth + (showDates ? 40 : 0); // Add space for date display if needed
+          
+          return (
+            <FixedSizeGrid
+              ref={gridRef}
+              columnCount={columnsCount}
+              columnWidth={itemWidth}
+              height={height}
+              rowCount={rowCount}
+              rowHeight={itemHeight}
+              width={width}
+              itemData={mediaIds}
+              overscanRowCount={2}
+            >
+              {Cell}
+            </FixedSizeGrid>
+          );
+        }}
+      </AutoSizer>
     </div>
   );
 });
