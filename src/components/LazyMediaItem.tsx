@@ -156,10 +156,12 @@ const LazyMediaItem = memo(({
   const setCombinedRef = useCallback((node: HTMLDivElement | null) => {
     // Définir la ref d'intersection
     if (elementRef) {
+      // We need to ensure elementRef is handled correctly based on its type
       if (typeof elementRef === 'function') {
-        elementRef(node);
-      } else {
-        elementRef.current = node;
+        (elementRef as React.RefCallback<HTMLDivElement>)(node);
+      } else if (elementRef.current !== undefined) {
+        // Only set current if it's a ref object with a current property
+        (elementRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }
     }
     

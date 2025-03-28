@@ -16,6 +16,7 @@ export function useIntersectionObserver<T extends HTMLElement = HTMLDivElement>(
 }: UseIntersectionObserverProps = {}) {
   const [isIntersecting, setIsIntersecting] = useState(false);
   const [hasBeenVisible, setHasBeenVisible] = useState(false);
+  // Make sure elementRef is correctly typed as a MutableRefObject
   const elementRef = useRef<T | null>(null);
   
   useEffect(() => {
