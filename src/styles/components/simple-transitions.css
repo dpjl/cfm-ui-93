@@ -1,16 +1,54 @@
 
 @layer components {
-  /* Styles simplifiés sans animation pour éviter le scintillement */
   .simple-fade-in {
-    opacity: 1;
+    opacity: 0;
+    animation: simpleFadeIn 0.2s ease-out forwards;
   }
   
   .simple-fade-out {
-    opacity: 0;
+    opacity: 1;
+    animation: simpleFadeOut 0.2s ease-out forwards;
   }
   
-  /* Transitions réduites au minimum */
+  .simple-slide-in {
+    transform: translateX(-10px);
+    opacity: 0;
+    animation: simpleSlideIn 0.2s ease-out forwards;
+  }
+  
+  .simple-slide-out {
+    transform: translateX(0);
+    opacity: 1;
+    animation: simpleSlideOut 0.2s ease-out forwards;
+  }
+  
+  @keyframes simpleFadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes simpleFadeOut {
+    to {
+      opacity: 0;
+    }
+  }
+  
+  @keyframes simpleSlideIn {
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes simpleSlideOut {
+    to {
+      transform: translateX(-10px);
+      opacity: 0;
+    }
+  }
+  
   .simple-transition {
-    transition: opacity 0.2s ease-out;
+    transition: all 0.2s ease-out;
   }
 }

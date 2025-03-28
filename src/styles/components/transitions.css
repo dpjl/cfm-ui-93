@@ -1,15 +1,14 @@
 
 @layer components {
-  /* Transitions simplifiées au minimum */
   .image-shimmer {
-    @apply bg-muted;
+    @apply bg-gradient-to-r from-transparent via-white/10 to-transparent bg-[length:1000px_100%] animate-image-shimmer;
   }
   
   .image-transition-in {
-    opacity: 1;
+    @apply animate-scale-in;
   }
   
   .image-transition-out {
-    opacity: 0;
+    @apply animate-scale-out;
   }
 }

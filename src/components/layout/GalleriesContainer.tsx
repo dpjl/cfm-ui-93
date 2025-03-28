@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import MobileGalleriesView from './MobileGalleriesView';
 import DesktopGalleriesView from './DesktopGalleriesView';
@@ -36,18 +36,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
 }) => {
   const isMobile = useIsMobile();
   
-  // Disable unnecessary animations on mobile to improve performance
-  useEffect(() => {
-    if (isMobile) {
-      document.documentElement.classList.add('reduce-motion');
-    } else {
-      document.documentElement.classList.remove('reduce-motion');
-    }
-    
-    return () => {
-      document.documentElement.classList.remove('reduce-motion');
-    };
-  }, [isMobile]);
+  console.log(`GalleriesContainer rendering with columns: left=${columnsCountLeft}, right=${columnsCountRight}`);
   
   // Create props object for desktop/mobile views
   const sharedProps = {

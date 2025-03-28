@@ -1,5 +1,5 @@
 
-import React, { memo } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -8,20 +8,16 @@ interface SelectionCheckboxProps {
   selected: boolean;
   onSelect: (e: React.MouseEvent) => void;
   loaded: boolean;
-  mediaId: string;
+  mediaId: string; // Added for accessibility
 }
 
-const SelectionCheckbox = memo(({
+const SelectionCheckbox: React.FC<SelectionCheckboxProps> = ({
   selected,
   onSelect,
   loaded,
   mediaId
-}: SelectionCheckboxProps) => {
+}) => {
   const isMobile = useIsMobile();
-  
-  if (!loaded) {
-    return null; // Ne pas afficher si le média n'est pas chargé
-  }
   
   return (
     <div 
@@ -34,6 +30,17 @@ const SelectionCheckbox = memo(({
         e.stopPropagation();
         onSelect(e);
       }}
+      onTouchEnd={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Create a synthetic mouse event
+        const mouseEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        });
+        onSelect(mouseEvent as unknown as React.MouseEvent);
+      }}
       role="checkbox"
       aria-checked={selected}
       aria-label={selected ? `Deselect media ${mediaId}` : `Select media ${mediaId}`}
@@ -41,6 +48,7 @@ const SelectionCheckbox = memo(({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
+          e.stopPropagation();
           const mouseEvent = new MouseEvent('click', {
             bubbles: true,
             cancelable: true,
@@ -54,23 +62,15 @@ const SelectionCheckbox = memo(({
         checked={selected}
         className={cn(
           "border-2",
-          "h-5 w-5",
-          selected ? "border-primary bg-primary" : "border-white bg-white/30",
-          "shadow-sm"
+          isMobile ? "h-5 w-5" : "h-5 w-5",
+          selected ? "border-primary bg-primary shadow-md" : "border-white bg-white/30 shadow-sm",
+          "transition-all duration-200 ease-out",
+          !loaded && "opacity-0"
         )}
-        tabIndex={-1}
+        tabIndex={-1} // We want the parent div to receive focus, not the checkbox itself
       />
     </div>
   );
-}, (prevProps, nextProps) => {
-  // Optimisation des comparaisons
-  return (
-    prevProps.selected === nextProps.selected &&
-    prevProps.loaded === nextProps.loaded &&
-    prevProps.mediaId === nextProps.mediaId
-  );
-});
-
-SelectionCheckbox.displayName = 'SelectionCheckbox';
+};
 
 export default SelectionCheckbox;

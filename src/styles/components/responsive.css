@@ -25,13 +25,13 @@
     /* Image card adjustments for mobile */
     .image-card {
       @apply shadow-none;
-      touch-action: manipulation; /* Optimize for touch */
+      touch-action: manipulation; /* Optimisation pour le tactile */
     }
     
     /* Make clickable areas bigger on mobile */
     .image-card .image-checkbox {
-      @apply p-2; /* Extra padding to make the click area larger */
-      margin: -8px; /* Negative compensation to maintain visual alignment */
+      @apply p-2; /* Padding extra pour agrandir la zone de clic */
+      margin: -8px; /* Compensation négative pour maintenir l'alignement visuel */
     }
     
     /* Header adjustments for mobile */
@@ -87,63 +87,5 @@
   
   .column-slider-label {
     @apply flex items-center justify-between text-xs text-muted-foreground mb-1;
-  }
-
-  /* Enhanced scrollbar styles for virtualized galleries */
-  .react-window-vertical {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(var(--border), 0.5) transparent;
-  }
-  
-  .react-window-vertical::-webkit-scrollbar {
-    width: 8px;
-  }
-  
-  .react-window-vertical::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  .react-window-vertical::-webkit-scrollbar-thumb {
-    background-color: rgba(var(--border), 0.5);
-    border-radius: 20px;
-    border: 2px solid transparent;
-  }
-
-  /* Optimize for GPU acceleration */
-  .virtualized-gallery {
-    will-change: transform;
-    backface-visibility: hidden;
-    transform: translateZ(0);
-    contain: content;
-  }
-
-  .virtualized-gallery-cell {
-    contain: layout style paint;
-    will-change: transform, opacity;
-    transform: translateZ(0);
-  }
-  
-  /* Anti-flicker styles */
-  .image-card img,
-  .image-card video {
-    backface-visibility: hidden;
-    transform: translateZ(0);
-    will-change: transform, opacity;
-  }
-  
-  /* Prevent FOUC */
-  .no-fouc {
-    opacity: 0;
-    transition: opacity 200ms ease-in;
-  }
-  
-  .fouc-loaded {
-    opacity: 1;
-  }
-  
-  /* Optimize performance for virtualized cells */
-  .react-window-vertical .react-window-inner {
-    contain: strict;
-    will-change: contents;
   }
 }

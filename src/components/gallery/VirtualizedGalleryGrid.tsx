@@ -1,7 +1,6 @@
 
-import React, { memo, useCallback, useRef, useState, useEffect } from 'react';
+import React, { memo, useEffect, useState, useRef } from 'react';
 import { FixedSizeGrid } from 'react-window';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import LazyMediaItem from '@/components/LazyMediaItem';
 import { DetailedMediaInfo } from '@/api/imageApi';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -29,47 +28,59 @@ const VirtualizedGalleryGrid = memo(({
 }: VirtualizedGalleryGridProps) => {
   const isMobile = useIsMobile();
   const gridRef = useRef<FixedSizeGrid>(null);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const scrollTimeoutRef = useRef<number | null>(null);
   
-  // Optimisation - Set pour lookups O(1)
-  const selectedIdsSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
+  // Calculate dimensions
+  const [containerSize, setContainerSize] = useState({ width: 1, height: 1 });
+  const parentRef = useRef<HTMLDivElement>(null);
   
-  const gap = 8;
+  // Calculate optimal item size
+  const gap = 8; // 2rem converted to px (matches the gap-2 class)
+  const itemWidth = Math.floor((containerSize.width - (gap * (columnsCount - 1))) / columnsCount);
+  const itemHeight = itemWidth + (showDates ? 40 : 0); // Add space for date display if needed
   
-  // Nettoyage des timeouts au démontage
+  // Calculate rows needed
+  const rowCount = Math.ceil(mediaIds.length / columnsCount);
+  
+  // Update container size on mount and when columns change
   useEffect(() => {
-    return () => {
-      if (scrollTimeoutRef.current) {
-        window.clearTimeout(scrollTimeoutRef.current);
+    const updateSize = () => {
+      if (parentRef.current) {
+        setContainerSize({
+          width: parentRef.current.offsetWidth,
+          height: parentRef.current.offsetHeight,
+        });
       }
     };
-  }, []);
-  
-  // Gestion du scrolling avec debounce simple
-  const handleScroll = useCallback(() => {
-    setIsScrolling(true);
     
-    if (scrollTimeoutRef.current) {
-      window.clearTimeout(scrollTimeoutRef.current);
+    updateSize();
+    
+    const resizeObserver = new ResizeObserver(updateSize);
+    if (parentRef.current) {
+      resizeObserver.observe(parentRef.current);
     }
     
-    scrollTimeoutRef.current = window.setTimeout(() => {
-      setIsScrolling(false);
-      scrollTimeoutRef.current = null;
-    }, 150);
-  }, []);
+    return () => {
+      if (parentRef.current) {
+        resizeObserver.unobserve(parentRef.current);
+      }
+    };
+  }, [columnsCount]);
   
-  const Cell = useCallback(({ columnIndex, rowIndex, style }: { 
-    columnIndex: number; rowIndex: number; style: React.CSSProperties 
-  }) => {
+  // Reset scroll position when columns or data changes
+  useEffect(() => {
+    if (gridRef.current) {
+      gridRef.current.scrollTo({ scrollTop: 0, scrollLeft: 0 });
+    }
+  }, [columnsCount, mediaIds]);
+  
+  // Render each cell of the grid
+  const Cell = ({ columnIndex, rowIndex, style }: { columnIndex: number; rowIndex: number; style: React.CSSProperties }) => {
     const index = rowIndex * columnsCount + columnIndex;
     if (index >= mediaIds.length) return null;
     
     const id = mediaIds[index];
-    const isSelected = selectedIdsSet.has(id);
     
-    // Style simplifié
+    // Apply gap spacing to the style
     const adjustedStyle = {
       ...style,
       left: `${parseFloat(style.left as string) + (columnIndex * gap)}px`,
@@ -84,53 +95,39 @@ const VirtualizedGalleryGrid = memo(({
         <LazyMediaItem
           key={id}
           id={id}
-          selected={isSelected}
+          selected={selectedIds.includes(id)}
           onSelect={onSelectId}
           index={index}
           showDates={showDates}
           updateMediaInfo={updateMediaInfo}
           position={position}
-          isScrolling={isScrolling}
         />
       </div>
     );
-  }, [mediaIds, selectedIdsSet, columnsCount, gap, showDates, updateMediaInfo, position, onSelectId, isScrolling]);
-  
-  const rowCount = React.useMemo(() => 
-    Math.ceil(mediaIds.length / columnsCount), 
-    [mediaIds.length, columnsCount]
-  );
+  };
   
   return (
-    <div className="w-full h-full p-2">
-      <AutoSizer>
-        {({ width, height }) => {
-          const itemWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
-          const itemHeight = itemWidth + (showDates ? 28 : 0);
-          
-          return (
-            <FixedSizeGrid
-              ref={gridRef}
-              columnCount={columnsCount}
-              columnWidth={itemWidth}
-              height={height}
-              rowCount={rowCount}
-              rowHeight={itemHeight}
-              width={width}
-              overscanRowCount={5}
-              onScroll={handleScroll}
-              style={{ overflowX: 'hidden' }}
-              useIsScrolling={true}
-            >
-              {Cell}
-            </FixedSizeGrid>
-          );
-        }}
-      </AutoSizer>
+    <div ref={parentRef} className="w-full h-full p-2">
+      {containerSize.width > 1 && (
+        <FixedSizeGrid
+          ref={gridRef}
+          columnCount={columnsCount}
+          columnWidth={itemWidth}
+          height={containerSize.height}
+          rowCount={rowCount}
+          rowHeight={itemHeight}
+          width={containerSize.width}
+          itemData={mediaIds}
+          overscanRowCount={2}
+        >
+          {Cell}
+        </FixedSizeGrid>
+      )}
     </div>
   );
 });
 
+// Set display name for debugging
 VirtualizedGalleryGrid.displayName = 'VirtualizedGalleryGrid';
 
 export default VirtualizedGalleryGrid;

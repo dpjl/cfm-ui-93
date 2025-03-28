@@ -9,73 +9,80 @@ interface MediaItemRendererProps {
   isVideo: boolean;
   onLoad: () => void;
   loaded: boolean;
-  isScrolling?: boolean;
 }
 
-const MediaItemRenderer = memo(({
+// Using memo to prevent unnecessary re-renders
+const MediaItemRenderer: React.FC<MediaItemRendererProps> = memo(({
   src,
   alt,
   isVideo,
   onLoad,
-  loaded,
-  isScrolling = false
-}: MediaItemRendererProps) => {
+  loaded
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   
-  // Pendant le scrolling, montrer un placeholder simple pour éviter le scintillement
-  if (isScrolling && !loaded) {
-    return <div className="w-full h-full rounded-md bg-muted/50" />;
-  }
+  const handleMouseOver = () => {
+    if (isVideo && videoRef.current) {
+      videoRef.current.play().catch(err => console.error('Error playing video:', err));
+    }
+  };
+  
+  const handleMouseOut = () => {
+    if (isVideo && videoRef.current) {
+      videoRef.current.pause();
+    }
+  };
+  
+  // Common classes and styles
+  const mediaClasses = cn(
+    "w-full h-full object-cover pointer-events-none", // Disable pointer events on the media itself
+    loaded ? "opacity-100" : "opacity-0"
+  );
+  
+  const containerClasses = cn(
+    "w-full h-full rounded-md overflow-hidden",
+    !loaded && "animate-pulse bg-muted"
+  );
   
   return (
-    <div className="w-full h-full rounded-md overflow-hidden relative">
-      {/* Utiliser un div de fond plutôt qu'une transition complexe */}
-      <div 
-        className="absolute inset-0 bg-muted/50"
-        style={{ display: loaded ? 'none' : 'block' }}
-        aria-hidden="true" 
-      />
-      
+    <div 
+      onMouseOver={handleMouseOver}
+      onMouseOut={handleMouseOut}
+      className={containerClasses}
+      aria-hidden="true" // The parent element handles interaction
+    >
       {isVideo ? (
         <>
           <video 
             ref={videoRef}
             src={src}
             title={alt}
-            className="w-full h-full object-cover"
-            style={{ opacity: loaded ? 1 : 0 }}
+            className={mediaClasses}
             onLoadedData={onLoad}
             muted
             loop
             playsInline
+            style={{ transition: 'opacity 300ms ease' }}
           />
-          {loaded && (
-            <div className="absolute top-2 right-2 z-10 bg-black/70 p-1 rounded-md text-white">
-              <Video className="h-4 w-4" />
-            </div>
-          )}
+          {/* Video icon overlay */}
+          <div className="absolute top-2 right-2 z-10 bg-black/70 p-1 rounded-md text-white pointer-events-none">
+            <Video className="h-4 w-4" />
+          </div>
         </>
       ) : (
         <img
           src={src}
-          alt={alt}
-          className="w-full h-full object-cover"
-          style={{ opacity: loaded ? 1 : 0 }}
+          alt=""  // Empty alt because parent has aria-label
+          className={mediaClasses}
           onLoad={onLoad}
-          decoding="async"
+          style={{ transition: 'opacity 300ms ease' }}
         />
       )}
     </div>
   );
-}, (prevProps, nextProps) => {
-  // Optimisation pour éviter les re-rendus inutiles
-  return (
-    prevProps.src === nextProps.src &&
-    prevProps.loaded === nextProps.loaded &&
-    prevProps.isScrolling === nextProps.isScrolling
-  );
 });
 
+// Set component display name for debugging
 MediaItemRenderer.displayName = 'MediaItemRenderer';
 
 export default MediaItemRenderer;
