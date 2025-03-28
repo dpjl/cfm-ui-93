@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import type { MediaItem } from '../../types/gallery';
 import VirtualizedGalleryGridWrapper from './VirtualizedGalleryGridWrapper';
 import { Skeleton } from '../ui/skeleton';
@@ -11,7 +11,6 @@ interface GalleryGridContainerProps {
   columnCount: number;
   position: 'source' | 'destination';
   onMediaClick?: (id: string) => void;
-  panelOpen?: boolean; // Ajout d'une prop pour savoir si un panneau est ouvert
 }
 
 const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
@@ -19,16 +18,8 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
   isLoading,
   columnCount,
   position,
-  onMediaClick,
-  panelOpen
+  onMediaClick
 }) => {
-  const [containerKey, setContainerKey] = useState<string>('initial');
-
-  // Réinitialiser la grille quand le panneau d'information change d'état
-  useEffect(() => {
-    setContainerKey(`panel-${panelOpen ? 'open' : 'closed'}-${Date.now()}`);
-  }, [panelOpen]);
-  
   // Show loading skeletons
   if (isLoading) {
     return (
@@ -59,7 +50,7 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
         key={item.id}
         className="w-full h-full overflow-hidden rounded-md bg-muted cursor-pointer relative group"
         onClick={() => onMediaClick?.(item.id)}
-        style={style}
+        style={style} // Style appliqué directement sans modifications supplémentaires
       >
         <img 
           src={thumbnailUrl} 
@@ -85,7 +76,6 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
         itemSize={200}
         rowGap={8}
         columnGap={8}
-        containerKey={containerKey} // Passer la clé qui change quand le panneau s'ouvre/se ferme
       />
     </div>
   );

@@ -15,7 +15,6 @@ interface VirtualizedGalleryGridProps {
   showDates?: boolean;
   updateMediaInfo?: (id: string, info: DetailedMediaInfo) => void;
   position: 'source' | 'destination';
-  infoPanelOpen?: boolean; // Ajout de la nouvelle prop
 }
 
 const VirtualizedGalleryGrid = memo(({
@@ -26,14 +25,11 @@ const VirtualizedGalleryGrid = memo(({
   viewMode = 'single',
   showDates = false,
   updateMediaInfo,
-  position = 'source',
-  infoPanelOpen = false
+  position = 'source'
 }: VirtualizedGalleryGridProps) => {
   const isMobile = useIsMobile();
   const gridRef = useRef<FixedSizeGrid>(null);
   const prevSelectedIdsRef = useRef<string[]>(selectedIds);
-  const [gridKey, setGridKey] = useState<number>(0);
-  const prevInfoPanelState = useRef<boolean>(infoPanelOpen);
   
   // Calculate optimal item size
   const gap = 8; // 2rem converted to px (matches the gap-2 class)
@@ -47,24 +43,6 @@ const VirtualizedGalleryGrid = memo(({
       gridRef.current.scrollTo({ scrollTop: 0, scrollLeft: 0 });
     }
   }, [columnsCount, mediaIds]);
-  
-  // Forcer la mise à jour complète lorsque le panneau d'information change d'état
-  useEffect(() => {
-    if (prevInfoPanelState.current !== infoPanelOpen) {
-      prevInfoPanelState.current = infoPanelOpen;
-      // Attendre un peu que le DOM se stabilise après l'animation du panneau
-      setTimeout(() => {
-        setGridKey(k => k + 1);
-        if (gridRef.current) {
-          gridRef.current.resetAfterIndices({
-            columnIndex: 0,
-            rowIndex: 0,
-            shouldForceUpdate: true
-          });
-        }
-      }, 50);
-    }
-  }, [infoPanelOpen]);
   
   // Force re-render of only the cells that changed selection state
   useEffect(() => {
@@ -86,15 +64,12 @@ const VirtualizedGalleryGrid = memo(({
     // If no selection changes, nothing to do
     if (changedIds.size === 0) return;
     
-    // Force full grid update to properly handle all changed items
+    // Au lieu d'utiliser resetAfterIndices qui n'existe pas, on force la grille entière à être mise à jour
     if (gridRef.current) {
-      gridRef.current.resetAfterIndices({
-        columnIndex: 0,
-        rowIndex: 0,
-        shouldForceUpdate: true
-      });
+      // Forcer la mise à jour de toute la grille
+      gridRef.current.forceUpdate();
     }
-  }, [selectedIds]);
+  }, [selectedIds, mediaIds, columnsCount]);
   
   // Memoized version of onSelectId to prevent unnecessary renders when selecting items
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
@@ -126,9 +101,11 @@ const VirtualizedGalleryGrid = memo(({
     const id = data.mediaIds[index];
     const isSelected = data.selectedIds.includes(id);
     
-    // Apply gap spacing to the style without modifying top/left positioning
+    // Apply gap spacing to the style
     const adjustedStyle = {
       ...style,
+      left: `${parseFloat(style.left as string) + (columnIndex * data.gap)}px`,
+      top: `${parseFloat(style.top as string) + (rowIndex * data.gap)}px`,
       width: `${parseFloat(style.width as string) - data.gap}px`,
       height: `${parseFloat(style.height as string) - data.gap}px`,
       padding: 0,
@@ -152,7 +129,7 @@ const VirtualizedGalleryGrid = memo(({
   
   return (
     <div className="w-full h-full p-2">
-      <AutoSizer key={`gallery-grid-autosizer-${gridKey}`}>
+      <AutoSizer>
         {({ height, width }) => {
           // Calculate item size based on available width
           const itemWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
@@ -161,7 +138,6 @@ const VirtualizedGalleryGrid = memo(({
           return (
             <FixedSizeGrid
               ref={gridRef}
-              key={`grid-${gridKey}`}
               columnCount={columnsCount}
               columnWidth={itemWidth}
               height={height}
@@ -169,7 +145,7 @@ const VirtualizedGalleryGrid = memo(({
               rowHeight={itemHeight}
               width={width}
               itemData={itemData}
-              overscanRowCount={3} // Augmenter légèrement pour améliorer le défilement
+              overscanRowCount={2}
               overscanColumnCount={1}
               // Use a stable itemKey to improve render efficiency
               itemKey={({ columnIndex, rowIndex }) => {
