@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef } from 'react';
 
 export type SelectionMode = 'single' | 'multiple';
@@ -18,105 +19,162 @@ export function useGallerySelection({
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState<SelectionMode>(initialSelectionMode);
   const processingRef = useRef(false);
-
-  // Optimized with debouncing protection
+  const batchUpdateTimeoutRef = useRef<number | null>(null);
+  const pendingSelectionChangesRef = useRef<Set<string>>(new Set());
+  
+  // Fonction d'aide pour vider les mises à jour en attente
+  const flushPendingUpdates = useCallback(() => {
+    if (pendingSelectionChangesRef.current.size > 0) {
+      const changes = Array.from(pendingSelectionChangesRef.current);
+      pendingSelectionChangesRef.current.clear();
+      
+      changes.forEach(id => onSelectId(id));
+    }
+    
+    if (batchUpdateTimeoutRef.current) {
+      window.clearTimeout(batchUpdateTimeoutRef.current);
+      batchUpdateTimeoutRef.current = null;
+    }
+    
+    processingRef.current = false;
+  }, [onSelectId]);
+  
+  // Optimisation avec batch d'updates pour éviter les rendus en cascade
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
-    // Prevent double-processing during animations
-    if (processingRef.current) return;
+    // Eviter les sélections multiples rapides
+    if (processingRef.current) {
+      pendingSelectionChangesRef.current.add(id);
+      return;
+    }
+    
     processingRef.current = true;
     
-    // Use requestAnimationFrame for better visual sync
-    requestAnimationFrame(() => {
-      try {
-        // Single selection mode without extension
-        if (selectionMode === 'single' && !extendSelection) {
-          // If already selected, deselect
-          if (selectedIds.includes(id)) {
-            onSelectId(id);
-          } 
-          // Otherwise replace selection
-          else {
-            // First select the new item (to avoid empty selection flicker)
-            if (!selectedIds.includes(id)) {
-              onSelectId(id);
+    // Mode single - sélection simple
+    if (selectionMode === 'single' && !extendSelection) {
+      // Si déjà sélectionné, désélectionner uniquement
+      if (selectedIds.includes(id)) {
+        onSelectId(id);
+        setLastSelectedId(null);
+      } 
+      // Sinon remplacer la sélection existante
+      else {
+        // D'abord sélectionner le nouvel élément
+        if (!selectedIds.includes(id)) {
+          onSelectId(id);
+        }
+        
+        // Puis désélectionner les autres sans créer de clignotement
+        const otherSelectedIds = selectedIds.filter(selectedId => selectedId !== id);
+        
+        if (otherSelectedIds.length > 0) {
+          // Utilisation de RAF pour optimiser les performances visuelles
+          requestAnimationFrame(() => {
+            otherSelectedIds.forEach(selectedId => {
+              onSelectId(selectedId);
+            });
+          });
+        }
+        
+        setLastSelectedId(id);
+      }
+    }
+    // Mode multiple ou sélection étendue
+    else {
+      // Sélection Shift pour plage
+      if (extendSelection && lastSelectedId) {
+        const lastIndex = mediaIds.indexOf(lastSelectedId);
+        const currentIndex = mediaIds.indexOf(id);
+        
+        if (lastIndex !== -1 && currentIndex !== -1) {
+          const start = Math.min(lastIndex, currentIndex);
+          const end = Math.max(lastIndex, currentIndex);
+          
+          // Batch update pour éviter les clignotements
+          const idsToUpdate = [];
+          for (let i = start; i <= end; i++) {
+            const mediaId = mediaIds[i];
+            if (!selectedIds.includes(mediaId)) {
+              idsToUpdate.push(mediaId);
             }
-            
-            // Then deselect others
-            selectedIds.forEach(selectedId => {
-              if (selectedId !== id) {
-                onSelectId(selectedId);
-              }
+          }
+          
+          // Utiliser RAF pour les mises à jour visuelles optimisées
+          if (idsToUpdate.length > 0) {
+            requestAnimationFrame(() => {
+              idsToUpdate.forEach(mediaId => onSelectId(mediaId));
             });
           }
         }
-        // Multiple selection or extended selection
-        else {
-          // Shift selection for range
-          if (extendSelection && lastSelectedId) {
-            const lastIndex = mediaIds.indexOf(lastSelectedId);
-            const currentIndex = mediaIds.indexOf(id);
-            
-            if (lastIndex !== -1 && currentIndex !== -1) {
-              const start = Math.min(lastIndex, currentIndex);
-              const end = Math.max(lastIndex, currentIndex);
-              
-              // Optimize range selection
-              for (let i = start; i <= end; i++) {
-                const mediaId = mediaIds[i];
-                if (!selectedIds.includes(mediaId)) {
-                  onSelectId(mediaId);
-                }
-              }
-            }
-          } 
-          // Toggle single item
-          else {
-            onSelectId(id);
-          }
-        }
-        
-        // Store last selected ID for Shift functionality
-        setLastSelectedId(id);
-      } finally {
-        // Always release lock
-        processingRef.current = false;
-      }
-    });
-  }, [mediaIds, selectedIds, onSelectId, selectionMode]);
-
-  const handleSelectAll = useCallback(() => {
-    mediaIds.forEach(id => {
-      if (!selectedIds.includes(id)) {
+      } 
+      // Basculer un seul élément
+      else {
         onSelectId(id);
       }
-    });
+      
+      setLastSelectedId(id);
+    }
+    
+    // Différer la libération du flag pour éviter les sélections multiples
+    batchUpdateTimeoutRef.current = window.setTimeout(() => {
+      flushPendingUpdates();
+    }, 50);
+  }, [mediaIds, selectedIds, onSelectId, selectionMode, lastSelectedId, flushPendingUpdates]);
+  
+  // Nettoyage des timeouts au démontage
+  useEffect(() => {
+    return () => {
+      if (batchUpdateTimeoutRef.current) {
+        window.clearTimeout(batchUpdateTimeoutRef.current);
+      }
+    };
+  }, []);
+  
+  // Sélection complète optimisée
+  const handleSelectAll = useCallback(() => {
+    // Batch tous les IDs à sélectionner pour un seul rendu
+    const idsToSelect = mediaIds.filter(id => !selectedIds.includes(id));
+    
+    if (idsToSelect.length > 0) {
+      // Utiliser RAF pour optimiser les performances visuelles
+      requestAnimationFrame(() => {
+        idsToSelect.forEach(id => onSelectId(id));
+      });
+    }
   }, [mediaIds, selectedIds, onSelectId]);
-
+  
+  // Désélection optimisée
   const handleDeselectAll = useCallback(() => {
-    selectedIds.forEach(id => onSelectId(id));
+    if (selectedIds.length > 0) {
+      // Utiliser RAF pour optimiser les performances visuelles
+      requestAnimationFrame(() => {
+        selectedIds.forEach(id => onSelectId(id));
+      });
+    }
   }, [selectedIds, onSelectId]);
-
+  
+  // Changement de mode optimisé
   const toggleSelectionMode = useCallback(() => {
     setSelectionMode(prev => prev === 'single' ? 'multiple' : 'single');
     
-    // Simplify selection logic when switching modes
+    // Simplifier la sélection lors du changement de mode
     if (selectionMode === 'multiple' && selectedIds.length > 1) {
-      // Keep only the last selected item
-      if (lastSelectedId && selectedIds.includes(lastSelectedId)) {
-        selectedIds.forEach(id => {
-          if (id !== lastSelectedId) {
-            onSelectId(id);
-          }
-        });
-      } 
-      // Or deselect all but first if no last ID
-      else if (selectedIds.length > 0) {
-        const keepId = selectedIds[0];
-        selectedIds.slice(1).forEach(id => onSelectId(id));
-      }
+      // Utiliser RAF pour éviter les clignotements
+      requestAnimationFrame(() => {
+        if (lastSelectedId && selectedIds.includes(lastSelectedId)) {
+          selectedIds.forEach(id => {
+            if (id !== lastSelectedId) {
+              onSelectId(id);
+            }
+          });
+        } 
+        else if (selectedIds.length > 0) {
+          const keepId = selectedIds[0];
+          selectedIds.slice(1).forEach(id => onSelectId(id));
+        }
+      });
     }
   }, [selectionMode, selectedIds, lastSelectedId, onSelectId]);
-
+  
   return {
     selectionMode,
     handleSelectItem,

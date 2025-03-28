@@ -1,7 +1,6 @@
 
 import React, { memo } from 'react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 
 interface MediaItemContainerProps {
   id: string;
@@ -10,7 +9,7 @@ interface MediaItemContainerProps {
   children: React.ReactNode;
 }
 
-// A focused component just for the container and click handling
+// Optimisé pour réduire les re-rendus et les clignotements
 const MediaItemContainer = memo(({
   id,
   selected,
@@ -20,7 +19,8 @@ const MediaItemContainer = memo(({
   return (
     <div
       className={cn(
-        "image-card relative aspect-square cursor-pointer",
+        "image-card relative aspect-square cursor-pointer transform-gpu",
+        "hover:scale-[1.01] transition-transform duration-150",
         selected && "selected"
       )}
       onClick={onClick}
@@ -40,9 +40,20 @@ const MediaItemContainer = memo(({
         }
       }}
       data-media-id={id}
+      style={{
+        contain: 'layout style',
+        willChange: 'transform',
+        backfaceVisibility: 'hidden'
+      }}
     >
       {children}
     </div>
+  );
+}, (prevProps, nextProps) => {
+  // Optimisation des comparaisons
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.selected === nextProps.selected
   );
 });
 

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, memo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import { useIntersectionObserver } from '@/hooks/use-intersection-observer';
 import { useMediaInfo } from '@/hooks/use-media-info';
 import { getThumbnailUrl } from '@/api/imageApi';
@@ -18,7 +18,6 @@ interface LazyMediaItemProps {
   isScrolling?: boolean;
 }
 
-// Optimized and simplified LazyMediaItem that delegates to smaller components
 const LazyMediaItem = memo(({
   id,
   selected,
@@ -31,66 +30,76 @@ const LazyMediaItem = memo(({
 }: LazyMediaItemProps) => {
   const [loaded, setLoaded] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [loadingStarted, setLoadingStarted] = useState(false);
   
-  // Simplified intersection observer usage
-  const { elementRef, isIntersecting } = useIntersectionObserver<HTMLDivElement>({ 
+  // Observer avec marge augmentée pour charger en avance
+  const { elementRef, isIntersecting, hasBeenVisible } = useIntersectionObserver<HTMLDivElement>({ 
     threshold: 0.1,
-    rootMargin: '200px', // Load images a bit earlier
+    rootMargin: '500px', // Chargement très anticipé
+    triggerOnce: true // Observer une seule fois puis se déconnecter
   });
   
-  const { mediaInfo, isLoading } = useMediaInfo(id, isIntersecting, position);
+  const { mediaInfo, isLoading } = useMediaInfo(id, isIntersecting || hasBeenVisible, position);
   const { getCachedThumbnailUrl, setCachedThumbnailUrl } = useMediaCache();
   
-  // Load thumbnail URL, using cache if available
+  // Gestion optimisée du chargement
   useEffect(() => {
-    if (isIntersecting) {
+    // Ne pas exécuter pendant le scrolling pour éviter la surcharge
+    if (isScrolling && !hasBeenVisible) return;
+    
+    // Charger seulement si l'élément est visible ou l'a déjà été
+    if ((isIntersecting || hasBeenVisible) && !loadingStarted) {
+      setLoadingStarted(true);
+      
+      // Essayer d'abord le cache
       const cachedUrl = getCachedThumbnailUrl(id, position);
       
       if (cachedUrl) {
         setThumbnailUrl(cachedUrl);
+        // Pas de setLoaded ici pour permettre la transition correcte
       } else {
         const url = getThumbnailUrl(id, position);
         setThumbnailUrl(url);
         setCachedThumbnailUrl(id, position, url);
       }
     }
-  }, [id, isIntersecting, position, getCachedThumbnailUrl, setCachedThumbnailUrl]);
+  }, [id, isIntersecting, hasBeenVisible, position, loadingStarted, isScrolling, getCachedThumbnailUrl, setCachedThumbnailUrl]);
   
-  // Update the parent component with media info when it's loaded
+  // Mise à jour des infos seulement quand nécessaire
   useEffect(() => {
-    if (mediaInfo && updateMediaInfo && isIntersecting) {
+    if (mediaInfo && updateMediaInfo && (isIntersecting || hasBeenVisible)) {
       updateMediaInfo(id, mediaInfo);
     }
-  }, [id, mediaInfo, updateMediaInfo, isIntersecting]);
+  }, [id, mediaInfo, updateMediaInfo, isIntersecting, hasBeenVisible]);
   
-  // Determine if this is a video based on the file extension if available
+  // Détecter les vidéos
   const isVideo = mediaInfo?.alt ? /\.(mp4|webm|ogg|mov)$/i.test(mediaInfo.alt) : false;
   
-  // Optimized click handlers
+  // Gestionnaire de clics optimisé avec useCallback
   const handleItemClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
   }, [id, onSelect]);
   
-  // Handle checkbox selection - separate from item click for better performance
+  // Gestionnaire de checkbox distinct pour éviter les conflits d'événements
   const handleCheckboxClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
   }, [id, onSelect]);
   
-  // Only render a simple placeholder when the item is not intersecting
-  if (!isIntersecting && !thumbnailUrl) {
+  // Placeholder hautement optimisé pendant le chargement
+  if (!isIntersecting && !hasBeenVisible && !thumbnailUrl) {
     return (
       <div 
         ref={elementRef} 
-        className="aspect-square bg-muted rounded-lg"
-        aria-label="Loading media item"
-      ></div>
+        className="aspect-square bg-muted/50 rounded-lg transform-gpu"
+        style={{ willChange: 'transform' }}
+      />
     );
   }
   
-  // Using our new components for a cleaner structure
+  // Utiliser nos composants dédiés avec le minimum de props
   return (
     <div ref={elementRef}>
       <MediaItemContainer
@@ -115,7 +124,6 @@ const LazyMediaItem = memo(({
   );
 });
 
-// Set component display name for debugging
 LazyMediaItem.displayName = 'LazyMediaItem';
 
 export default LazyMediaItem;

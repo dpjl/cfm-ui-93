@@ -1,5 +1,5 @@
 
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import { DetailedMediaInfo } from '@/api/imageApi';
 import MediaItemRenderer from './MediaItemRenderer';
 import DateDisplay from './DateDisplay';
@@ -18,7 +18,7 @@ interface MediaItemContentProps {
   selected: boolean;
 }
 
-// A focused component for the actual content inside the media item
+// Optimisé pour réduire les re-rendus et les clignotements
 const MediaItemContent = memo(({
   id,
   thumbnailUrl,
@@ -31,12 +31,29 @@ const MediaItemContent = memo(({
   isScrolling = false,
   selected
 }: MediaItemContentProps) => {
-  if (!thumbnailUrl && !isScrolling) return null;
+  // Protection supplémentaire pour les urls nulles pendant le scrolling
+  const effectiveThumbnailUrl = thumbnailUrl || '';
+  
+  // Précharger les images pour réduire les clignotements
+  useEffect(() => {
+    if (!isVideo && thumbnailUrl && !loaded && !isScrolling) {
+      const img = new Image();
+      img.src = thumbnailUrl;
+      img.onload = () => setLoaded(true);
+    }
+  }, [isVideo, thumbnailUrl, loaded, isScrolling, setLoaded]);
+  
+  // Pendant le scrolling rapide, ne pas essayer de rendre un média sans URL
+  if (!effectiveThumbnailUrl && isScrolling) {
+    return (
+      <div className="w-full h-full rounded-md bg-muted/40" />
+    );
+  }
   
   return (
     <>
       <MediaItemRenderer
-        src={thumbnailUrl || ''}
+        src={effectiveThumbnailUrl}
         alt={mediaInfo?.alt || id}
         isVideo={isVideo}
         onLoad={() => setLoaded(true)}
@@ -44,10 +61,21 @@ const MediaItemContent = memo(({
         isScrolling={isScrolling}
       />
 
-      {showDates && <DateDisplay dateString={mediaInfo?.createdAt} showDate={showDates} />}
+      {/* Afficher la date seulement si demandé et disponible */}
+      {showDates && mediaInfo?.createdAt && (
+        <DateDisplay 
+          dateString={mediaInfo.createdAt} 
+          showDate={showDates} 
+        />
+      )}
 
-      <div className="image-overlay pointer-events-none" />
+      {/* Overlay subtil pour l'effet visuel - pas de clignotement */}
+      <div 
+        className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200"
+        style={{ pointerEvents: 'none', willChange: 'opacity' }}
+      />
       
+      {/* Checkbox optimisée avec visibilité contrôlée */}
       <SelectionCheckbox
         selected={selected}
         onSelect={handleCheckboxClick}
@@ -55,6 +83,16 @@ const MediaItemContent = memo(({
         mediaId={id}
       />
     </>
+  );
+}, (prevProps, nextProps) => {
+  // Optimisation maximale des comparaisons pour minimiser les re-rendus
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.thumbnailUrl === nextProps.thumbnailUrl && 
+    prevProps.loaded === nextProps.loaded &&
+    prevProps.selected === nextProps.selected &&
+    prevProps.isScrolling === nextProps.isScrolling &&
+    prevProps.showDates === nextProps.showDates
   );
 });
 

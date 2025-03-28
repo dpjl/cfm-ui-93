@@ -11,7 +11,7 @@ interface SelectionCheckboxProps {
   mediaId: string;
 }
 
-// Optimized SelectionCheckbox with controlled rendering
+// Optimisé pour réduire les re-rendus et éliminer les clignotements
 const SelectionCheckbox = memo(({
   selected,
   onSelect,
@@ -20,25 +20,33 @@ const SelectionCheckbox = memo(({
 }: SelectionCheckboxProps) => {
   const isMobile = useIsMobile();
   
+  // Éviter le retard d'affichage avec un placeholder
+  const visibilityStyle = {
+    opacity: loaded ? 1 : 0,
+    transition: 'opacity 150ms ease',
+    pointerEvents: loaded ? 'auto' : 'none' as const,
+    willChange: 'opacity',
+    transform: 'translateZ(0)'
+  };
+  
   return (
     <div 
       className={cn(
         "absolute z-20",
         isMobile ? "top-1 left-1" : "top-2 left-2",
-        !loaded && "opacity-0", // Hide until loaded
-        "transition-opacity duration-200"
       )}
+      style={visibilityStyle}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        onSelect(e);
+        if (loaded) onSelect(e); // Protection supplémentaire
       }}
       role="checkbox"
       aria-checked={selected}
       aria-label={selected ? `Deselect media ${mediaId}` : `Select media ${mediaId}`}
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if ((e.key === 'Enter' || e.key === ' ') && loaded) {
           e.preventDefault();
           const mouseEvent = new MouseEvent('click', {
             bubbles: true,
@@ -55,17 +63,18 @@ const SelectionCheckbox = memo(({
           "border-2",
           "h-5 w-5",
           selected ? "border-primary bg-primary" : "border-white bg-white/30",
-          "transition-colors duration-150 ease-out"
+          "transform-gpu shadow-sm" // Optimisations pour éviter les clignotements
         )}
         tabIndex={-1}
       />
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Optimized comparison function
+  // Optimisation extrême des comparaisons
   return (
     prevProps.selected === nextProps.selected &&
-    prevProps.loaded === nextProps.loaded
+    prevProps.loaded === nextProps.loaded &&
+    prevProps.mediaId === nextProps.mediaId
   );
 });
 

@@ -114,10 +114,36 @@
     will-change: transform;
     backface-visibility: hidden;
     transform: translateZ(0);
+    contain: content;
   }
 
-  .image-card-container {
+  .virtualized-gallery-cell {
     contain: layout style paint;
     will-change: transform, opacity;
+    transform: translateZ(0);
+  }
+  
+  /* Anti-flicker styles */
+  .image-card img,
+  .image-card video {
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+  
+  /* Prevent FOUC */
+  .no-fouc {
+    opacity: 0;
+    transition: opacity 200ms ease-in;
+  }
+  
+  .fouc-loaded {
+    opacity: 1;
+  }
+  
+  /* Optimize performance for virtualized cells */
+  .react-window-vertical .react-window-inner {
+    contain: strict;
+    will-change: contents;
   }
 }
