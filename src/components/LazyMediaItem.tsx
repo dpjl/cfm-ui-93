@@ -57,7 +57,7 @@ const LazyMediaItem = memo(({
         clearTimeout(longPressTimer);
       }
     };
-  }, [id]);
+  }, [id, longPressTimer]);
   
   // Charger l'URL de la vignette, en utilisant le cache si disponible
   useEffect(() => {

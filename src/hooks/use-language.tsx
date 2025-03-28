@@ -24,6 +24,7 @@ const translations = {
     close_sidebars: 'Close sidebars',
     multiple_selection: 'Enable multiple selection',
     single_selection: 'Switch to single selection',
+    too_many_items_to_select: 'Too many items to select (>100)',
     // Add missing translations
     desktop_columns: 'Desktop columns',
     desktop_single_columns: 'Desktop full view columns',
@@ -60,6 +61,7 @@ const translations = {
     close_sidebars: 'Fermer les panneaux',
     multiple_selection: 'Activer la sélection multiple',
     single_selection: 'Passer à la sélection simple',
+    too_many_items_to_select: 'Trop d\'éléments à sélectionner (>100)',
     // Add missing translations
     desktop_columns: 'Colonnes bureau',
     desktop_single_columns: 'Colonnes plein écran',
