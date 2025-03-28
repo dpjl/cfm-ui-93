@@ -2,8 +2,8 @@
 import React from 'react';
 import type { MediaItem } from '../../types/gallery';
 import VirtualizedGalleryGridWrapper from './VirtualizedGalleryGridWrapper';
-import MediaItemRenderer from '../media/MediaItemRenderer';
 import { Skeleton } from '../ui/skeleton';
+import { getThumbnailUrl } from '../../api/imageApi';
 
 interface GalleryGridContainerProps {
   items: MediaItem[];
@@ -42,15 +42,25 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
     );
   }
 
-  const renderMediaItem = (item: MediaItem, style: React.CSSProperties) => (
-    <MediaItemRenderer
-      key={item.id}
-      item={item}
-      position={position}
-      onClick={() => onMediaClick?.(item.id)}
-      style={style}
-    />
-  );
+  const renderMediaItem = (item: MediaItem, style: React.CSSProperties) => {
+    const thumbnailUrl = getThumbnailUrl(item.id, position);
+    
+    return (
+      <div 
+        key={item.id}
+        className="w-full h-full overflow-hidden rounded-md bg-muted cursor-pointer"
+        onClick={() => onMediaClick?.(item.id)}
+        style={style}
+      >
+        <img 
+          src={thumbnailUrl} 
+          alt={item.alt || ''}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </div>
+    );
+  };
 
   return (
     <div className="h-full w-full">

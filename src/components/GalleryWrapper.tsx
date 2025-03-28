@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { useMediaQuery } from 'react-responsive';
+import { useIsMobile } from '@/hooks/use-media-query';
 import GalleryGridContainer from './gallery/GalleryGridContainer';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMediaIds, fetchMediaInfo } from '../api/imageApi';
+import type { MediaItem } from '../types/gallery';
 
 interface GalleryWrapperProps {
   position: 'source' | 'destination';
@@ -18,7 +19,7 @@ const GalleryWrapper: React.FC<GalleryWrapperProps> = ({
   currentDirectory = '',
   filter = 'all'
 }) => {
-  const isMobile = useMediaQuery({ maxWidth: 768 });
+  const isMobile = useIsMobile();
   const adaptiveColumnCount = isMobile ? 2 : columnCount;
 
   // Fetch media IDs
@@ -54,14 +55,18 @@ const GalleryWrapper: React.FC<GalleryWrapperProps> = ({
     );
   }
 
+  // Convert media info to MediaItem format
+  const mediaItems: MediaItem[] = mediaInfoList.map(info => ({
+    id: info.id || '',
+    alt: info.filename || '',
+    createdAt: info.createdAt || '',
+    isVideo: info.mimeType?.startsWith('video/') || false
+  }));
+
   return (
     <div className="h-full w-full overflow-hidden">
       <GalleryGridContainer
-        items={mediaInfoList.map(info => ({
-          id: info.id || '',
-          alt: info.alt || '',
-          createdAt: info.createdAt || '',
-        }))}
+        items={mediaItems}
         isLoading={isLoading}
         columnCount={adaptiveColumnCount}
         position={position}

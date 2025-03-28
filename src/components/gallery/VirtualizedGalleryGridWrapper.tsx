@@ -22,27 +22,14 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
   renderItem
 }) => {
   const gridRef = useRef<Grid | null>(null);
-  const [forceUpdate, setForceUpdate] = useState(0);
+  const [key, setKey] = useState(0);
 
   // Calculate rows based on items and columns
   const rowCount = Math.ceil(items.length / columnCount);
   
   useEffect(() => {
-    // Force rerender when items or columnCount changes
-    setForceUpdate(prev => prev + 1);
-    
-    // Small delay to ensure grid is rendered before resetting
-    const timer = setTimeout(() => {
-      if (gridRef.current) {
-        gridRef.current.resetAfterIndices({
-          columnIndex: 0,
-          rowIndex: 0,
-          shouldForceUpdate: true
-        });
-      }
-    }, 50);
-    
-    return () => clearTimeout(timer);
+    // Force rerender when items or columnCount changes by changing the key
+    setKey(prev => prev + 1);
   }, [items.length, columnCount]);
 
   const cellRenderer = useCallback(({ columnIndex, rowIndex, style }: any) => {
@@ -63,9 +50,7 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
       padding: '4px',
     };
     
-    return <div style={adjustedStyle}>
-      {renderItem(items[index], {})}
-    </div>;
+    return renderItem(items[index], adjustedStyle);
   }, [items, columnCount, columnGap, rowGap, renderItem]);
 
   // Calculate dimensions including gaps
@@ -74,7 +59,7 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
 
   return (
     <div className="w-full h-full">
-      <AutoSizer key={`gallery-grid-${forceUpdate}`}>
+      <AutoSizer key={`gallery-grid-${key}`}>
         {({ height, width }) => (
           <Grid
             ref={gridRef}
@@ -84,6 +69,10 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
             rowCount={rowCount}
             rowHeight={getItemHeight()}
             width={width}
+            itemKey={({ columnIndex, rowIndex }) => {
+              const index = rowIndex * columnCount + columnIndex;
+              return index < items.length ? items[index].id : `empty-${rowIndex}-${columnIndex}`;
+            }}
           >
             {cellRenderer}
           </Grid>
