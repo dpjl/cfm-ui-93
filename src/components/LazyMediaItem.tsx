@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import { useIntersectionObserver } from '@/hooks/use-intersection-observer';
 import { useMediaInfo } from '@/hooks/use-media-info';
 import { getThumbnailUrl } from '@/api/imageApi';
-import { motion } from 'framer-motion';
 import MediaItemRenderer from './media/MediaItemRenderer';
 import DateDisplay from './media/DateDisplay';
 import SelectionCheckbox from './media/SelectionCheckbox';
@@ -156,10 +155,12 @@ const LazyMediaItem = memo(({
   // Référence combinée pour l'intersection observer et notre propre ref
   const setCombinedRef = useCallback((node: HTMLDivElement | null) => {
     // Définir la ref d'intersection
-    if (typeof elementRef === 'function') {
-      elementRef(node);
-    } else if (elementRef) {
-      (elementRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    if (elementRef) {
+      if (typeof elementRef === 'function') {
+        elementRef(node);
+      } else {
+        elementRef.current = node;
+      }
     }
     
     // Définir notre propre ref
