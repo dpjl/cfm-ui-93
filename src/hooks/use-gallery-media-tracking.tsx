@@ -1,60 +1,40 @@
 
-import { useRef, useEffect, useCallback } from 'react';
-import { FixedSizeGrid } from 'react-window';
+import { useEffect, useRef } from 'react';
+import type { FixedSizeGrid } from 'react-window';
 
 export function useGalleryMediaTracking(
-  mediaIds: string[],
+  mediaIds: string[], 
   selectedIds: string[],
   gridRef: React.RefObject<FixedSizeGrid>
 ) {
-  const prevMediaIdsRef = useRef<string[]>(mediaIds);
-  const prevSelectedIdsRef = useRef<string[]>(selectedIds);
-  const scrollPositionRef = useRef(0);
-
-  // Update cell selection states
+  const prevMediaIdsRef = useRef<string[]>([]);
+  const prevSelectedIdsRef = useRef<string[]>([]);
+  
+  // Détecter les changements importants dans les médias
   useEffect(() => {
-    if (!gridRef.current) return;
+    const prevMediaIds = prevMediaIdsRef.current;
     
-    // Find IDs with changed selection state
-    const prevSelectedSet = new Set(prevSelectedIdsRef.current);
-    const currentSelectedSet = new Set(selectedIds);
+    // Vérifier s'il y a eu un changement significatif dans les médias
+    const significantMediaChange = Math.abs(mediaIds.length - prevMediaIds.length) > 5;
     
-    const changedIds = mediaIds.filter(id => 
-      (prevSelectedSet.has(id) && !currentSelectedSet.has(id)) || 
-      (!prevSelectedSet.has(id) && currentSelectedSet.has(id))
-    );
-    
-    // Update reference for next comparison
-    prevSelectedIdsRef.current = [...selectedIds];
-    
-    // If selections changed, force grid update without resetting scroll
-    if (changedIds.length > 0 && gridRef.current) {
-      gridRef.current.forceUpdate();
-    }
-  }, [selectedIds, mediaIds, gridRef]);
-
-  // Track media ID changes
-  useEffect(() => {
-    // Check if media IDs have significantly changed
-    if (Math.abs(prevMediaIdsRef.current.length - mediaIds.length) > 5) {
-      // Save current reference
-      prevMediaIdsRef.current = mediaIds;
-      
-      // Check if this is a completely different set of IDs
-      const intersection = mediaIds.filter(id => prevMediaIdsRef.current.includes(id));
-      if (intersection.length < Math.min(mediaIds.length, prevMediaIdsRef.current.length) * 0.5) {
-        // If vastly different, reset scroll to top
-        scrollPositionRef.current = 0;
+    if (significantMediaChange) {
+      // Réinitialisation seulement en cas de changement significatif des médias
+      if (gridRef.current) {
+        // Stocker la liste actuelle comme référence
+        prevMediaIdsRef.current = [...mediaIds];
+        
+        // Faire remonter la grille vers le haut
+        gridRef.current.scrollTo({ scrollTop: 0 });
       }
-    } else {
-      // Just update the reference without other actions
-      prevMediaIdsRef.current = mediaIds;
     }
-  }, [mediaIds]);
-
-  return {
-    prevMediaIdsRef,
-    prevSelectedIdsRef,
-    scrollPositionRef
-  };
+  }, [mediaIds, gridRef]);
+  
+  // Optimisation pour les changements de sélection
+  useEffect(() => {
+    // Ne pas réagir aux changements de sélection pour l'instant, car cela cause des resets
+    // Nous gérons déjà cela dans useGallerySelection
+    
+    // Stocker la sélection actuelle comme référence
+    prevSelectedIdsRef.current = [...selectedIds];
+  }, [selectedIds]);
 }

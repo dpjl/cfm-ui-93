@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 export type SelectionMode = 'single' | 'multiple';
 
@@ -19,9 +19,15 @@ export function useGallerySelection({
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState<SelectionMode>(initialSelectionMode);
   const processingBatchRef = useRef(false);
+  
+  // Prevent grid resets during selection changes
+  const preventResetRef = useRef<boolean>(true);
 
-  // Gestionnaire de sélection plus optimisé avec useCallback pour maintenir la stabilité de référence
+  // Gestionnaire de sélection optimisé avec useCallback pour maintenir la stabilité de référence
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
+    // Activer la protection contre les resets durant les changements de sélection
+    preventResetRef.current = true;
+    
     // Si nous traitons déjà une sélection par lots, n'en commencez pas une autre
     if (processingBatchRef.current && extendSelection) return;
 
@@ -90,13 +96,20 @@ export function useGallerySelection({
     
     // Gardez une trace du dernier élément sélectionné pour la fonctionnalité Shift
     setLastSelectedId(id);
+    
+    // Réactiver les resets après un court délai
+    setTimeout(() => {
+      preventResetRef.current = false;
+    }, 100);
   }, [mediaIds, selectedIds, onSelectId, selectionMode, lastSelectedId]);
 
   // Gestionnaire de sélection tout optimisé
   const handleSelectAll = useCallback(() => {
+    // Activer la protection contre les resets
+    preventResetRef.current = true;
+    
     // Vérifier la limite de performance
     if (mediaIds.length > 100) {
-      // Nous pourrions alerter l'utilisateur ici
       console.warn("Trop d'éléments à sélectionner (>100)");
       return;
     }
@@ -115,10 +128,18 @@ export function useGallerySelection({
     });
     
     processingBatchRef.current = false;
+    
+    // Réactiver les resets après un court délai
+    setTimeout(() => {
+      preventResetRef.current = false;
+    }, 100);
   }, [mediaIds, selectedIds, onSelectId]);
 
   // Gestionnaire désélectionner tout optimisé
   const handleDeselectAll = useCallback(() => {
+    // Activer la protection contre les resets
+    preventResetRef.current = true;
+    
     // Traiter en tant qu'opération par lots
     processingBatchRef.current = true;
     
@@ -126,10 +147,18 @@ export function useGallerySelection({
     selectedIds.forEach(id => onSelectId(id));
     
     processingBatchRef.current = false;
+    
+    // Réactiver les resets après un court délai
+    setTimeout(() => {
+      preventResetRef.current = false;
+    }, 100);
   }, [selectedIds, onSelectId]);
 
   // Bascule du mode de sélection optimisée
   const toggleSelectionMode = useCallback(() => {
+    // Activer la protection contre les resets
+    preventResetRef.current = true;
+    
     setSelectionMode(prev => {
       const newMode = prev === 'single' ? 'multiple' : 'single';
       
@@ -161,6 +190,11 @@ export function useGallerySelection({
       
       return newMode;
     });
+    
+    // Réactiver les resets après un court délai
+    setTimeout(() => {
+      preventResetRef.current = false;
+    }, 100);
   }, [selectedIds, onSelectId]);
 
   return {
@@ -168,6 +202,7 @@ export function useGallerySelection({
     handleSelectItem,
     handleSelectAll,
     handleDeselectAll,
-    toggleSelectionMode
+    toggleSelectionMode,
+    preventResetRef // Exposer la référence pour permettre à d'autres composants de vérifier l'état
   };
 }

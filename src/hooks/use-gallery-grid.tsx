@@ -7,10 +7,19 @@ export function useGalleryGrid() {
   const [gridKey, setGridKey] = useState(0);
   const previousSizeRef = useRef({ width: 0, height: 0 });
   const scrollPositionRef = useRef(0);
+  const lastResetTimeRef = useRef(0);
 
   // Increment grid key to force re-render
   const refreshGrid = useCallback(() => {
+    // Vérifiez si un reset a été fait récemment pour éviter les resets trop fréquents
+    const now = Date.now();
+    if (now - lastResetTimeRef.current < 500) {
+      // Éviter les resets trop fréquents
+      return;
+    }
+    
     setGridKey(prev => prev + 1);
+    lastResetTimeRef.current = now;
   }, []);
   
   // Save current scroll position

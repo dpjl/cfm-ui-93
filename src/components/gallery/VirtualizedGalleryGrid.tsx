@@ -58,7 +58,7 @@ const VirtualizedGalleryGrid = memo(({
     };
   }, [handleResize]);
   
-  // Reset grid when media IDs significantly change
+  // Reset grid only when media IDs count changes significantly
   useEffect(() => {
     if (Math.abs(mediaIds.length - (gridRef.current as any)?._lastMediaLength || 0) > 5) {
       refreshGrid();
@@ -95,17 +95,18 @@ const VirtualizedGalleryGrid = memo(({
         {({ height, width }) => {
           // Calculate item size based on available width
           const gap = 8;
-          const itemWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
-          const itemHeight = itemWidth + (showDates ? 40 : 0); // Add space for date display if needed
+          // Use fixed cell width to ensure consistent gallery sizing
+          const cellWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
+          const cellHeight = cellWidth + (showDates ? 40 : 0); // Add space for date display if needed
           
           return (
             <FixedSizeGrid
               ref={gridRef}
               columnCount={columnsCount}
-              columnWidth={itemWidth}
+              columnWidth={cellWidth}
               height={height}
               rowCount={rowCount}
-              rowHeight={itemHeight}
+              rowHeight={cellHeight}
               width={width}
               itemData={itemData}
               // Increased overscan for smoother scrolling

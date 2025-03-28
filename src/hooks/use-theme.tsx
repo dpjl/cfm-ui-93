@@ -28,7 +28,10 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
+    () => {
+      const storedTheme = localStorage.getItem(storageKey) as Theme | null;
+      return storedTheme || defaultTheme;
+    }
   );
 
   useEffect(() => {
@@ -36,6 +39,8 @@ export function ThemeProvider({
     
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
+    
+    // Persister la préférence dans le local storage
     localStorage.setItem(storageKey, theme);
   }, [theme, storageKey]);
 

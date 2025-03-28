@@ -11,14 +11,22 @@ export function useCombinedRef<T>(elementRef: RefType<T>, localRef: React.RefObj
       if (typeof elementRef === 'function') {
         (elementRef as React.RefCallback<T>)(node);
       } else if (elementRef && 'current' in elementRef) {
-        // Only set current if it's a ref object with a current property
-        (elementRef as React.MutableRefObject<T | null>).current = node;
+        // Vérifier si la propriété current est en lecture seule
+        try {
+          (elementRef as React.MutableRefObject<T | null>).current = node;
+        } catch (error) {
+          console.warn('Could not set ref, it might be read-only', error);
+        }
       }
     }
     
-    // Set local ref
-    if (localRef) {
-      localRef.current = node;
+    // Set local ref if it's mutable
+    if (localRef && !Object.isFrozen(localRef)) {
+      try {
+        (localRef as React.MutableRefObject<T | null>).current = node;
+      } catch (error) {
+        console.warn('Could not set local ref, it might be read-only', error);
+      }
     }
   }, [elementRef, localRef]);
 
