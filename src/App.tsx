@@ -1,47 +1,35 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import { ThemeProvider } from "@/hooks/use-theme";
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { Toaster } from 'sonner'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-// Create a new QueryClient instance
+import Index from './pages/Index'
+import NotFound from './pages/NotFound'
+
+import './App.css'
+
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
       refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
     },
   },
-});
+})
 
-// Get the base URL from environment or use default
-const getBasename = () => {
-  // For GitHub Pages or similar hosting that serves from a subdirectory
-  return import.meta.env.BASE_URL !== '/' ? import.meta.env.BASE_URL : undefined;
-};
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster position="top-right" />
+      </BrowserRouter>
+    </QueryClientProvider>
+  )
+}
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter basename={getBasename()}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            {/* Redirect /index.html to root path to handle direct navigation */}
-            <Route path="/index.html" element={<Navigate to="/" replace />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
-
-export default App;
+export default App
