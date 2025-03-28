@@ -24,10 +24,10 @@ const SelectionCheckbox = memo(({
   const visibilityStyle = {
     opacity: loaded ? 1 : 0,
     transition: 'opacity 150ms ease',
-    pointerEvents: loaded ? 'auto' : 'none' as const,
+    pointerEvents: loaded ? 'auto' : 'none',
     willChange: 'opacity',
     transform: 'translateZ(0)'
-  };
+  } as React.CSSProperties;
   
   return (
     <div 
