@@ -1,14 +1,14 @@
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import MediaCompare from "./components/MediaCompare";
-import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "./hooks/use-theme";
+import { BrowserRouter } from 'react-router-dom';
+import { AppRoutes } from './routes';
+import { Toaster } from './components/ui/toaster';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Création d'un client React Query
+// Création du client de requête
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
       retry: 1,
     },
   },
@@ -16,12 +16,12 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <MediaCompare />
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AppRoutes />
         <Toaster />
-      </QueryClientProvider>
-    </ThemeProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 
