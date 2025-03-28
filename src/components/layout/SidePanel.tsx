@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, PanelLeft, PanelRight, ChevronDown, X, Settings } from 'lucide-react';
@@ -7,7 +6,6 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
 import { MobileViewMode } from '@/types/gallery';
-
 interface SidePanelProps {
   children: React.ReactNode;
   position: 'left' | 'right';
@@ -16,7 +14,6 @@ interface SidePanelProps {
   title: string;
   viewMode?: MobileViewMode;
 }
-
 const SidePanel: React.FC<SidePanelProps> = ({
   children,
   position,
@@ -62,33 +59,10 @@ const SidePanel: React.FC<SidePanelProps> = ({
   // Custom trigger button that shows the appropriate icon based on position
   const renderTriggerButton = () => {
     if (!shouldShowTrigger()) return null;
-    
     const icon = position === 'left' ? <PanelLeft size={16} /> : <PanelRight size={16} />;
     const alignmentClass = position === 'left' ? 'left-0' : 'right-0';
     const borderRadiusClass = position === 'left' ? 'rounded-r-md' : 'rounded-l-md';
-    
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className={cn(
-          "absolute top-3 h-8 px-2 bg-background/80 backdrop-blur-sm hover:bg-background", 
-          alignmentClass,
-          borderRadiusClass
-        )}
-        onClick={() => onOpenChange(true)}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {isHovered ? (
-          <span className="flex items-center gap-2">
-            {icon} {title}
-          </span>
-        ) : (
-          icon
-        )}
-      </Button>
-    );
+    return;
   };
 
   // Desktop sheet implementation
@@ -115,5 +89,4 @@ const SidePanel: React.FC<SidePanelProps> = ({
       </Sheet>
     </>;
 };
-
 export default SidePanel;
