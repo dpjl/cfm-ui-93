@@ -8,6 +8,10 @@ import MediaItemRenderer from './media/MediaItemRenderer';
 import DateDisplay from './media/DateDisplay';
 import SelectionCheckbox from './media/SelectionCheckbox';
 import { useMediaCache } from '@/hooks/use-media-cache';
+import { useTouchInteractions } from '@/hooks/use-touch-interactions';
+import { useKeyboardInteractions } from '@/hooks/use-keyboard-interactions';
+import { useCombinedRef } from '@/hooks/use-combined-ref';
+import MediaPlaceholder from './media/MediaPlaceholder';
 
 interface LazyMediaItemProps {
   id: string;
@@ -19,7 +23,7 @@ interface LazyMediaItemProps {
   position: 'source' | 'destination';
 }
 
-// Utilisation de memo pour éviter les re-rendus inutiles
+// Using memo to prevent unnecessary re-renders
 const LazyMediaItem = memo(({
   id,
   selected,
@@ -30,9 +34,6 @@ const LazyMediaItem = memo(({
   position
 }: LazyMediaItemProps) => {
   const [loaded, setLoaded] = useState(false);
-  const [touchStartPoint, setTouchStartPoint] = useState<{x: number, y: number} | null>(null);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const touchMoveCount = useRef(0);
   const itemRef = useRef<HTMLDivElement>(null);
   
   const { elementRef, isIntersecting } = useIntersectionObserver<HTMLDivElement>({ 
@@ -43,22 +44,35 @@ const LazyMediaItem = memo(({
   const { getCachedThumbnailUrl, setCachedThumbnailUrl } = useMediaCache();
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   
-  // Ne charger les infos du média que lorsque l'élément est visible
+  // Touch interaction handlers
+  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchInteractions({
+    id,
+    onSelect,
+  });
+  
+  // Keyboard interaction handlers
+  const { handleKeyDown } = useKeyboardInteractions({
+    id,
+    onSelect,
+  });
+  
+  // Combined ref handler
+  const setCombinedRef = useCombinedRef<HTMLDivElement>(elementRef, itemRef);
+  
+  // Only load media info when element is visible
   const shouldLoadInfo = isIntersecting;
   
-  // Charger les infos du média une fois que l'élément est visible
+  // Load media info once element is visible
   const { mediaInfo, isLoading } = useMediaInfo(id, shouldLoadInfo, position);
   
-  // Nettoyer le timer quand le composant est démonté ou quand l'id change
-  useEffect(() => {
-    return () => {
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
-      }
-    };
-  }, [id, longPressTimer]);
+  // Handle item click
+  const handleItemClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
+  }, [id, onSelect]);
   
-  // Charger l'URL de la vignette, en utilisant le cache si disponible
+  // Load thumbnail URL, using cache if available
   useEffect(() => {
     if (isIntersecting) {
       const cachedUrl = getCachedThumbnailUrl(id, position);
@@ -73,112 +87,19 @@ const LazyMediaItem = memo(({
     }
   }, [id, isIntersecting, position, getCachedThumbnailUrl, setCachedThumbnailUrl]);
   
-  // Mettre à jour le composant parent avec les infos du média - MAIS UNE SEULE FOIS
+  // Update parent component with media info - ONCE
   useEffect(() => {
     if (mediaInfo && updateMediaInfo) {
       updateMediaInfo(id, mediaInfo);
     }
   }, [id, mediaInfo, updateMediaInfo]);
   
-  // Déterminer s'il s'agit d'une vidéo en fonction de l'extension du fichier
+  // Determine if it's a video based on file extension
   const isVideo = mediaInfo?.alt ? /\.(mp4|webm|ogg|mov)$/i.test(mediaInfo.alt) : false;
   
-  // Optimisation de la gestion des clics avec useCallback
-  const handleItemClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
-  }, [id, onSelect]);
-  
-  // Nouvelle implémentation pour le tactile mobile
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    // Stocker le point de départ du toucher
-    const touch = e.touches[0];
-    setTouchStartPoint({x: touch.clientX, y: touch.clientY});
-    touchMoveCount.current = 0;
-    
-    // Démarrer le timer pour détecter un appui long
-    const timer = setTimeout(() => {
-      // Si l'utilisateur n'a pas trop bougé le doigt, considérer comme un appui long
-      if (touchMoveCount.current < 10) {
-        // Simuler un "Ctrl+click" pour la sélection multiple
-        onSelect(id, true);
-        
-        // Retour haptique sur les appareils qui le supportent
-        if (navigator.vibrate) {
-          navigator.vibrate(50);
-        }
-      }
-    }, 500); // 500ms est un bon délai pour un appui long
-    
-    setLongPressTimer(timer);
-  }, [id, onSelect]);
-  
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    // Incrémenter le compteur de mouvements
-    touchMoveCount.current += 1;
-    
-    // Si l'utilisateur bouge trop, annuler le timer d'appui long
-    if (touchMoveCount.current > 10 && longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-  }, [longPressTimer]);
-  
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    // Annuler le timer si l'utilisateur relâche avant la fin
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-    
-    // Vérifier si c'était un tap simple (pas beaucoup de mouvement)
-    if (touchMoveCount.current < 10) {
-      // C'était un tap simple, traiter comme un clic normal
-      e.preventDefault();
-      e.stopPropagation();
-      onSelect(id, false);
-    }
-    
-    // Réinitialiser l'état pour le prochain toucher
-    setTouchStartPoint(null);
-  }, [longPressTimer, id, onSelect]);
-  
-  // Gérer le clavier pour l'accessibilité
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
-    }
-  }, [id, onSelect]);
-  
-  // Référence combinée pour l'intersection observer et notre propre ref
-  const setCombinedRef = useCallback((node: HTMLDivElement | null) => {
-    // Définir la ref d'intersection
-    if (elementRef) {
-      // We need to ensure elementRef is handled correctly based on its type
-      if (typeof elementRef === 'function') {
-        (elementRef as React.RefCallback<HTMLDivElement>)(node);
-      } else if (elementRef.current !== undefined) {
-        // Only set current if it's a ref object with a current property
-        (elementRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-      }
-    }
-    
-    // Définir notre propre ref
-    itemRef.current = node;
-  }, [elementRef]);
-  
-  // Ne rendre qu'un simple placeholder quand l'élément n'est pas dans la vue
+  // Render only a placeholder when not in view
   if (!isIntersecting) {
-    return (
-      <div 
-        ref={setCombinedRef} 
-        className="aspect-square bg-muted/30 rounded-lg"
-        role="img"
-        aria-label="Loading media item"
-      ></div>
-    );
+    return <MediaPlaceholder ref={setCombinedRef} />;
   }
   
   return (
@@ -229,7 +150,7 @@ const LazyMediaItem = memo(({
   );
 });
 
-// Définir un nom d'affichage pour le débogage
+// Set display name for debugging
 LazyMediaItem.displayName = 'LazyMediaItem';
 
 export default LazyMediaItem;
