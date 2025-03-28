@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { MediaItem } from '../../types/gallery';
 import VirtualizedGalleryGridWrapper from './VirtualizedGalleryGridWrapper';
 import { Skeleton } from '../ui/skeleton';
@@ -20,6 +20,25 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
   position,
   onMediaClick
 }) => {
+  // État pour forcer le rendu lors des changements de dimension
+  const [resetKey, setResetKey] = useState(0);
+  
+  // Forcer une réinitialisation lorsque la taille du conteneur parent change
+  // (par exemple, quand le panneau d'information s'ouvre ou se ferme)
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(() => {
+      setResetKey(prev => prev + 1);
+    });
+    
+    // Observer le conteneur parent de la galerie
+    const galleryContainer = document.querySelector('.gallery-content') || document.body;
+    resizeObserver.observe(galleryContainer);
+    
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   // Show loading skeletons
   if (isLoading) {
     return (
@@ -50,7 +69,7 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
         key={item.id}
         className="w-full h-full overflow-hidden rounded-md bg-muted cursor-pointer relative group"
         onClick={() => onMediaClick?.(item.id)}
-        style={style} // Style appliqué directement sans modifications supplémentaires
+        style={style}
       >
         <img 
           src={thumbnailUrl} 
@@ -68,7 +87,7 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
   };
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full gallery-content" key={`gallery-container-${resetKey}`}>
       <VirtualizedGalleryGridWrapper
         items={items}
         columnCount={columnCount}

@@ -29,47 +29,80 @@ const VirtualizedGalleryGrid = memo(({
 }: VirtualizedGalleryGridProps) => {
   const isMobile = useIsMobile();
   const gridRef = useRef<FixedSizeGrid>(null);
+  const [gridKey, setGridKey] = useState(0);
+  const previousSizeRef = useRef({ width: 0, height: 0 });
+  const prevMediaIdsRef = useRef<string[]>(mediaIds);
   const prevSelectedIdsRef = useRef<string[]>(selectedIds);
   
-  // Calculate optimal item size
-  const gap = 8; // 2rem converted to px (matches the gap-2 class)
-  
-  // Calculate rows needed
-  const rowCount = Math.ceil(mediaIds.length / columnsCount);
-  
-  // Reset scroll position when columns or data changes (but not when only selection changes)
+  // Détecter les changements de dimensions du conteneur parent
   useEffect(() => {
-    if (gridRef.current) {
-      gridRef.current.scrollTo({ scrollTop: 0, scrollLeft: 0 });
+    const resizeObserver = new ResizeObserver((entries) => {
+      if (entries[0]) {
+        const { width, height } = entries[0].contentRect;
+        // Vérifier si le changement est significatif pour éviter les mises à jour inutiles
+        if (
+          Math.abs(previousSizeRef.current.width - width) > 5 || 
+          Math.abs(previousSizeRef.current.height - height) > 5
+        ) {
+          previousSizeRef.current = { width, height };
+          // Forcer la réinitialisation complète de la grille
+          setGridKey(prev => prev + 1);
+        }
+      }
+    });
+
+    // Observer le conteneur parent
+    const galleryContainer = document.querySelector('.gallery-container') || document.body;
+    resizeObserver.observe(galleryContainer);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+  
+  // Détecter les changements de données qui nécessitent une réinitialisation
+  useEffect(() => {
+    // Si les médias ou le nombre de colonnes change, réinitialiser la grille
+    if (
+      prevMediaIdsRef.current.length !== mediaIds.length ||
+      columnsCount !== prevMediaIdsRef.current.length / Math.ceil(prevMediaIdsRef.current.length / columnsCount)
+    ) {
+      prevMediaIdsRef.current = mediaIds;
+      setGridKey(prev => prev + 1);
+      
+      if (gridRef.current) {
+        gridRef.current.scrollTo({ scrollTop: 0, scrollLeft: 0 });
+      }
     }
-  }, [columnsCount, mediaIds]);
+  }, [mediaIds, columnsCount]);
   
   // Force re-render of only the cells that changed selection state
   useEffect(() => {
     if (!gridRef.current) return;
     
-    // Get set of IDs that changed selection state
+    // Trouver les IDs qui ont changé de statut de sélection
     const prevSelectedSet = new Set(prevSelectedIdsRef.current);
     const currentSelectedSet = new Set(selectedIds);
     
-    // Find IDs that were added or removed from selection
-    const changedIds = new Set([
-      ...prevSelectedIdsRef.current.filter(id => !currentSelectedSet.has(id)),
-      ...selectedIds.filter(id => !prevSelectedSet.has(id))
-    ]);
+    const changedIds = mediaIds.filter(id => 
+      (prevSelectedSet.has(id) && !currentSelectedSet.has(id)) || 
+      (!prevSelectedSet.has(id) && currentSelectedSet.has(id))
+    );
     
-    // Update ref for next comparison
+    // Mettre à jour la référence pour la prochaine comparaison
     prevSelectedIdsRef.current = selectedIds;
     
-    // If no selection changes, nothing to do
-    if (changedIds.size === 0) return;
-    
-    // Au lieu d'utiliser resetAfterIndices qui n'existe pas, on force la grille entière à être mise à jour
-    if (gridRef.current) {
-      // Forcer la mise à jour de toute la grille
-      gridRef.current.forceUpdate();
+    // Si des sélections ont changé, forcer la mise à jour de la grille
+    if (changedIds.length > 0) {
+      // Utiliser forceUpdate au lieu de resetAfterIndices
+      if (gridRef.current) {
+        gridRef.current.forceUpdate();
+      }
     }
-  }, [selectedIds, mediaIds, columnsCount]);
+  }, [selectedIds, mediaIds]);
+  
+  // Calculate rows needed
+  const rowCount = Math.ceil(mediaIds.length / columnsCount);
   
   // Memoized version of onSelectId to prevent unnecessary renders when selecting items
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
@@ -85,8 +118,8 @@ const VirtualizedGalleryGrid = memo(({
     updateMediaInfo,
     position,
     columnsCount,
-    gap
-  }), [mediaIds, selectedIds, handleSelectItem, showDates, updateMediaInfo, position, columnsCount, gap]);
+    gap: 8
+  }), [mediaIds, selectedIds, handleSelectItem, showDates, updateMediaInfo, position, columnsCount]);
   
   // Memoize the Cell component to prevent unnecessary re-renders
   const Cell = useCallback(({ columnIndex, rowIndex, style, data }: { 
@@ -101,11 +134,9 @@ const VirtualizedGalleryGrid = memo(({
     const id = data.mediaIds[index];
     const isSelected = data.selectedIds.includes(id);
     
-    // Apply gap spacing to the style
+    // N'ajustez que la largeur et la hauteur, pas les positions
     const adjustedStyle = {
       ...style,
-      left: `${parseFloat(style.left as string) + (columnIndex * data.gap)}px`,
-      top: `${parseFloat(style.top as string) + (rowIndex * data.gap)}px`,
       width: `${parseFloat(style.width as string) - data.gap}px`,
       height: `${parseFloat(style.height as string) - data.gap}px`,
       padding: 0,
@@ -128,10 +159,11 @@ const VirtualizedGalleryGrid = memo(({
   }, []);
   
   return (
-    <div className="w-full h-full p-2">
-      <AutoSizer>
+    <div className="w-full h-full p-2 gallery-container">
+      <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
           // Calculate item size based on available width
+          const gap = 8;
           const itemWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
           const itemHeight = itemWidth + (showDates ? 40 : 0); // Add space for date display if needed
           
@@ -145,9 +177,10 @@ const VirtualizedGalleryGrid = memo(({
               rowHeight={itemHeight}
               width={width}
               itemData={itemData}
-              overscanRowCount={2}
-              overscanColumnCount={1}
-              // Use a stable itemKey to improve render efficiency
+              // Augmenter les overscan pour améliorer les performances de défilement
+              overscanRowCount={5}
+              overscanColumnCount={2}
+              // Utiliser une clé stable pour améliorer l'efficacité du rendu
               itemKey={({ columnIndex, rowIndex }) => {
                 const index = rowIndex * columnsCount + columnIndex;
                 return index < mediaIds.length ? mediaIds[index] : `empty-${rowIndex}-${columnIndex}`;

@@ -23,7 +23,8 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
 }) => {
   const gridRef = useRef<Grid | null>(null);
   const [key, setKey] = useState(0);
-
+  const previousDimensionsRef = useRef<{width: number, height: number}>({width: 0, height: 0});
+  
   // Calculate rows based on items and columns
   const rowCount = Math.ceil(items.length / columnCount);
   
@@ -40,9 +41,8 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
       return <div style={style}></div>;
     }
     
-    // IMPORTANT: Pour corriger le problème de défilement, ne manipulons pas 
-    // les valeurs "top" et "left" du style, car react-window s'occupe déjà 
-    // du positionnement correct. Ajustons seulement width et height pour les gaps.
+    // IMPORTANT: Ne pas manipuler les positions top/left contrôlées par react-window
+    // Ajuster uniquement width et height pour les gaps
     const adjustedStyle = {
       ...style,
       width: `calc(${style.width}px - ${columnGap}px)`,
@@ -55,8 +55,7 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
 
   // Calculate dimensions including gaps
   const getItemWidth = (width: number) => {
-    // Calcul correct de la largeur des éléments en tenant compte des gaps
-    return (width - (columnGap * (columnCount - 1))) / columnCount;
+    return Math.floor((width - (columnGap * (columnCount - 1))) / columnCount);
   };
   
   const getItemHeight = () => itemSize;
@@ -64,24 +63,47 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
   return (
     <div className="w-full h-full">
       <AutoSizer key={`gallery-grid-${key}`}>
-        {({ height, width }) => (
-          <Grid
-            ref={gridRef}
-            columnCount={columnCount}
-            columnWidth={getItemWidth(width)}
-            height={height}
-            rowCount={rowCount}
-            rowHeight={getItemHeight()}
-            width={width}
-            itemData={items} // Fournir les items comme données
-            itemKey={({ columnIndex, rowIndex }) => {
-              const index = rowIndex * columnCount + columnIndex;
-              return index < items.length ? items[index].id : `empty-${rowIndex}-${columnIndex}`;
-            }}
-          >
-            {cellRenderer}
-          </Grid>
-        )}
+        {({ height, width }) => {
+          // Si les dimensions changent significativement, forcer la mise à jour du grid
+          const dimensionsChanged = 
+            Math.abs(previousDimensionsRef.current.width - width) > 5 || 
+            Math.abs(previousDimensionsRef.current.height - height) > 5;
+          
+          if (dimensionsChanged) {
+            previousDimensionsRef.current = { width, height };
+            // On ne change pas le key ici, car cela provoquerait une boucle infinie
+            // Mais on force la mise à jour du grid si nécessaire
+            if (gridRef.current) {
+              setTimeout(() => {
+                gridRef.current?.forceUpdate();
+              }, 0);
+            }
+          }
+          
+          // Calculer la largeur des éléments
+          const itemWidth = getItemWidth(width);
+          const itemHeight = getItemHeight();
+          
+          return (
+            <Grid
+              ref={gridRef}
+              columnCount={columnCount}
+              columnWidth={itemWidth}
+              height={height}
+              rowCount={rowCount}
+              rowHeight={itemHeight}
+              width={width}
+              overscanRowCount={5} // Augmenter pour un meilleur défilement
+              overscanColumnCount={2}
+              itemKey={({ columnIndex, rowIndex }) => {
+                const index = rowIndex * columnCount + columnIndex;
+                return index < items.length ? items[index].id : `empty-${rowIndex}-${columnIndex}`;
+              }}
+            >
+              {cellRenderer}
+            </Grid>
+          );
+        }}
       </AutoSizer>
     </div>
   );

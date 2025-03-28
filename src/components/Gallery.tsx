@@ -56,6 +56,7 @@ const Gallery: React.FC<GalleryProps> = ({
 }) => {
   const [showDates, setShowDates] = useState(false);
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
+  const [galleryKey, setGalleryKey] = useState(0); // Clé pour forcer le rendu complet
   const { t } = useLanguage();
   
   // Initialize gallery selection features
@@ -76,6 +77,16 @@ const Gallery: React.FC<GalleryProps> = ({
     selectedIds,
     position
   );
+
+  // Forcer le rendu complet lorsque le panneau d'information change d'état
+  useEffect(() => {
+    // Une légère temporisation pour laisser le temps au DOM de se mettre à jour
+    const timer = setTimeout(() => {
+      setGalleryKey(prev => prev + 1);
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, [selectedIds.length > 0]);
 
   // Collect media info from child components
   const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
@@ -112,7 +123,7 @@ const Gallery: React.FC<GalleryProps> = ({
   }
   
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative" key={`gallery-container-${galleryKey}`}>
       <GalleryToolbar
         selectedIds={selectedIds}
         mediaIds={mediaIds}
