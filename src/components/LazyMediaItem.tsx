@@ -1,14 +1,11 @@
 
 import React, { useState, useEffect, memo, useCallback, useRef } from 'react';
-import { cn } from '@/lib/utils';
 import { useIntersectionObserver } from '@/hooks/use-intersection-observer';
 import { useMediaInfo } from '@/hooks/use-media-info';
 import { getThumbnailUrl } from '@/api/imageApi';
-import { motion } from 'framer-motion';
-import MediaItemRenderer from './media/MediaItemRenderer';
-import DateDisplay from './media/DateDisplay';
-import SelectionCheckbox from './media/SelectionCheckbox';
 import { useMediaCache } from '@/hooks/use-media-cache';
+import MediaItemContainer from './media/MediaItemContainer';
+import MediaItemContent from './media/MediaItemContent';
 
 interface LazyMediaItemProps {
   id: string;
@@ -21,7 +18,7 @@ interface LazyMediaItemProps {
   isScrolling?: boolean;
 }
 
-// Optimized LazyMediaItem to prevent flickering
+// Optimized and simplified LazyMediaItem that delegates to smaller components
 const LazyMediaItem = memo(({
   id,
   selected,
@@ -34,7 +31,6 @@ const LazyMediaItem = memo(({
 }: LazyMediaItemProps) => {
   const [loaded, setLoaded] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
-  const previousSelected = useRef(selected);
   
   // Simplified intersection observer usage
   const { elementRef, isIntersecting } = useIntersectionObserver<HTMLDivElement>({ 
@@ -67,15 +63,10 @@ const LazyMediaItem = memo(({
     }
   }, [id, mediaInfo, updateMediaInfo, isIntersecting]);
   
-  // Track selection changes to avoid flicker
-  useEffect(() => {
-    previousSelected.current = selected;
-  }, [selected]);
-  
   // Determine if this is a video based on the file extension if available
   const isVideo = mediaInfo?.alt ? /\.(mp4|webm|ogg|mov)$/i.test(mediaInfo.alt) : false;
   
-  // Optimized click handler
+  // Optimized click handlers
   const handleItemClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -99,59 +90,28 @@ const LazyMediaItem = memo(({
     );
   }
   
-  // Simplified component with optimized rendering
+  // Using our new components for a cleaner structure
   return (
-    <div
-      ref={elementRef}
-      className={cn(
-        "image-card relative aspect-square cursor-pointer",
-        selected && "selected"
-      )}
-      onClick={handleItemClick}
-      role="button"
-      aria-label={`Media item ${mediaInfo?.alt || id}`}
-      aria-pressed={selected}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
-        }
-      }}
-      data-media-id={id}
-    >
-      {(thumbnailUrl || isScrolling) && (
-        <>
-          <MediaItemRenderer
-            src={thumbnailUrl || ''}
-            alt={mediaInfo?.alt || id}
-            isVideo={isVideo}
-            onLoad={() => setLoaded(true)}
-            loaded={loaded}
-            isScrolling={isScrolling}
-          />
-
-          {showDates && <DateDisplay dateString={mediaInfo?.createdAt} showDate={showDates} />}
-
-          <div className="image-overlay pointer-events-none" />
-          
-          <SelectionCheckbox
-            selected={selected}
-            onSelect={handleCheckboxClick}
-            loaded={loaded}
-            mediaId={id}
-          />
-        </>
-      )}
+    <div ref={elementRef}>
+      <MediaItemContainer
+        id={id}
+        selected={selected}
+        onClick={handleItemClick}
+      >
+        <MediaItemContent
+          id={id}
+          thumbnailUrl={thumbnailUrl}
+          loaded={loaded}
+          setLoaded={setLoaded}
+          handleCheckboxClick={handleCheckboxClick}
+          mediaInfo={mediaInfo}
+          isVideo={isVideo}
+          showDates={showDates}
+          isScrolling={isScrolling}
+          selected={selected}
+        />
+      </MediaItemContainer>
     </div>
-  );
-}, (prevProps, nextProps) => {
-  // Custom comparison for optimizing re-renders
-  return (
-    prevProps.id === nextProps.id &&
-    prevProps.selected === nextProps.selected &&
-    prevProps.isScrolling === nextProps.isScrolling &&
-    prevProps.showDates === nextProps.showDates
   );
 });
 
