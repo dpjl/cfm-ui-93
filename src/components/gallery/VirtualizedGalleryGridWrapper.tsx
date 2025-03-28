@@ -27,9 +27,8 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
   // Calculate rows based on items and columns
   const rowCount = Math.ceil(items.length / columnCount);
   
-  // Forcer le rendu complet lorsque les éléments ou le nombre de colonnes changent
+  // Force full re-render when items or columns change
   useEffect(() => {
-    // Force rerender when items or columnCount changes by changing the key
     setKey(prevKey => prevKey + 1);
   }, [items.length, columnCount]);
 
@@ -41,13 +40,13 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
       return <div style={style}></div>;
     }
     
-    // Apply gaps to style
+    // IMPORTANT: Pour corriger le problème de défilement, ne manipulons pas 
+    // les valeurs "top" et "left" du style, car react-window s'occupe déjà 
+    // du positionnement correct. Ajustons seulement width et height pour les gaps.
     const adjustedStyle = {
       ...style,
-      left: Number(style.left) + columnGap * columnIndex,
-      top: Number(style.top) + rowGap * rowIndex,
-      width: Number(style.width) - columnGap,
-      height: Number(style.height) - rowGap,
+      width: `calc(${style.width}px - ${columnGap}px)`,
+      height: `calc(${style.height}px - ${rowGap}px)`,
       padding: '4px',
     };
     
@@ -55,7 +54,11 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
   }, [items, columnCount, columnGap, rowGap, renderItem]);
 
   // Calculate dimensions including gaps
-  const getItemWidth = (width: number) => (width - (columnGap * (columnCount - 1))) / columnCount;
+  const getItemWidth = (width: number) => {
+    // Calcul correct de la largeur des éléments en tenant compte des gaps
+    return (width - (columnGap * (columnCount - 1))) / columnCount;
+  };
+  
   const getItemHeight = () => itemSize;
 
   return (
@@ -70,6 +73,7 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
             rowCount={rowCount}
             rowHeight={getItemHeight()}
             width={width}
+            itemData={items} // Fournir les items comme données
             itemKey={({ columnIndex, rowIndex }) => {
               const index = rowIndex * columnCount + columnIndex;
               return index < items.length ? items[index].id : `empty-${rowIndex}-${columnIndex}`;

@@ -50,7 +50,7 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
         key={item.id}
         className="w-full h-full overflow-hidden rounded-md bg-muted cursor-pointer relative group"
         onClick={() => onMediaClick?.(item.id)}
-        style={style}
+        style={style} // Style appliqué directement sans modifications supplémentaires
       >
         <img 
           src={thumbnailUrl} 
@@ -74,6 +74,8 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
         columnCount={columnCount}
         renderItem={renderMediaItem}
         itemSize={200}
+        rowGap={8}
+        columnGap={8}
       />
     </div>
   );
