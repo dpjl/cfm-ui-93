@@ -57,12 +57,12 @@ const GalleryWrapper: React.FC<GalleryWrapperProps> = ({
 
   // Convert media info to MediaItem format
   const mediaItems: MediaItem[] = mediaInfoList.map(info => ({
-    id: info.alt || '', // Correction ici - utiliser alt comme id
-    alt: info.alt || '', // Correction ici - alt est présent dans DetailedMediaInfo
+    id: info.alt || '',
+    alt: info.alt || '',
     createdAt: info.createdAt || '',
     isVideo: info.name ? info.name.toLowerCase().endsWith('.mp4') || 
                          info.name.toLowerCase().endsWith('.webm') || 
-                         info.name.toLowerCase().endsWith('.mov') : false // Vérifier si le nom se termine par une extension vidéo
+                         info.name.toLowerCase().endsWith('.mov') : false
   }));
 
   return (

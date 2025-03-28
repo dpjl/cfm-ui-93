@@ -27,9 +27,10 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
   // Calculate rows based on items and columns
   const rowCount = Math.ceil(items.length / columnCount);
   
+  // Forcer le rendu complet lorsque les éléments ou le nombre de colonnes changent
   useEffect(() => {
     // Force rerender when items or columnCount changes by changing the key
-    setKey(prev => prev + 1);
+    setKey(prevKey => prevKey + 1);
   }, [items.length, columnCount]);
 
   const cellRenderer = useCallback(({ columnIndex, rowIndex, style }: any) => {

@@ -64,19 +64,11 @@ const VirtualizedGalleryGrid = memo(({
     // If no selection changes, nothing to do
     if (changedIds.size === 0) return;
     
-    // Find indices of changed items to rerender specific cells
-    changedIds.forEach(id => {
-      const index = mediaIds.indexOf(id);
-      if (index !== -1) {
-        const rowIndex = Math.floor(index / columnsCount);
-        const columnIndex = index % columnsCount;
-        gridRef.current?.resetAfterIndices({
-          columnIndex,
-          rowIndex,
-          shouldForceUpdate: true,
-        });
-      }
-    });
+    // Au lieu d'utiliser resetAfterIndices qui n'existe pas, on force la grille entière à être mise à jour
+    if (gridRef.current) {
+      // Forcer la mise à jour de toute la grille
+      gridRef.current.forceUpdate();
+    }
   }, [selectedIds, mediaIds, columnsCount]);
   
   // Memoized version of onSelectId to prevent unnecessary renders when selecting items

@@ -48,16 +48,21 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
     return (
       <div 
         key={item.id}
-        className="w-full h-full overflow-hidden rounded-md bg-muted cursor-pointer"
+        className="w-full h-full overflow-hidden rounded-md bg-muted cursor-pointer relative group"
         onClick={() => onMediaClick?.(item.id)}
         style={style}
       >
         <img 
           src={thumbnailUrl} 
           alt={item.alt || ''}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
           loading="lazy"
         />
+        {item.isVideo && (
+          <div className="absolute top-2 right-2 bg-black/70 text-white p-1 rounded-md text-xs">
+            Vidéo
+          </div>
+        )}
       </div>
     );
   };
@@ -68,6 +73,7 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
         items={items}
         columnCount={columnCount}
         renderItem={renderMediaItem}
+        itemSize={200}
       />
     </div>
   );
