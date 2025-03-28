@@ -9,7 +9,6 @@ interface MediaItemContainerProps {
   children: React.ReactNode;
 }
 
-// Optimisé pour réduire les re-rendus et les clignotements
 const MediaItemContainer = memo(({
   id,
   selected,
@@ -19,9 +18,8 @@ const MediaItemContainer = memo(({
   return (
     <div
       className={cn(
-        "image-card relative aspect-square cursor-pointer transform-gpu",
-        "hover:scale-[1.01] transition-transform duration-150",
-        selected && "selected"
+        "relative aspect-square cursor-pointer",
+        selected && "ring-2 ring-primary ring-offset-2"
       )}
       onClick={onClick}
       role="button"
@@ -40,17 +38,11 @@ const MediaItemContainer = memo(({
         }
       }}
       data-media-id={id}
-      style={{
-        contain: 'layout style',
-        willChange: 'transform',
-        backfaceVisibility: 'hidden'
-      }}
     >
       {children}
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Optimisation des comparaisons
   return (
     prevProps.id === nextProps.id &&
     prevProps.selected === nextProps.selected

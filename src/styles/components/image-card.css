@@ -1,10 +1,8 @@
 
 @layer components {
   .image-card {
-    @apply relative overflow-hidden rounded-lg transition-all duration-300 ease-out cursor-pointer shadow-subtle hover:shadow-elevation;
-    backface-visibility: hidden;
-    transform: translateZ(0); /* Force GPU acceleration */
-    user-select: none; /* Prevent text selection from interfering with clicks */
+    @apply relative overflow-hidden rounded-lg shadow-sm;
+    user-select: none; /* Prevent text selection */
     -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
   }
   
@@ -14,33 +12,15 @@
   
   .image-card img,
   .image-card video {
-    @apply w-full h-full object-cover transition-all duration-300 ease-out;
+    @apply w-full h-full object-cover;
     pointer-events: none; /* Prevent image/video from capturing clicks */
-  }
-  
-  .image-card:hover img,
-  .image-card:hover video {
-    @apply scale-105;
-  }
-  
-  .image-card .image-overlay {
-    @apply absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 transition-opacity duration-300;
-    pointer-events: none; /* Prevent overlay from capturing clicks */
-  }
-  
-  .image-card:hover .image-overlay {
-    @apply opacity-100;
-  }
-  
-  .image-card .image-checkbox {
-    @apply absolute z-10 transition-all duration-200 ease-out;
   }
   
   /* Mobile responsive adjustments */
   @media (max-width: 640px) {
     .image-card {
       @apply rounded-md shadow-sm;
-      touch-action: manipulation; /* Optimize for touch interactions */
+      touch-action: manipulation; /* Optimize for touch */
     }
     
     .image-card.selected {

@@ -11,7 +11,6 @@ interface SelectionCheckboxProps {
   mediaId: string;
 }
 
-// Optimisé pour réduire les re-rendus et éliminer les clignotements
 const SelectionCheckbox = memo(({
   selected,
   onSelect,
@@ -20,33 +19,27 @@ const SelectionCheckbox = memo(({
 }: SelectionCheckboxProps) => {
   const isMobile = useIsMobile();
   
-  // Éviter le retard d'affichage avec un placeholder
-  const visibilityStyle = {
-    opacity: loaded ? 1 : 0,
-    transition: 'opacity 150ms ease',
-    pointerEvents: loaded ? 'auto' : 'none',
-    willChange: 'opacity',
-    transform: 'translateZ(0)'
-  } as React.CSSProperties;
+  if (!loaded) {
+    return null; // Ne pas afficher si le média n'est pas chargé
+  }
   
   return (
     <div 
       className={cn(
         "absolute z-20",
-        isMobile ? "top-1 left-1" : "top-2 left-2",
+        isMobile ? "top-1 left-1" : "top-2 left-2"
       )}
-      style={visibilityStyle}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (loaded) onSelect(e); // Protection supplémentaire
+        onSelect(e);
       }}
       role="checkbox"
       aria-checked={selected}
       aria-label={selected ? `Deselect media ${mediaId}` : `Select media ${mediaId}`}
       tabIndex={0}
       onKeyDown={(e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && loaded) {
+        if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           const mouseEvent = new MouseEvent('click', {
             bubbles: true,
@@ -63,14 +56,14 @@ const SelectionCheckbox = memo(({
           "border-2",
           "h-5 w-5",
           selected ? "border-primary bg-primary" : "border-white bg-white/30",
-          "transform-gpu shadow-sm" // Optimisations pour éviter les clignotements
+          "shadow-sm"
         )}
         tabIndex={-1}
       />
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Optimisation extrême des comparaisons
+  // Optimisation des comparaisons
   return (
     prevProps.selected === nextProps.selected &&
     prevProps.loaded === nextProps.loaded &&

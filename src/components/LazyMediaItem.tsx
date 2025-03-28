@@ -30,42 +30,34 @@ const LazyMediaItem = memo(({
 }: LazyMediaItemProps) => {
   const [loaded, setLoaded] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
-  const [loadingStarted, setLoadingStarted] = useState(false);
   
   // Observer avec marge augmentée pour charger en avance
   const { elementRef, isIntersecting, hasBeenVisible } = useIntersectionObserver<HTMLDivElement>({ 
     threshold: 0.1,
-    rootMargin: '500px', // Chargement très anticipé
-    triggerOnce: true // Observer une seule fois puis se déconnecter
+    rootMargin: '500px', // Chargement anticipé
+    triggerOnce: true
   });
   
-  const { mediaInfo, isLoading } = useMediaInfo(id, isIntersecting || hasBeenVisible, position);
+  const { mediaInfo } = useMediaInfo(id, isIntersecting || hasBeenVisible, position);
   const { getCachedThumbnailUrl, setCachedThumbnailUrl } = useMediaCache();
   
-  // Gestion optimisée du chargement
+  // Chargement des thumbnails
   useEffect(() => {
-    // Ne pas exécuter pendant le scrolling pour éviter la surcharge
-    if (isScrolling && !hasBeenVisible) return;
-    
-    // Charger seulement si l'élément est visible ou l'a déjà été
-    if ((isIntersecting || hasBeenVisible) && !loadingStarted) {
-      setLoadingStarted(true);
-      
+    if ((isIntersecting || hasBeenVisible) && !thumbnailUrl) {
       // Essayer d'abord le cache
       const cachedUrl = getCachedThumbnailUrl(id, position);
       
       if (cachedUrl) {
         setThumbnailUrl(cachedUrl);
-        // Pas de setLoaded ici pour permettre la transition correcte
       } else {
         const url = getThumbnailUrl(id, position);
         setThumbnailUrl(url);
         setCachedThumbnailUrl(id, position, url);
       }
     }
-  }, [id, isIntersecting, hasBeenVisible, position, loadingStarted, isScrolling, getCachedThumbnailUrl, setCachedThumbnailUrl]);
+  }, [id, isIntersecting, hasBeenVisible, position, thumbnailUrl, getCachedThumbnailUrl, setCachedThumbnailUrl]);
   
-  // Mise à jour des infos seulement quand nécessaire
+  // Mise à jour des infos
   useEffect(() => {
     if (mediaInfo && updateMediaInfo && (isIntersecting || hasBeenVisible)) {
       updateMediaInfo(id, mediaInfo);
@@ -75,31 +67,23 @@ const LazyMediaItem = memo(({
   // Détecter les vidéos
   const isVideo = mediaInfo?.alt ? /\.(mp4|webm|ogg|mov)$/i.test(mediaInfo.alt) : false;
   
-  // Gestionnaire de clics optimisé avec useCallback
+  // Gestionnaire de clics
   const handleItemClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
     onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
   }, [id, onSelect]);
   
-  // Gestionnaire de checkbox distinct pour éviter les conflits d'événements
+  // Gestionnaire de checkbox distinct
   const handleCheckboxClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
   }, [id, onSelect]);
   
-  // Placeholder hautement optimisé pendant le chargement
+  // Placeholder simple pendant le chargement
   if (!isIntersecting && !hasBeenVisible && !thumbnailUrl) {
-    return (
-      <div 
-        ref={elementRef} 
-        className="aspect-square bg-muted/50 rounded-lg transform-gpu"
-        style={{ willChange: 'transform' }}
-      />
-    );
+    return <div ref={elementRef} className="aspect-square bg-muted/50 rounded-lg" />;
   }
   
-  // Utiliser nos composants dédiés avec le minimum de props
   return (
     <div ref={elementRef}>
       <MediaItemContainer

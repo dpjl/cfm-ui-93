@@ -46,21 +46,19 @@ const VirtualizedGalleryGrid = memo(({
     };
   }, []);
   
-  // Gestion améliorée du scrolling pour éviter les clignotements
+  // Gestion du scrolling avec debounce simple
   const handleScroll = useCallback(() => {
-    if (!isScrolling) setIsScrolling(true);
+    setIsScrolling(true);
     
-    // Réinitialiser le timeout existant
     if (scrollTimeoutRef.current) {
       window.clearTimeout(scrollTimeoutRef.current);
     }
     
-    // Définir un nouveau timeout pour désactiver isScrolling
     scrollTimeoutRef.current = window.setTimeout(() => {
       setIsScrolling(false);
       scrollTimeoutRef.current = null;
     }, 150);
-  }, [isScrolling]);
+  }, []);
   
   const Cell = useCallback(({ columnIndex, rowIndex, style }: { 
     columnIndex: number; rowIndex: number; style: React.CSSProperties 
@@ -71,20 +69,18 @@ const VirtualizedGalleryGrid = memo(({
     const id = mediaIds[index];
     const isSelected = selectedIdsSet.has(id);
     
-    // Style optimisé
+    // Style simplifié
     const adjustedStyle = {
       ...style,
       left: `${parseFloat(style.left as string) + (columnIndex * gap)}px`,
       top: `${parseFloat(style.top as string) + (rowIndex * gap)}px`,
       width: `${parseFloat(style.width as string) - gap}px`,
       height: `${parseFloat(style.height as string) - gap}px`,
-      transform: 'translateZ(0)', // Force GPU acceleration
-      willChange: 'transform',
       padding: 0,
     };
     
     return (
-      <div style={adjustedStyle} className="virtualized-gallery-cell">
+      <div style={adjustedStyle}>
         <LazyMediaItem
           key={id}
           id={id}
@@ -105,9 +101,8 @@ const VirtualizedGalleryGrid = memo(({
     [mediaIds.length, columnsCount]
   );
   
-  // Ajouter une classe conteneur pour optimisations CSS
   return (
-    <div className="w-full h-full p-2 virtualized-gallery">
+    <div className="w-full h-full p-2">
       <AutoSizer>
         {({ width, height }) => {
           const itemWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
@@ -122,15 +117,10 @@ const VirtualizedGalleryGrid = memo(({
               rowCount={rowCount}
               rowHeight={itemHeight}
               width={width}
-              overscanRowCount={10} // Augmenté pour charger plus de lignes hors écran
+              overscanRowCount={5}
               onScroll={handleScroll}
-              style={{ 
-                overflowX: 'hidden',
-                willChange: 'contents', 
-                contain: 'strict'
-              }}
-              className="react-window-vertical"
-              useIsScrolling={true} // Utiliser isScrolling pour optimiser
+              style={{ overflowX: 'hidden' }}
+              useIsScrolling={true}
             >
               {Cell}
             </FixedSizeGrid>

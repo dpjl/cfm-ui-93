@@ -18,7 +18,6 @@ interface MediaItemContentProps {
   selected: boolean;
 }
 
-// Optimisé pour réduire les re-rendus et les clignotements
 const MediaItemContent = memo(({
   id,
   thumbnailUrl,
@@ -31,10 +30,10 @@ const MediaItemContent = memo(({
   isScrolling = false,
   selected
 }: MediaItemContentProps) => {
-  // Protection supplémentaire pour les urls nulles pendant le scrolling
+  // Protection pour les urls nulles pendant le scrolling
   const effectiveThumbnailUrl = thumbnailUrl || '';
   
-  // Précharger les images pour réduire les clignotements
+  // Précharger les images hors-écran
   useEffect(() => {
     if (!isVideo && thumbnailUrl && !loaded && !isScrolling) {
       const img = new Image();
@@ -43,11 +42,9 @@ const MediaItemContent = memo(({
     }
   }, [isVideo, thumbnailUrl, loaded, isScrolling, setLoaded]);
   
-  // Pendant le scrolling rapide, ne pas essayer de rendre un média sans URL
+  // Si pas de thumbnail pendant le scrolling, afficher un placeholder simple
   if (!effectiveThumbnailUrl && isScrolling) {
-    return (
-      <div className="w-full h-full rounded-md bg-muted/40" />
-    );
+    return <div className="w-full h-full rounded-md bg-muted/40" />;
   }
   
   return (
@@ -68,24 +65,20 @@ const MediaItemContent = memo(({
           showDate={showDates} 
         />
       )}
-
-      {/* Overlay subtil pour l'effet visuel - pas de clignotement */}
-      <div 
-        className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200"
-        style={{ pointerEvents: 'none', willChange: 'opacity' }}
-      />
       
-      {/* Checkbox optimisée avec visibilité contrôlée */}
-      <SelectionCheckbox
-        selected={selected}
-        onSelect={handleCheckboxClick}
-        loaded={loaded}
-        mediaId={id}
-      />
+      {/* Checkbox de sélection - n'afficher que si le média est chargé */}
+      {loaded && (
+        <SelectionCheckbox
+          selected={selected}
+          onSelect={handleCheckboxClick}
+          loaded={loaded}
+          mediaId={id}
+        />
+      )}
     </>
   );
 }, (prevProps, nextProps) => {
-  // Optimisation maximale des comparaisons pour minimiser les re-rendus
+  // Optimisation des comparaisons pour minimiser les re-rendus
   return (
     prevProps.id === nextProps.id &&
     prevProps.thumbnailUrl === nextProps.thumbnailUrl && 
