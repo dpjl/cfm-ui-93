@@ -152,6 +152,7 @@ const Gallery: React.FC<GalleryProps> = ({
             showDates={showDates}
             updateMediaInfo={updateMediaInfo}
             position={position}
+            infoPanelOpen={shouldShowInfoPanel} // Passer l'état du panneau d'information
           />
         </div>
       )}

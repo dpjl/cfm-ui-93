@@ -11,6 +11,7 @@ interface VirtualizedGalleryGridWrapperProps {
   columnGap?: number;
   itemSize?: number; 
   renderItem: (item: MediaItem, style: React.CSSProperties) => React.ReactNode;
+  containerKey?: string; // Ajout d'une prop key externe pour forcer le re-rendu
 }
 
 const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps> = ({
@@ -19,7 +20,8 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
   rowGap = 8,
   columnGap = 8,
   itemSize = 200,
-  renderItem
+  renderItem,
+  containerKey
 }) => {
   const gridRef = useRef<Grid | null>(null);
   const [key, setKey] = useState(0);
@@ -27,10 +29,21 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
   // Calculate rows based on items and columns
   const rowCount = Math.ceil(items.length / columnCount);
   
-  // Force full re-render when items or columns change
+  // Force full re-render when items, columns, or external key changes
   useEffect(() => {
     setKey(prevKey => prevKey + 1);
-  }, [items.length, columnCount]);
+  }, [items.length, columnCount, containerKey]);
+  
+  // Force grid to re-render when key changes
+  useEffect(() => {
+    if (gridRef.current) {
+      gridRef.current.resetAfterIndices({
+        columnIndex: 0,
+        rowIndex: 0,
+        shouldForceUpdate: true
+      });
+    }
+  }, [key]);
 
   const cellRenderer = useCallback(({ columnIndex, rowIndex, style }: any) => {
     const index = rowIndex * columnCount + columnIndex;
@@ -40,9 +53,8 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
       return <div style={style}></div>;
     }
     
-    // IMPORTANT: Pour corriger le problème de défilement, ne manipulons pas 
-    // les valeurs "top" et "left" du style, car react-window s'occupe déjà 
-    // du positionnement correct. Ajustons seulement width et height pour les gaps.
+    // IMPORTANT: Ne manipulons pas les valeurs "top" et "left" du style
+    // car react-window s'occupe déjà du positionnement correct
     const adjustedStyle = {
       ...style,
       width: `calc(${style.width}px - ${columnGap}px)`,
@@ -73,7 +85,10 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
             rowCount={rowCount}
             rowHeight={getItemHeight()}
             width={width}
-            itemData={items} // Fournir les items comme données
+            itemData={items}
+            overscanRowCount={5} // Augmenter le nombre de lignes chargées en dehors de la vue
+            overscanColumnCount={2} // Augmenter le nombre de colonnes chargées en dehors de la vue
+            useIsScrolling={true} // Optimiser le chargement pendant le défilement
             itemKey={({ columnIndex, rowIndex }) => {
               const index = rowIndex * columnCount + columnIndex;
               return index < items.length ? items[index].id : `empty-${rowIndex}-${columnIndex}`;
