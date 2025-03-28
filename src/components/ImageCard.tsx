@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Video } from 'lucide-react';
@@ -34,7 +34,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   
   // Call onInView immediately when component mounts if it exists
-  React.useEffect(() => {
+  useEffect(() => {
     if (onInView) {
       onInView();
     }
