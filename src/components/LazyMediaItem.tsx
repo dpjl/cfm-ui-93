@@ -21,7 +21,7 @@ interface LazyMediaItemProps {
 }
 
 // Using memo to prevent unnecessary re-renders
-const LazyMediaItem: React.FC<LazyMediaItemProps> = memo(({
+const LazyMediaItem = memo(({
   id,
   selected,
   onSelect,
@@ -29,7 +29,7 @@ const LazyMediaItem: React.FC<LazyMediaItemProps> = memo(({
   showDates = false,
   updateMediaInfo,
   position
-}) => {
+}: LazyMediaItemProps) => {
   const [loaded, setLoaded] = useState(false);
   const [longPressTriggered, setLongPressTriggered] = useState(false);
   const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -39,11 +39,16 @@ const LazyMediaItem: React.FC<LazyMediaItemProps> = memo(({
     freezeOnceVisible: true 
   });
   
-  const { mediaInfo, isLoading } = useMediaInfo(id, isIntersecting, position);
   const { getCachedThumbnailUrl, setCachedThumbnailUrl } = useMediaCache();
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   
-  // Nettoyer le timer quand le composant est démonté ou quand l'ID change
+  // Prevent initial loading of media info until element is actually visible
+  const shouldLoadInfo = isIntersecting;
+  
+  // Only fetch media info once the item is visible and if we don't already have a URL
+  const { mediaInfo, isLoading } = useMediaInfo(id, shouldLoadInfo, position);
+  
+  // Clean up timer when component unmounts or when id changes
   useEffect(() => {
     return () => {
       if (pressTimerRef.current) {
@@ -68,7 +73,7 @@ const LazyMediaItem: React.FC<LazyMediaItemProps> = memo(({
     }
   }, [id, isIntersecting, position, getCachedThumbnailUrl, setCachedThumbnailUrl]);
   
-  // Update the parent component with media info when it's loaded
+  // Update the parent component with media info when it's loaded - BUT ONLY ONCE
   useEffect(() => {
     if (mediaInfo && updateMediaInfo) {
       updateMediaInfo(id, mediaInfo);
@@ -78,37 +83,46 @@ const LazyMediaItem: React.FC<LazyMediaItemProps> = memo(({
   // Determine if this is a video based on the file extension if available
   const isVideo = mediaInfo?.alt ? /\.(mp4|webm|ogg|mov)$/i.test(mediaInfo.alt) : false;
   
-  // Gestion des clics - Optimisée pour éviter les re-rendus inutiles
+  // Optimize click handling with useCallback
   const handleItemClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault(); // Prevent default behavior
+    e.stopPropagation(); // Stop propagation to prevent bubbling
     onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
   }, [id, onSelect]);
   
-  // Gestion du appui long pour les mobiles (comme alternative au Ctrl+click)
+  // Handle long press for mobile (as alternative to Ctrl+click)
   const handleTouchStart = useCallback(() => {
-    // Démarrer le timer pour détecter un appui long
+    // Start timer to detect long press
     pressTimerRef.current = setTimeout(() => {
       setLongPressTriggered(true);
-      // Simuler un "Ctrl+click" en passant true comme second argument
+      // Simulate a "Ctrl+click" by passing true as second argument
       onSelect(id, true);
-    }, 500); // 500ms est un bon délai pour un appui long
+    }, 500); // 500ms is a good delay for a long press
   }, [id, onSelect]);
   
   const handleTouchEnd = useCallback(() => {
-    // Annuler le timer si l'utilisateur relâche trop tôt
+    // Cancel timer if user releases too early
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
     }
     
-    // Si ce n'était pas un appui long, traiter comme un clic normal
+    // If it wasn't a long press, treat as a normal click
     if (!longPressTriggered) {
       onSelect(id, false);
     }
     
-    // Réinitialiser l'état pour le prochain appui
+    // Reset state for next press
     setLongPressTriggered(false);
   }, [longPressTriggered, id, onSelect]);
+  
+  // Optimize keyboard handling
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
+    }
+  }, [id, onSelect]);
   
   // Only render a simple placeholder when the item is not intersecting
   if (!isIntersecting) {
@@ -137,12 +151,7 @@ const LazyMediaItem: React.FC<LazyMediaItemProps> = memo(({
       aria-label={`Media item ${mediaInfo?.alt || id}`}
       aria-pressed={selected}
       tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
-        }
-      }}
+      onKeyDown={handleKeyDown}
       data-media-id={id}
     >
       {thumbnailUrl && (

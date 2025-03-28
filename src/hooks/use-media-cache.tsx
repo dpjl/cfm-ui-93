@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { DetailedMediaInfo } from '@/api/imageApi';
 
 // Type for our cache
@@ -15,41 +15,47 @@ const globalCache: MediaCache = {
 };
 
 export function useMediaCache() {
-  const [cache] = useState<MediaCache>(globalCache);
-
-  // Get cached thumbnail URL or return undefined if not cached
+  // Use ref instead of state to avoid re-renders when accessing cache
+  const cacheRef = useRef<MediaCache>(globalCache);
+  
+  // Memoized getter for thumbnail URLs
   const getCachedThumbnailUrl = useCallback((id: string, position: 'source' | 'destination'): string | undefined => {
     const cacheKey = `${id}-${position}`;
-    return cache.thumbnails.get(cacheKey);
-  }, [cache.thumbnails]);
+    return cacheRef.current.thumbnails.get(cacheKey);
+  }, []);
 
-  // Set a thumbnail URL in the cache
+  // Memoized setter for thumbnail URLs
   const setCachedThumbnailUrl = useCallback((id: string, position: 'source' | 'destination', url: string): void => {
     const cacheKey = `${id}-${position}`;
-    cache.thumbnails.set(cacheKey, url);
-  }, [cache.thumbnails]);
+    if (!cacheRef.current.thumbnails.has(cacheKey)) {
+      cacheRef.current.thumbnails.set(cacheKey, url);
+    }
+  }, []);
 
-  // Get cached media info or return undefined if not cached
+  // Memoized getter for media info
   const getCachedMediaInfo = useCallback((id: string, position: 'source' | 'destination'): DetailedMediaInfo | undefined => {
     const cacheKey = `${id}-${position}`;
-    return cache.info.get(cacheKey);
-  }, [cache.info]);
+    return cacheRef.current.info.get(cacheKey);
+  }, []);
 
-  // Set media info in the cache
+  // Memoized setter for media info
   const setCachedMediaInfo = useCallback((id: string, position: 'source' | 'destination', info: DetailedMediaInfo): void => {
     const cacheKey = `${id}-${position}`;
-    cache.info.set(cacheKey, info);
-  }, [cache.info]);
+    if (!cacheRef.current.info.has(cacheKey) || (info && Object.keys(info).length > 2)) {
+      // Only replace existing info if new info is more complete
+      cacheRef.current.info.set(cacheKey, info);
+    }
+  }, []);
 
   // Just for debugging purposes - reduced frequency of logging
   useEffect(() => {
-    const logInterval = 10000; // Log once every 10 seconds
+    const logInterval = 30000; // Log once every 30 seconds
     const intervalId = setInterval(() => {
-      console.log(`Cache stats - Thumbnails: ${cache.thumbnails.size}, Info: ${cache.info.size}`);
+      console.log(`Cache stats - Thumbnails: ${cacheRef.current.thumbnails.size}, Info: ${cacheRef.current.info.size}`);
     }, logInterval);
     
     return () => clearInterval(intervalId);
-  }, [cache.thumbnails.size, cache.info.size]);
+  }, []);
 
   return {
     getCachedThumbnailUrl,

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchMediaInfo, DetailedMediaInfo } from '@/api/imageApi';
 import { useMediaCache } from './use-media-cache';
 
@@ -8,9 +8,14 @@ export const useMediaInfo = (id: string, isIntersecting: boolean, position: 'sou
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { getCachedMediaInfo, setCachedMediaInfo } = useMediaCache();
+  const hasRequestedRef = useRef(false);
 
   // Memoize the fetch function to avoid unnecessary re-renders
   const fetchInfo = useCallback(async () => {
+    // If we've already requested the info, don't request it again
+    if (hasRequestedRef.current) return;
+    hasRequestedRef.current = true;
+    
     setIsLoading(true);
     
     try {
@@ -52,18 +57,22 @@ export const useMediaInfo = (id: string, isIntersecting: boolean, position: 'sou
   }, [id, position, setCachedMediaInfo]);
 
   useEffect(() => {
-    if (isIntersecting && !mediaInfo && !error) {
+    // Reset the hasRequested flag when the ID changes
+    hasRequestedRef.current = false;
+    
+    if (isIntersecting) {
       // Check cache first
       const cachedInfo = getCachedMediaInfo(id, position);
       if (cachedInfo) {
         setMediaInfo(cachedInfo);
+        hasRequestedRef.current = true; // Mark as requested since we got it from cache
         return;
       }
       
       // If not in cache, fetch the info
       fetchInfo();
     }
-  }, [id, isIntersecting, mediaInfo, error, position, getCachedMediaInfo, fetchInfo]);
+  }, [id, isIntersecting, position, getCachedMediaInfo, fetchInfo]);
 
   return {
     mediaInfo,

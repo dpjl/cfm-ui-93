@@ -7,10 +7,16 @@
     user-select: none; /* Prevent text selection from interfering with clicks */
     -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
     transition: box-shadow 0.2s ease-out, transform 0.2s ease-out;
+    will-change: box-shadow, transform; /* Hint to browser about properties that will animate */
   }
   
   .image-card.selected {
     @apply ring-2 ring-primary ring-offset-1;
+    /*
+     * Disable transitions when selected to prevent flickering
+     * This helps make the state change immediate
+     */
+    transition: none;
   }
   
   .image-card img,
@@ -18,6 +24,7 @@
     @apply w-full h-full object-cover;
     pointer-events: none; /* Prevent image/video from capturing clicks */
     transition: transform 0.3s ease-out;
+    will-change: transform; /* Hint to browser about properties that will animate */
   }
   
   .image-card:hover:not(.selected) img,
@@ -40,9 +47,9 @@
     transition: opacity 0.2s ease-out, transform 0.1s ease-out;
   }
   
-  /* Avoid transitions for selected items to prevent flicker */
-  .image-card.selected {
-    transition: none;
+  /* Special style for selection state change to prevent flickering */
+  .image-card[data-selection-changing="true"] {
+    transition: none !important;
   }
   
   /* Mobile responsive adjustments */

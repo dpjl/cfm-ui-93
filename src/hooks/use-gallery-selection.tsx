@@ -1,5 +1,4 @@
-
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 
 export type SelectionMode = 'single' | 'multiple';
 
@@ -18,96 +17,135 @@ export function useGallerySelection({
 }: UseGallerySelectionProps) {
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState<SelectionMode>(initialSelectionMode);
+  const processingBatchRef = useRef(false);
 
-  // Optimized selection handler with useCallback to maintain reference stability
+  // More optimized selection handler with useCallback to maintain reference stability
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
-    // Si nous sommes en mode de sélection unique et que l'extension n'est pas forcée
+    // If we're already processing a batch selection, don't start another one
+    if (processingBatchRef.current && extendSelection) return;
+
+    // For single selection mode and not forcing extension
     if (selectionMode === 'single' && !extendSelection) {
-      // Si l'élément est déjà sélectionné, le déselectionner
+      // If the item is already selected, deselect it
       if (selectedIds.includes(id)) {
         onSelectId(id);
       } 
-      // Sinon, désélectionner tout et sélectionner cet élément
+      // Otherwise, deselect all others and select this item
       else {
+        // Create a local cache of currently selected IDs to avoid multiple state updates
         const currentSelected = [...selectedIds];
-        currentSelected.forEach(selectedId => {
-          if (selectedId !== id) {
-            onSelectId(selectedId);
-          }
-        });
+        // Only deselect others if we have multiple items selected
+        if (currentSelected.length > 0) {
+          processingBatchRef.current = true;
+          currentSelected.forEach(selectedId => {
+            if (selectedId !== id) {
+              onSelectId(selectedId);
+            }
+          });
+          processingBatchRef.current = false;
+        }
+        // Select the new item
         onSelectId(id);
       }
     }
-    // Si nous sommes en mode de sélection multiple ou que l'extension est forcée
+    // For multiple selection mode or if extension is forced
     else {
-      // Si Shift est utilisé pour étendre la sélection
+      // If Shift is used to extend selection
       if (extendSelection && lastSelectedId) {
-        // Trouver les indices
+        // Find indices
         const lastIndex = mediaIds.indexOf(lastSelectedId);
         const currentIndex = mediaIds.indexOf(id);
         
         if (lastIndex !== -1 && currentIndex !== -1) {
-          // Définir la plage de sélection
+          // Define selection range
           const start = Math.min(lastIndex, currentIndex);
           const end = Math.max(lastIndex, currentIndex);
           
-          // Sélectionner tous les éléments dans la plage
+          // Select all items in the range
           const idsToSelect = mediaIds.slice(start, end + 1);
           
-          // Créer un nouvel ensemble de sélection conservant les éléments déjà sélectionnés
+          // Create a new selection set keeping already selected items
           const newSelection = new Set([...selectedIds]);
           
-          // Ajouter tous les éléments de la plage
+          // Process as a batch operation
+          processingBatchRef.current = true;
+          
+          // Add all items in the range
           idsToSelect.forEach(mediaId => {
             if (!newSelection.has(mediaId)) {
               newSelection.add(mediaId);
-              onSelectId(mediaId); // Informer le parent de chaque élément nouvellement sélectionné
+              onSelectId(mediaId); // Inform parent of each newly selected item
             }
           });
+          
+          processingBatchRef.current = false;
         }
       } 
-      // Basculer la sélection de cet élément en mode multiple
+      // Toggle the selection of this item in multiple mode
       else {
         onSelectId(id);
       }
     }
     
-    // Garder une trace du dernier élément sélectionné pour la fonctionnalité Shift
+    // Keep track of the last selected item for Shift functionality
     setLastSelectedId(id);
   }, [mediaIds, selectedIds, onSelectId, selectionMode, lastSelectedId]);
 
+  // Optimized select all handler
   const handleSelectAll = useCallback(() => {
-    // Select all media
+    // Create set of currently selected IDs for faster lookup
+    const selectedIdSet = new Set(selectedIds);
+    
+    // Process as a batch operation
+    processingBatchRef.current = true;
+    
+    // Select all media not already selected
     mediaIds.forEach(id => {
-      if (!selectedIds.includes(id)) {
+      if (!selectedIdSet.has(id)) {
         onSelectId(id);
       }
     });
+    
+    processingBatchRef.current = false;
   }, [mediaIds, selectedIds, onSelectId]);
 
+  // Optimized deselect all handler
   const handleDeselectAll = useCallback(() => {
+    // Process as a batch operation
+    processingBatchRef.current = true;
+    
     // Deselect all media
     selectedIds.forEach(id => onSelectId(id));
+    
+    processingBatchRef.current = false;
   }, [selectedIds, onSelectId]);
 
+  // Optimized selection mode toggle
   const toggleSelectionMode = useCallback(() => {
     setSelectionMode(prev => {
       const newMode = prev === 'single' ? 'multiple' : 'single';
       
-      // Lorsque nous passons de multiple à unique, désélectionner tous les éléments sauf le dernier
+      // When switching from multiple to single, deselect all items except the last
       if (prev === 'multiple' && selectedIds.length > 1) {
         const lastIndex = selectedIds.length - 1;
         const keepId = selectedIds[lastIndex];
+        
+        // Process as a batch operation
+        processingBatchRef.current = true;
+        
         selectedIds.forEach((id, index) => {
           if (index !== lastIndex) {
             onSelectId(id);
           }
         });
-        // Si aucun élément n'était sélectionné, ne rien faire
+        
+        processingBatchRef.current = false;
+        
+        // If no item was selected, do nothing
         if (selectedIds.length === 0) {
           return newMode;
         }
-        // Si le dernier élément sélectionné n'était pas déjà sélectionné, le sélectionner
+        // If the last selected item wasn't already selected, select it
         if (!selectedIds.includes(keepId)) {
           onSelectId(keepId);
         }

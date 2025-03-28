@@ -29,6 +29,7 @@ const VirtualizedGalleryGrid = memo(({
 }: VirtualizedGalleryGridProps) => {
   const isMobile = useIsMobile();
   const gridRef = useRef<FixedSizeGrid>(null);
+  const prevSelectedIdsRef = useRef<string[]>(selectedIds);
   
   // Calculate optimal item size
   const gap = 8; // 2rem converted to px (matches the gap-2 class)
@@ -36,33 +37,85 @@ const VirtualizedGalleryGrid = memo(({
   // Calculate rows needed
   const rowCount = Math.ceil(mediaIds.length / columnsCount);
   
-  // Reset scroll position when columns or data changes
+  // Reset scroll position when columns or data changes (but not when only selection changes)
   useEffect(() => {
     if (gridRef.current) {
       gridRef.current.scrollTo({ scrollTop: 0, scrollLeft: 0 });
     }
   }, [columnsCount, mediaIds]);
   
-  // Memoized version of onSelectId to prevent unnecessay renders when selecting items
+  // Force re-render of only the cells that changed selection state
+  useEffect(() => {
+    if (!gridRef.current) return;
+    
+    // Get set of IDs that changed selection state
+    const prevSelectedSet = new Set(prevSelectedIdsRef.current);
+    const currentSelectedSet = new Set(selectedIds);
+    
+    // Find IDs that were added or removed from selection
+    const changedIds = new Set([
+      ...prevSelectedIdsRef.current.filter(id => !currentSelectedSet.has(id)),
+      ...selectedIds.filter(id => !prevSelectedSet.has(id))
+    ]);
+    
+    // Update ref for next comparison
+    prevSelectedIdsRef.current = selectedIds;
+    
+    // If no selection changes, nothing to do
+    if (changedIds.size === 0) return;
+    
+    // Find indices of changed items to rerender specific cells
+    changedIds.forEach(id => {
+      const index = mediaIds.indexOf(id);
+      if (index !== -1) {
+        const rowIndex = Math.floor(index / columnsCount);
+        const columnIndex = index % columnsCount;
+        gridRef.current?.resetAfterIndices({
+          columnIndex,
+          rowIndex,
+          shouldForceUpdate: true,
+        });
+      }
+    });
+  }, [selectedIds, mediaIds, columnsCount]);
+  
+  // Memoized version of onSelectId to prevent unnecessary renders when selecting items
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
     onSelectId(id, extendSelection);
   }, [onSelectId]);
   
+  // Memoize ItemData to prevent unnecessary renders
+  const itemData = React.useMemo(() => ({
+    mediaIds,
+    selectedIds,
+    onSelectId: handleSelectItem,
+    showDates,
+    updateMediaInfo,
+    position,
+    columnsCount,
+    gap
+  }), [mediaIds, selectedIds, handleSelectItem, showDates, updateMediaInfo, position, columnsCount, gap]);
+  
   // Memoize the Cell component to prevent unnecessary re-renders
-  const Cell = useCallback(({ columnIndex, rowIndex, style }: { columnIndex: number; rowIndex: number; style: React.CSSProperties }) => {
-    const index = rowIndex * columnsCount + columnIndex;
-    if (index >= mediaIds.length) return null;
+  const Cell = useCallback(({ columnIndex, rowIndex, style, data }: { 
+    columnIndex: number; 
+    rowIndex: number; 
+    style: React.CSSProperties;
+    data: any;
+  }) => {
+    const index = rowIndex * data.columnsCount + columnIndex;
+    if (index >= data.mediaIds.length) return null;
     
-    const id = mediaIds[index];
-    const isSelected = selectedIds.includes(id);
+    const id = data.mediaIds[index];
+    const isSelected = data.selectedIds.includes(id);
     
     // Apply gap spacing to the style
     const adjustedStyle = {
       ...style,
-      left: `${parseFloat(style.left as string) + (columnIndex * gap)}px`,
-      top: `${parseFloat(style.top as string) + (rowIndex * gap)}px`,
-      width: `${parseFloat(style.width as string) - gap}px`,
-      height: `${parseFloat(style.height as string) - gap}px`,
+      left: `${parseFloat(style.left as string) + (columnIndex * data.gap)}px`,
+      top: `${parseFloat(style.top as string) + (rowIndex * data.gap)}px`,
+      width: `${parseFloat(style.width as string) - data.gap}px`,
+      height: `${parseFloat(style.height as string) - data.gap}px`,
       padding: 0,
     };
     
@@ -72,15 +125,15 @@ const VirtualizedGalleryGrid = memo(({
           key={id}
           id={id}
           selected={isSelected}
-          onSelect={handleSelectItem}
+          onSelect={data.onSelectId}
           index={index}
-          showDates={showDates}
-          updateMediaInfo={updateMediaInfo}
-          position={position}
+          showDates={data.showDates}
+          updateMediaInfo={data.updateMediaInfo}
+          position={data.position}
         />
       </div>
     );
-  }, [mediaIds, columnsCount, selectedIds, handleSelectItem, showDates, updateMediaInfo, position, gap]);
+  }, []);
   
   return (
     <div className="w-full h-full p-2">
@@ -99,8 +152,14 @@ const VirtualizedGalleryGrid = memo(({
               rowCount={rowCount}
               rowHeight={itemHeight}
               width={width}
-              itemData={mediaIds}
+              itemData={itemData}
               overscanRowCount={2}
+              overscanColumnCount={1}
+              // Use a stable itemKey to improve render efficiency
+              itemKey={({ columnIndex, rowIndex }) => {
+                const index = rowIndex * columnsCount + columnIndex;
+                return index < mediaIds.length ? mediaIds[index] : `empty-${rowIndex}-${columnIndex}`;
+              }}
             >
               {Cell}
             </FixedSizeGrid>
