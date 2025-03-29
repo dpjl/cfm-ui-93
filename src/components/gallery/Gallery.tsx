@@ -25,13 +25,33 @@ const Gallery: React.FC<GalleryProps> = ({ directory, title }) => {
     queryFn: () => getMediaIds(directory),
   });
 
+  // Use the basic selection state hooks
   const { 
     selectedIds, 
-    isSelecting, 
-    toggleSelection, 
-    clearSelection, 
-    toggleSelectionMode 
+    setSelectedIds,
+    selectionMode,
+    toggleSelectionMode
   } = useSelectionState();
+  
+  // Simplified selection management
+  const isSelecting = selectedIds.length > 0;
+  
+  const clearSelection = () => setSelectedIds([]);
+  
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(itemId => itemId !== id);
+      } else {
+        // In single mode, replace the selection
+        if (selectionMode === 'single') {
+          return [id];
+        }
+        // In multiple mode, add to selection
+        return [...prev, id];
+      }
+    });
+  };
 
   const {
     isDeleteDialogOpen,
@@ -43,7 +63,7 @@ const Gallery: React.FC<GalleryProps> = ({ directory, title }) => {
   // Clear selection when directory changes
   useEffect(() => {
     clearSelection();
-  }, [directory, clearSelection]);
+  }, [directory]);
 
   return (
     <div className="relative flex h-full w-full flex-col">
@@ -53,13 +73,17 @@ const Gallery: React.FC<GalleryProps> = ({ directory, title }) => {
         isLoading={isLoading}
         isError={isError}
         error={error}
-        isSelecting={isSelecting}
         selectedIds={selectedIds}
-        onToggleSelection={toggleSelection}
-        onToggleSelectionMode={toggleSelectionMode}
+        onSelectId={toggleSelection}
+        columnsCount={4} // Default value
+        viewMode="single"
+        onPreviewItem={() => {}} // Empty handler
+        onDeleteSelected={handleOpenDeleteDialog}
+        filter="all"
+        position={directory}
       />
 
-      {isSelecting && selectedIds.length > 0 && (
+      {isSelecting && (
         <GallerySelectionBar
           selectedCount={selectedIds.length}
           onDeselectAll={clearSelection}

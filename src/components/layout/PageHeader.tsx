@@ -1,7 +1,7 @@
 
 import React from 'react';
-import ThemeToggle from '../ThemeToggle';
-import LanguageToggle from '../LanguageToggle';
+import { ThemeToggle } from '../ThemeToggle';
+import { LanguageToggle } from '../LanguageToggle';
 
 const PageHeader: React.FC = () => {
   return (

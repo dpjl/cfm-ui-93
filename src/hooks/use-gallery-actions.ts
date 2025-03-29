@@ -30,6 +30,7 @@ export const useGalleryActions = (
       console.log(`Deleting ${selectedIds.length} items from ${directory} directory`);
       console.log('Selected IDs:', selectedIds);
       
+      // Ensure we're sending the correct directory parameter and selectedIds
       await deleteImages(directory, selectedIds);
       
       toast.success(`${selectedIds.length} élément${selectedIds.length > 1 ? 's' : ''} supprimé${selectedIds.length > 1 ? 's' : ''}`);
@@ -49,4 +50,9 @@ export const useGalleryActions = (
     handleCloseDeleteDialog,
     handleDeleteConfirm,
   };
+};
+
+// Helper function to determine if an array contains elements
+export const hasSelectedItems = (selectedIds: string[]): boolean => {
+  return selectedIds && selectedIds.length > 0;
 };

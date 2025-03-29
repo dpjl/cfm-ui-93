@@ -23,7 +23,7 @@ const GallerySelectionBar: React.FC<GallerySelectionBarProps> = ({
         Désélectionner
       </Button>
       <Button variant="ghost" onClick={onDelete} size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
-        <Trash2 className="h-4 w-4 text-red-500" />
+        <Trash2 className="h-4 w-4 text-destructive" />
         <span className="ml-1">Supprimer</span>
       </Button>
     </div>

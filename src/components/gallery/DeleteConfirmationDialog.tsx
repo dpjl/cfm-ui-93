@@ -17,6 +17,10 @@ interface DeleteConfirmationDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   selectedCount: number;
+  selectedIds?: string[]; // Added optional prop
+  onOpenChange?: (open: boolean) => void; // Added to match interface
+  onCancel?: () => void; // Added optional prop
+  isPending?: boolean; // Added optional prop
 }
 
 const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
@@ -24,9 +28,30 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   onClose,
   onConfirm,
   selectedCount,
+  onOpenChange,
+  onCancel,
+  isPending,
 }) => {
+  // Use onOpenChange if provided, otherwise fallback to onClose
+  const handleOpenChange = (newOpenState: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(newOpenState);
+    } else if (!newOpenState) {
+      onClose();
+    }
+  };
+
+  // Use onCancel if provided, otherwise fallback to onClose
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    } else {
+      onClose();
+    }
+  };
+
   return (
-    <AlertDialog open={open} onOpenChange={onClose}>
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
@@ -37,8 +62,14 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-destructive hover:bg-destructive/90">Supprimer</AlertDialogAction>
+          <AlertDialogCancel onClick={handleCancel}>Annuler</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={onConfirm} 
+            className="bg-destructive hover:bg-destructive/90"
+            disabled={isPending}
+          >
+            Supprimer
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
