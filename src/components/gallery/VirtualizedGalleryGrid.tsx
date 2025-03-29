@@ -1,5 +1,4 @@
-
-import React, { memo, useMemo, useEffect } from 'react';
+import React, { memo, useMemo } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -21,8 +20,6 @@ interface VirtualizedGalleryGridProps {
   showDates?: boolean;
   updateMediaInfo?: (id: string, info: DetailedMediaInfo) => void;
   position: 'source' | 'destination';
-  directory: string; // Ajout du directory pour la mémorisation
-  filter?: string; // Ajout du filtre pour la mémorisation
 }
 
 /**
@@ -37,39 +34,17 @@ const VirtualizedGalleryGrid = memo(({
   viewMode = 'single',
   showDates = false,
   updateMediaInfo,
-  position = 'source',
-  directory = '',
-  filter = 'all'
+  position = 'source'
 }: VirtualizedGalleryGridProps) => {
-  // Convertir la position source/destination en left/right pour la cohérence
-  const galleryId = position === 'source' ? 'left' : 'right';
-  
-  // Use custom hook for grid management with our extended options
+  // Use custom hook for grid management
   const {
     gridRef,
     gridKey,
-    handleScroll,
-    handleResize,
-    prepareViewModeChange
-  } = useGalleryGrid({
-    galleryId,
-    directoryId: directory,
-    filter,
-    columnsCount,
-    viewMode,
-    mediaIds
-  });
+    scrollPositionRef
+  } = useGalleryGrid();
   
   // Use hook for tracking media changes to optimize rendering
   useGalleryMediaTracking(mediaIds, gridRef);
-  
-  // Sauvegarder explicitement la position avant un changement de vue
-  useEffect(() => {
-    return () => {
-      // Cette fonction sera appelée avant un changement de vue
-      prepareViewModeChange();
-    };
-  }, [viewMode, prepareViewModeChange]);
   
   // Calculate the number of rows based on media and columns
   const rowCount = calculateRowCount(mediaIds.length, columnsCount);
@@ -106,9 +81,6 @@ const VirtualizedGalleryGrid = memo(({
     <div className="w-full h-full p-2 gallery-container">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // Handle resize events for our custom position tracking
-          handleResize(width, height);
-          
           // Use the enhanced calculation function for all grid parameters
           const { 
             itemWidth, 
@@ -138,7 +110,10 @@ const VirtualizedGalleryGrid = memo(({
                 const index = rowIndex * columnsCount + columnIndex;
                 return index < mediaIds.length ? mediaIds[index] : `empty-${rowIndex}-${columnIndex}`;
               }}
-              onScroll={handleScroll}
+              onScroll={({ scrollTop }) => {
+                scrollPositionRef.current = scrollTop;
+              }}
+              initialScrollTop={scrollPositionRef.current}
               className="scrollbar-vertical"
               style={{ 
                 overflowX: 'hidden',

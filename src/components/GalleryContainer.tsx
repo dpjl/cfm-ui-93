@@ -139,7 +139,6 @@ const GalleryContainer: React.FC<GalleryContainerProps> = ({
           filter={filter}
           position={apiPosition}
           onToggleSidebar={onToggleSidebar}
-          directory={directory}
         />
       </div>
       

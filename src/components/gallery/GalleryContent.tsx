@@ -17,7 +17,6 @@ interface GalleryContentProps {
   filter?: string;
   position?: 'source' | 'destination';
   onToggleSidebar?: () => void;
-  directory: string; // Ajout du répertoire pour la mémorisation
 }
 
 const GalleryContent: React.FC<GalleryContentProps> = ({
@@ -34,8 +33,7 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
   title,
   filter = 'all',
   position = 'source',
-  onToggleSidebar,
-  directory = ''
+  onToggleSidebar
 }) => {
   return (
     <Gallery
@@ -53,7 +51,6 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
       error={error}
       filter={filter}
       onToggleSidebar={onToggleSidebar}
-      directory={directory}
     />
   );
 };
