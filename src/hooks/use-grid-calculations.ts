@@ -1,5 +1,12 @@
 
 import { useMemo } from 'react';
+import { 
+  calculateItemWidth, 
+  calculateItemHeight, 
+  calculateRowCount, 
+  calculateItemIndex, 
+  itemExistsAtIndex
+} from '../utils/grid-utils';
 
 /**
  * Hook that provides centralized grid calculation utilities
@@ -14,17 +21,14 @@ export function useGridCalculations(
    * Calculate item width based on container width, column count, and gap
    */
   const itemWidth = useMemo(() => {
-    // Calculate the total gap width (gaps between columns)
-    const totalGapWidth = gap * (columnsCount - 1);
-    // Calculate item width by dividing the remaining space after gaps
-    return Math.floor((containerWidth - totalGapWidth) / columnsCount);
+    return calculateItemWidth(containerWidth, columnsCount, gap);
   }, [containerWidth, columnsCount, gap]);
 
   /**
    * Calculate item height, optionally accounting for date display
    */
   const itemHeight = useMemo(() => {
-    return itemWidth + (showDates ? 40 : 0);
+    return calculateItemHeight(itemWidth, showDates);
   }, [itemWidth, showDates]);
 
   /**
@@ -53,15 +57,8 @@ export function useGridCalculations(
 
 // These are pure functions that don't depend on React hooks
 // They can be called anywhere safely
-export const calculateRowCount = (itemCount: number, columnsCount: number): number => {
-  return Math.ceil(itemCount / columnsCount);
-};
-
-export const calculateItemIndex = (rowIndex: number, columnIndex: number, columnsCount: number): number => {
-  return rowIndex * columnsCount + columnIndex;
-};
-
-export const itemExistsAtIndex = (rowIndex: number, columnIndex: number, columnsCount: number, totalItems: number): boolean => {
-  const index = calculateItemIndex(rowIndex, columnIndex, columnsCount);
-  return index < totalItems;
+export {
+  calculateRowCount,
+  calculateItemIndex,
+  itemExistsAtIndex
 };

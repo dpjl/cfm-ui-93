@@ -4,6 +4,7 @@ import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import type { MediaItem } from '../../types/gallery';
 import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
+import { calculateRowCount } from '@/utils/grid-utils';
 
 interface VirtualizedGalleryGridWrapperProps {
   items: MediaItem[];
@@ -30,7 +31,7 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
   useGalleryMediaTracking(itemIds, gridRef);
   
   // Calculer le nombre de lignes en fonction des éléments et des colonnes
-  const rowCount = Math.ceil(items.length / columnCount);
+  const rowCount = calculateRowCount(items.length, columnCount);
   
   // Forcer une réinitialisation complète lorsque les éléments ou les colonnes changent
   useEffect(() => {

@@ -6,7 +6,7 @@ import { DetailedMediaInfo } from '@/api/imageApi';
 import { useGalleryGrid } from '@/hooks/use-gallery-grid';
 import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 import GalleryGridCell from './GalleryGridCell';
-import { calculateRowCount, calculateItemWidth, calculateItemHeight } from '@/utils/grid-calculations';
+import { calculateRowCount, calculateItemWidth, calculateItemHeight } from '@/utils/grid-utils';
 
 interface VirtualizedGalleryGridProps {
   mediaIds: string[];
