@@ -1,16 +1,16 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
-import VirtualizedGalleryGrid from './gallery/VirtualizedGalleryGrid';
-import GalleryEmptyState from './gallery/GalleryEmptyState';
-import GallerySkeletons from './gallery/GallerySkeletons';
-import MediaPreview from './MediaPreview';
+import VirtualizedGalleryGrid from './VirtualizedGalleryGrid';
+import GalleryEmptyState from './GalleryEmptyState';
+import GallerySkeletons from './GallerySkeletons';
+import MediaPreview from '../MediaPreview';
 import { DetailedMediaInfo } from '@/api/imageApi';
 import { useGallerySelection } from '@/hooks/use-gallery-selection';
 import { useGalleryPreviewHandler } from '@/hooks/use-gallery-preview-handler';
-import GalleryToolbar from './gallery/GalleryToolbar';
+import GalleryToolbar from './GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
-import MediaInfoPanel from './media/MediaInfoPanel';
+import MediaInfoPanel from '../media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 
 export interface ImageItem {

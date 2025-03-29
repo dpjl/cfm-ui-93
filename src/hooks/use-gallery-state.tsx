@@ -1,8 +1,8 @@
 
+import { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { useDirectoryState } from '@/hooks/use-directory-state';
 import { useColumnsState } from '@/hooks/use-columns-state';
-import { useSelectionState } from '@/hooks/use-selection-state';
 import { useUIState } from '@/hooks/use-ui-state';
 import { useGalleryActions } from '@/hooks/use-gallery-actions';
 import { ViewModeType } from '@/types/gallery';
@@ -13,17 +13,21 @@ export function useGalleryState() {
   // Use all the specialized hooks
   const directoryState = useDirectoryState();
   const columnsState = useColumnsState();
-  const selectionState = useSelectionState();
   const uiState = useUIState();
+  
+  // Intégrons directement la logique de sélection ici au lieu d'utiliser useSelectionState
+  const [selectedIdsLeft, setSelectedIdsLeft] = useState<string[]>([]);
+  const [selectedIdsRight, setSelectedIdsRight] = useState<string[]>([]);
+  const [activeSide, setActiveSide] = useState<'left' | 'right'>('left');
   
   // Gallery actions need access to selection state and UI state
   const galleryActions = useGalleryActions(
-    selectionState.selectedIdsLeft,
-    selectionState.selectedIdsRight,
-    selectionState.activeSide,
+    selectedIdsLeft,
+    selectedIdsRight,
+    activeSide,
     uiState.setDeleteDialogOpen,
-    selectionState.setSelectedIdsLeft,
-    selectionState.setSelectedIdsRight
+    setSelectedIdsLeft,
+    setSelectedIdsRight
   );
   
   // Convenience methods that use data from multiple hooks
@@ -55,7 +59,12 @@ export function useGalleryState() {
     handleRightColumnsChange,
     
     // Selection state
-    ...selectionState,
+    selectedIdsLeft,
+    setSelectedIdsLeft,
+    selectedIdsRight,
+    setSelectedIdsRight,
+    activeSide,
+    setActiveSide,
     
     // UI state
     ...uiState,

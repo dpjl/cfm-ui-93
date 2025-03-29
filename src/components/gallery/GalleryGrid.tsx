@@ -10,7 +10,6 @@ interface GalleryGridProps {
   onSelectId: (id: string, extendSelection: boolean) => void;
   columnsCount: number;
   viewMode?: 'single' | 'split';
-  showDates?: boolean;
   updateMediaInfo?: (id: string, info: DetailedMediaInfo) => void;
   position: 'source' | 'destination';
 }
@@ -22,7 +21,6 @@ const GalleryGrid = memo(({
   onSelectId,
   columnsCount = 5,
   viewMode = 'single',
-  showDates = false,
   updateMediaInfo,
   position = 'source'
 }: GalleryGridProps) => {
@@ -56,7 +54,6 @@ const GalleryGrid = memo(({
           selected={selectedIds.includes(id)}
           onSelect={onSelectId}
           index={index}
-          showDates={showDates}
           updateMediaInfo={updateMediaInfo}
           position={position}
         />

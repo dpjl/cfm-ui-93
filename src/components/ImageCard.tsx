@@ -2,7 +2,6 @@
 import React, { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Video } from 'lucide-react';
-import DateDisplay from './media/DateDisplay';
 
 interface ImageCardProps {
   src: string;
@@ -101,9 +100,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
           onLoad={() => setLoaded(true)}
         />
       )}
-
-      {/* Utiliser le composant DateDisplay */}
-      <DateDisplay dateString={createdAt} showDate={showDates} />
 
       <div className="image-overlay" />
     </div>
