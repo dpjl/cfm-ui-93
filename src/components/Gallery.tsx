@@ -61,9 +61,16 @@ const Gallery: React.FC<GalleryProps> = ({
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollbarRef = useRef<HTMLDivElement>(null);
+  const scrollHandleRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [visibleDateInfo, setVisibleDateInfo] = useState<string | null>(null);
+  const [scrollHandleHeight, setScrollHandleHeight] = useState(100);
+  const [scrollHandleTop, setScrollHandleTop] = useState(0);
+  const isDraggingRef = useRef(false);
+  const startDragYRef = useRef(0);
+  const startScrollTopRef = useRef(0);
   
   const selection = useGallerySelection({
     mediaIds,
@@ -117,7 +124,30 @@ const Gallery: React.FC<GalleryProps> = ({
     }
   }, [mediaInfoMap]);
 
-  // Handle scroll events for the pull tabs
+  // Update scroll handle position and height
+  const updateScrollHandleGeometry = useCallback(() => {
+    const galleryElement = containerRef.current?.querySelector('.gallery-scrollbar');
+    const scrollHandle = scrollHandleRef.current;
+    
+    if (!galleryElement || !scrollHandle) return;
+    
+    const { scrollHeight, clientHeight, scrollTop } = galleryElement as HTMLElement;
+    const scrollRatio = clientHeight / scrollHeight;
+    
+    // Set handle height (min 40px, max 120px)
+    const handleHeight = Math.max(
+      Math.min(scrollRatio * clientHeight, 120),
+      40
+    );
+    setScrollHandleHeight(handleHeight);
+    
+    // Set handle position
+    const scrollPercent = scrollTop / (scrollHeight - clientHeight);
+    const handleTop = scrollPercent * (clientHeight - handleHeight);
+    setScrollHandleTop(handleTop);
+  }, []);
+
+  // Handle scroll events
   useEffect(() => {
     const galleryElement = containerRef.current?.querySelector('.gallery-scrollbar');
     
@@ -126,16 +156,17 @@ const Gallery: React.FC<GalleryProps> = ({
     const handleScroll = () => {
       setIsScrolling(true);
       updateVisibleDate();
+      updateScrollHandleGeometry();
       
       // Clear previous timeout if exists
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
       
-      // Set timeout to hide pull tabs after scrolling stops
+      // Set timeout to hide indicators after scrolling stops
       scrollTimeoutRef.current = setTimeout(() => {
         setIsScrolling(false);
-      }, 1000);
+      }, 1500);
     };
     
     galleryElement.addEventListener('scroll', handleScroll);
@@ -146,7 +177,88 @@ const Gallery: React.FC<GalleryProps> = ({
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [updateVisibleDate]);
+  }, [updateVisibleDate, updateScrollHandleGeometry]);
+
+  // Initialize scroll handle on component mount
+  useEffect(() => {
+    updateScrollHandleGeometry();
+    
+    // Also update on window resize
+    const handleResize = () => {
+      updateScrollHandleGeometry();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [updateScrollHandleGeometry]);
+
+  // Mouse and touch events for scroll handle dragging
+  useEffect(() => {
+    const scrollHandle = scrollHandleRef.current;
+    const galleryElement = containerRef.current?.querySelector('.gallery-scrollbar') as HTMLElement;
+    
+    if (!scrollHandle || !galleryElement) return;
+    
+    const handleMouseDown = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      isDraggingRef.current = true;
+      scrollHandle.classList.add('active');
+      
+      // Get start positions
+      const clientY = 'touches' in e 
+        ? e.touches[0].clientY 
+        : e.clientY;
+      
+      startDragYRef.current = clientY;
+      startScrollTopRef.current = galleryElement.scrollTop;
+    };
+    
+    const handleMouseMove = (e: MouseEvent | TouchEvent) => {
+      if (!isDraggingRef.current) return;
+      
+      const clientY = 'touches' in e 
+        ? e.touches[0].clientY 
+        : e.clientY;
+      
+      const deltaY = clientY - startDragYRef.current;
+      const { scrollHeight, clientHeight } = galleryElement;
+      
+      // Calculate new scroll position
+      const scrollRatio = scrollHeight / clientHeight;
+      const newScrollTop = startScrollTopRef.current + (deltaY * scrollRatio);
+      
+      // Apply new scroll position
+      galleryElement.scrollTop = newScrollTop;
+    };
+    
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+      scrollHandle.classList.remove('active');
+    };
+    
+    // Add mouse event listeners
+    scrollHandle.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    
+    // Add touch event listeners
+    scrollHandle.addEventListener('touchstart', handleMouseDown);
+    document.addEventListener('touchmove', handleMouseMove);
+    document.addEventListener('touchend', handleMouseUp);
+    
+    return () => {
+      // Remove all event listeners
+      scrollHandle.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      
+      scrollHandle.removeEventListener('touchstart', handleMouseDown);
+      document.removeEventListener('touchmove', handleMouseMove);
+      document.removeEventListener('touchend', handleMouseUp);
+    };
+  }, []);
 
   const shouldShowInfoPanel = selectedIds.length > 0;
   
@@ -204,20 +316,29 @@ const Gallery: React.FC<GalleryProps> = ({
         onToggleSelectionMode={selection.toggleSelectionMode}
       />
       
-      <div className={`flex-1 overflow-hidden relative gallery-scrollbar ${isScrolling ? 'scrolling' : ''}`}>
-        {isMobile && (
-          <>
-            <div className={`scrollbar-pull-tab top ${isScrolling ? '' : 'faded'}`}>
-              {visibleDateInfo && isScrolling && (
-                <span className="date-label">
-                  <Calendar className="date-icon" size={12} />
-                  {formatDateDisplay(visibleDateInfo)}
-                </span>
-              )}
-            </div>
-            <div className={`scrollbar-pull-tab bottom ${isScrolling ? '' : 'faded'}`} />
-          </>
-        )}
+      <div 
+        className={`flex-1 overflow-hidden relative custom-scrollbar gallery-scrollbar ${isScrolling ? 'scrolling' : ''}`}
+        ref={scrollbarRef}
+      >
+        {/* Indicateur de date flottant */}
+        <div 
+          className={`scrollbar-indicator ${isScrolling ? 'visible' : ''}`} 
+          style={{ top: `${scrollHandleTop + scrollHandleHeight/2}px`, transform: 'translateY(-50%)' }}
+        >
+          <Calendar className="date-icon" size={12} />
+          {formatDateDisplay(visibleDateInfo)}
+        </div>
+        
+        {/* Poignée de défilement personnalisée */}
+        <div 
+          className="scrollbar-handle" 
+          ref={scrollHandleRef}
+          style={{ 
+            height: `${scrollHandleHeight}px`,
+            top: `${scrollHandleTop}px`,
+            opacity: isScrolling ? 1 : 0.3
+          }}
+        />
         
         {shouldShowInfoPanel && (
           <div className="absolute top-2 left-0 right-0 z-10 flex justify-center">

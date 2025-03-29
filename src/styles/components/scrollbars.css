@@ -16,102 +16,87 @@
   scrollbar-color: var(--primary-color-transparent) transparent;
 }
 
+/* Poignée de défilement personnalisée */
+.custom-scrollbar {
+  position: relative;
+  overflow-y: auto;
+  scrollbar-width: none; /* Masquer la barre de défilement native pour Firefox */
+  -ms-overflow-style: none; /* Masquer la barre de défilement native pour IE/Edge */
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  display: none; /* Masquer la barre de défilement native pour Chrome/Safari/Opera */
+}
+
 /* Poignée de défilement visible */
 .scrollbar-handle {
   position: absolute;
-  right: 0;
+  right: 4px;
   top: 0;
   width: 8px;
   border-radius: 4px;
   background-color: rgba(128, 128, 128, 0.3);
   z-index: 20;
-  transition: opacity 0.3s;
+  transition: opacity 0.3s, width 0.2s;
+  cursor: pointer;
 }
 
-.scrollbar-handle:hover {
+.scrollbar-handle:hover,
+.scrollbar-handle.active {
+  width: 10px;
   background-color: rgba(128, 128, 128, 0.5);
 }
 
-/* Indicateur de défilement mobile */
-.scrollbar-pull-tab {
+/* Indicateur de date flottant */
+.scrollbar-indicator {
   position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  height: 5px;
-  background-color: rgba(128, 128, 128, 0.25);
-  border-radius: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  transition: all 0.3s ease;
-  z-index: 50;
-}
-
-.scrollbar-pull-tab.top {
-  top: 4px;
-}
-
-.scrollbar-pull-tab.bottom {
-  bottom: 4px;
-}
-
-/* Style pour l'étiquette de date */
-.scrollbar-pull-tab .date-label {
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  background-color: rgba(0, 0, 0, 0.6);
+  right: 16px;
+  background-color: rgba(0, 0, 0, 0.7);
   color: white;
-  border-radius: 12px;
-  font-size: 10px;
-  height: 22px;
-  white-space: nowrap;
-  transform: translateY(-100%);
-  margin-top: -8px;
-}
-
-.scrollbar-pull-tab .date-icon {
-  margin-right: 4px;
-}
-
-/* Afficher l'indicateur uniquement lors d'un défilement */
-.scrolling .scrollbar-pull-tab {
-  opacity: 1;
-  height: 5px;
-}
-
-.scrollbar-pull-tab.faded {
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
   opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 50;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.scrollbar-indicator.visible {
+  opacity: 1;
+}
+
+.scrollbar-indicator .date-icon {
+  margin-right: 4px;
 }
 
 /* Styles mobile */
 @media (max-width: 640px) {
-  .scrollbar-pull-tab {
-    width: 40px;
-    height: 6px;
-    background-color: var(--primary-color-transparent, rgba(128, 128, 128, 0.5));
+  .scrollbar-handle {
+    width: 12px; /* Plus large sur mobile pour faciliter l'interaction */
+    right: 2px;
   }
   
-  .dark .scrollbar-pull-tab {
-    background-color: rgba(200, 200, 200, 0.3);
+  .scrollbar-handle:hover,
+  .scrollbar-handle.active {
+    width: 14px;
   }
   
-  .scrollbar-pull-tab.top.has-date {
-    height: auto;
-    padding-top: 24px;
+  .scrollbar-indicator {
+    font-size: 10px;
+    padding: 3px 6px;
+    right: 20px;
   }
 }
 
 /* Gestion tactile améliorée */
 @media (hover: none) and (pointer: coarse) {
-  .scrollbar-vertical,
-  .scrollbar-horizontal {
+  .custom-scrollbar {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
-  }
-  
-  .scrollbar-handle {
-    width: 10px;
   }
 }
