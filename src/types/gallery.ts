@@ -12,3 +12,12 @@ export interface MediaItem {
   createdAt?: string;
   isVideo?: boolean;
 }
+
+// Ensure all translation keys are properly typed
+export type TranslationKey = 
+  | 'date' | 'size' | 'camera' | 'path' | 'hash' | 'duplicates'
+  | 'noMediaFound' | 'noDirectories'
+  | 'media_gallery' | 'too_many_items_to_select' | 'close_sidebars'
+  | 'columns' | 'single_selection' | 'multiple_selection'
+  | 'desktop_columns' | 'desktop_single_columns' | 'split_columns' | 'single_columns'
+  | 'delete_confirmation_title' | 'delete_confirmation_description' | 'deleting';

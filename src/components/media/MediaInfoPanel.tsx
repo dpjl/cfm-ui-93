@@ -26,6 +26,7 @@ interface MediaInfoPanelProps {
   onDownloadSelected: (ids: string[]) => void;
   mediaInfoMap?: Map<string, DetailedMediaInfo | null>;
   selectionMode: 'single' | 'multiple';
+  position: 'source' | 'destination';
 }
 
 const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
@@ -34,7 +35,8 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
   onDeleteSelected,
   onDownloadSelected,
   mediaInfoMap = new Map(),
-  selectionMode
+  selectionMode,
+  position
 }) => {
   const isMobile = useIsMobile();
   const { t } = useLanguage();
@@ -48,10 +50,14 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      className="bg-background/80 backdrop-blur-sm border border-border/40 shadow-sm rounded-md p-3 mb-2"
+      exit={{ opacity: 0, y: -10 }}
+      className={`absolute top-0 left-0 right-0 z-10 bg-background/90 backdrop-blur-sm border border-border/40 shadow-sm rounded-md p-3 mb-2`}
+      style={{
+        maxHeight: '40vh',
+        overflowY: 'auto'
+      }}
     >
       {/* Header with action buttons */}
       <div className="flex justify-between items-center mb-2">

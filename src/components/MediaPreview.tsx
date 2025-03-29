@@ -69,15 +69,17 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
 
   if (!mediaId) return null;
 
-  // Determine if this is a video based on the file extension
-  const isVideo = mediaInfo?.alt ? mediaInfo.alt.match(/\.(mp4|webm|ogg|mov)$/i) : false;
+  // Determine if this is a video based on the file extension or ID
+  const isVideo = mediaInfo?.alt ? 
+    /\.(mp4|webm|ogg|mov)$/i.test(mediaInfo.alt) || mediaId.includes('vid-') : 
+    mediaId.includes('vid-');
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
       <DialogContent className="sm:max-w-[90vw] h-[90vh] p-0 gap-0 flex flex-col bg-background/50 backdrop-blur-lg">
         <div className="flex justify-between items-center p-4 border-b">
-          <h3 className="text-lg font-medium">
-            {mediaInfo?.alt || mediaId}
+          <h3 className="text-lg font-medium truncate">
+            {mediaInfo?.name || mediaInfo?.alt || mediaId}
           </h3>
           <DialogClose asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
@@ -123,11 +125,16 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
         </div>
         
         {/* Media info */}
-        {mediaInfo && <div className="p-4 border-t overflow-y-auto max-h-48">
+        {mediaInfo && <div className="p-4 border-t overflow-y-auto max-h-56">
             <div className="grid grid-cols-2 gap-4 text-sm">
               {mediaInfo.createdAt && <div>
                   <div className="font-medium">{t('date')}</div>
                   <div>{new Date(mediaInfo.createdAt).toLocaleString()}</div>
+                </div>}
+              
+              {mediaInfo.dimensions && <div>
+                  <div className="font-medium">Dimensions</div>
+                  <div>{mediaInfo.dimensions}</div>
                 </div>}
               
               {mediaInfo.size && <div>
@@ -143,6 +150,26 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
               {mediaInfo.path && <div>
                   <div className="font-medium">{t('path')}</div>
                   <div className="truncate">{mediaInfo.path}</div>
+                </div>}
+              
+              {mediaInfo.iso && <div>
+                  <div className="font-medium">ISO</div>
+                  <div>{mediaInfo.iso}</div>
+                </div>}
+              
+              {mediaInfo.focalLength && <div>
+                  <div className="font-medium">Focal Length</div>
+                  <div>{mediaInfo.focalLength}</div>
+                </div>}
+              
+              {mediaInfo.aperture && <div>
+                  <div className="font-medium">Aperture</div>
+                  <div>{mediaInfo.aperture}</div>
+                </div>}
+              
+              {mediaInfo.exposureTime && <div>
+                  <div className="font-medium">Exposure</div>
+                  <div>{mediaInfo.exposureTime}</div>
                 </div>}
               
               {mediaInfo.hash && <div className="col-span-2">

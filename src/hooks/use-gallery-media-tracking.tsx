@@ -8,14 +8,15 @@ export function useGalleryMediaTracking(
   gridRef: React.RefObject<FixedSizeGrid>
 ) {
   const prevMediaIdsRef = useRef<string[]>([]);
-  const prevSelectedIdsRef = useRef<string[]>([]);
   
-  // Détecter les changements importants dans les médias
+  // Détecter uniquement les changements importants dans les médias
+  // et ignorer les changements de sélection qui ne devraient pas affecter le défilement
   useEffect(() => {
     const prevMediaIds = prevMediaIdsRef.current;
     
     // Vérifier s'il y a eu un changement significatif dans les médias
-    const significantMediaChange = Math.abs(mediaIds.length - prevMediaIds.length) > 5;
+    // (pas juste un ajout ou suppression de quelques éléments)
+    const significantMediaChange = Math.abs(mediaIds.length - prevMediaIds.length) > 20;
     
     if (significantMediaChange) {
       // Réinitialisation seulement en cas de changement significatif des médias
@@ -29,12 +30,6 @@ export function useGalleryMediaTracking(
     }
   }, [mediaIds, gridRef]);
   
-  // Optimisation pour les changements de sélection
-  useEffect(() => {
-    // Ne pas réagir aux changements de sélection pour l'instant, car cela cause des resets
-    // Nous gérons déjà cela dans useGallerySelection
-    
-    // Stocker la sélection actuelle comme référence
-    prevSelectedIdsRef.current = [...selectedIds];
-  }, [selectedIds]);
+  // Nous ne faisons plus rien avec les changements de sélection
+  // pour éviter tout reset de la position de défilement
 }

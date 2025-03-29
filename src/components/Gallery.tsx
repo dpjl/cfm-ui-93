@@ -57,7 +57,6 @@ const Gallery: React.FC<GalleryProps> = ({
 }) => {
   const [showDates, setShowDates] = useState(false);
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
-  const [galleryKey, setGalleryKey] = useState(0); // Clé pour forcer le rendu complet
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -80,16 +79,6 @@ const Gallery: React.FC<GalleryProps> = ({
     selectedIds,
     position
   );
-
-  // Forcer le rendu complet lorsque le panneau d'information change d'état
-  useEffect(() => {
-    // Une légère temporisation pour laisser le temps au DOM de se mettre à jour
-    const timer = setTimeout(() => {
-      setGalleryKey(prev => prev + 1);
-    }, 50);
-    
-    return () => clearTimeout(timer);
-  }, [selectedIds.length > 0]);
 
   // Collecter les informations sur les médias à partir des composants enfants
   const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
@@ -126,7 +115,7 @@ const Gallery: React.FC<GalleryProps> = ({
   }
   
   return (
-    <div className="flex flex-col h-full relative" key={`gallery-container-${galleryKey}`} ref={containerRef}>
+    <div className="flex flex-col h-full relative" ref={containerRef}>
       <GalleryToolbar
         selectedIds={selectedIds}
         mediaIds={mediaIds}
@@ -141,30 +130,31 @@ const Gallery: React.FC<GalleryProps> = ({
         onToggleSelectionMode={selection.toggleSelectionMode}
       />
       
-      {/* Panneau d'information des médias */}
-      {shouldShowInfoPanel && (
-        <MediaInfoPanel
-          selectedIds={selectedIds}
-          onOpenPreview={preview.handleOpenPreview}
-          onDeleteSelected={onDeleteSelected}
-          onDownloadSelected={mediaHandler.handleDownloadSelected}
-          mediaInfoMap={mediaInfoMap}
-          selectionMode={selection.selectionMode}
-        />
-      )}
-      
-      {mediaIds.length === 0 ? (
-        <GalleryEmptyState />
-      ) : (
-        <div className="flex-1 overflow-hidden relative gallery-scrollbar">
-          {/* Indicateurs de défilement pour mobile */}
-          {isMobile && (
-            <>
-              <div className="scrollbar-pull-indicator top"></div>
-              <div className="scrollbar-pull-indicator bottom"></div>
-            </>
-          )}
-          
+      <div className="flex-1 overflow-hidden relative gallery-scrollbar">
+        {/* Indicateurs de défilement pour mobile */}
+        {isMobile && (
+          <>
+            <div className="scrollbar-pull-indicator top"></div>
+            <div className="scrollbar-pull-indicator bottom"></div>
+          </>
+        )}
+        
+        {/* Panneau d'information flottant */}
+        {shouldShowInfoPanel && (
+          <MediaInfoPanel
+            selectedIds={selectedIds}
+            onOpenPreview={preview.handleOpenPreview}
+            onDeleteSelected={onDeleteSelected}
+            onDownloadSelected={mediaHandler.handleDownloadSelected}
+            mediaInfoMap={mediaInfoMap}
+            selectionMode={selection.selectionMode}
+            position={position}
+          />
+        )}
+        
+        {mediaIds.length === 0 ? (
+          <GalleryEmptyState />
+        ) : (
           <VirtualizedGalleryGrid
             mediaIds={mediaIds}
             selectedIds={selectedIds}
@@ -175,8 +165,8 @@ const Gallery: React.FC<GalleryProps> = ({
             updateMediaInfo={updateMediaInfo}
             position={position}
           />
-        </div>
-      )}
+        )}
+      </div>
       
       <MediaPreview 
         mediaId={preview.previewMediaId}
