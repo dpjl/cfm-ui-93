@@ -1,5 +1,5 @@
 
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -50,7 +50,7 @@ const VirtualizedGalleryGrid = memo(({
   }, [onSelectId]);
   
   // Memorize item data to prevent unnecessary renders
-  const itemData = React.useMemo(() => ({
+  const itemData = useMemo(() => ({
     mediaIds,
     selectedIds,
     onSelectId: handleSelectItem,
@@ -65,15 +65,18 @@ const VirtualizedGalleryGrid = memo(({
     <div className="w-full h-full p-2 gallery-container">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // Use our grid calculations hook for dimensions
+          // Define gap here to ensure it's always available
           const gap = 8;
-          const { itemWidth, itemHeight, calculateCellStyle } = useGridCalculations(width, columnsCount, gap, showDates);
+          
+          // Use our grid calculations hook - we need to memorize this outside the AutoSizer render prop
+          const calculations = useGridCalculations(width, columnsCount, gap, showDates);
+          const { itemWidth, itemHeight, calculateCellStyle } = calculations;
           
           // Update itemData with the cell style calculation function
-          const enhancedItemData = { 
+          const enhancedItemData = useMemo(() => ({ 
             ...itemData, 
             calculateCellStyle 
-          };
+          }), [itemData, calculateCellStyle]);
           
           return (
             <FixedSizeGrid

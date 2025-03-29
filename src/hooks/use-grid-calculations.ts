@@ -28,42 +28,34 @@ export function useGridCalculations(
   }, [itemWidth, showDates]);
 
   /**
-   * Calculate the number of rows needed based on item count and columns
+   * Calculate cell style with gap considerations
    */
+  const calculateCellStyle = useMemo(() => {
+    return (originalStyle: React.CSSProperties, isLastColumn: boolean): React.CSSProperties => {
+      // Start with the original style
+      const adjustedStyle = { ...originalStyle };
+      
+      // Adjust width and height to account for gap
+      adjustedStyle.width = `${parseFloat(originalStyle.width as string) - gap}px`;
+      adjustedStyle.height = `${parseFloat(originalStyle.height as string) - gap}px`;
+      
+      return adjustedStyle;
+    };
+  }, [gap]);
+
+  // These functions don't depend on hook state, so they're safe to include
+  // without useMemo as they won't cause render issues
   const calculateRowCount = (itemCount: number): number => {
     return Math.ceil(itemCount / columnsCount);
   };
 
-  /**
-   * Calculate grid item index from row and column indices
-   */
   const calculateItemIndex = (rowIndex: number, columnIndex: number): number => {
     return rowIndex * columnsCount + columnIndex;
   };
 
-  /**
-   * Check if an item exists at the given indices
-   */
   const itemExistsAtIndex = (rowIndex: number, columnIndex: number, totalItems: number): boolean => {
     const index = calculateItemIndex(rowIndex, columnIndex);
     return index < totalItems;
-  };
-
-  /**
-   * Calculate cell style with gap considerations
-   */
-  const calculateCellStyle = (
-    originalStyle: React.CSSProperties, 
-    isLastColumn: boolean
-  ): React.CSSProperties => {
-    // Start with the original style
-    const adjustedStyle = { ...originalStyle };
-    
-    // Adjust width and height to account for gap
-    adjustedStyle.width = `${parseFloat(originalStyle.width as string) - gap}px`;
-    adjustedStyle.height = `${parseFloat(originalStyle.height as string) - gap}px`;
-    
-    return adjustedStyle;
   };
 
   return {
