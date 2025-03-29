@@ -12,8 +12,10 @@ import GalleryToolbar from './gallery/GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from './media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { useScrollbarDateIndicator } from '@/hooks/use-scrollbar-date-indicator';
 import { ScrollAreaWithDateIndicator } from './ui/scroll-area-with-date-indicator';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { X } from 'lucide-react';
 
 export interface ImageItem {
   id: string;
@@ -62,6 +64,11 @@ const Gallery: React.FC<GalleryProps> = ({
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<any>(null);
+  const [dateIndicator, setDateIndicator] = useState({
+    visible: false,
+    formattedDate: ""
+  });
+  const dateIndicatorTimerRef = useRef<number | null>(null);
   
   // Initialiser les fonctionnalités de sélection de la galerie
   const selection = useGallerySelection({
@@ -82,9 +89,6 @@ const Gallery: React.FC<GalleryProps> = ({
     position
   );
 
-  // Initialiser le système d'indicateur de date sur la scrollbar
-  const { dateIndicator, handleScroll } = useScrollbarDateIndicator(mediaInfoMap, mediaIds);
-
   // Collecter les informations sur les médias à partir des composants enfants
   const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
     setMediaInfoMap(prev => {
@@ -99,6 +103,76 @@ const Gallery: React.FC<GalleryProps> = ({
     selection.handleDeselectAll();
   }, [selection]);
   
+  // Gestionnaire de défilement simplifié pour afficher la date
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    // Trouver le premier élément visible
+    const scrollContainer = e.currentTarget;
+    const mediaElements = scrollContainer.querySelectorAll('[data-media-id]');
+    
+    if (mediaElements.length > 0) {
+      const containerRect = scrollContainer.getBoundingClientRect();
+      
+      // Recherche de l'élément le plus visible
+      let mostVisibleElement = null;
+      let maxVisibleArea = 0;
+      
+      for (const element of mediaElements) {
+        const elementRect = element.getBoundingClientRect();
+        
+        // Calculer la zone visible de l'élément
+        const visibleTop = Math.max(elementRect.top, containerRect.top);
+        const visibleBottom = Math.min(elementRect.bottom, containerRect.bottom);
+        
+        if (visibleBottom > visibleTop) {
+          const visibleArea = visibleBottom - visibleTop;
+          if (visibleArea > maxVisibleArea) {
+            maxVisibleArea = visibleArea;
+            mostVisibleElement = element;
+          }
+        }
+      }
+      
+      if (mostVisibleElement) {
+        const mediaId = mostVisibleElement.getAttribute('data-media-id');
+        if (mediaId && mediaInfoMap.has(mediaId)) {
+          const mediaInfo = mediaInfoMap.get(mediaId);
+          
+          if (mediaInfo?.createdAt) {
+            try {
+              const date = new Date(mediaInfo.createdAt);
+              const formattedDate = format(date, 'dd MMMM yyyy', { locale: fr });
+              
+              setDateIndicator({
+                visible: true,
+                formattedDate
+              });
+              
+              // Masquer l'indicateur après un délai
+              if (dateIndicatorTimerRef.current) {
+                window.clearTimeout(dateIndicatorTimerRef.current);
+              }
+              
+              dateIndicatorTimerRef.current = window.setTimeout(() => {
+                setDateIndicator(prev => ({ ...prev, visible: false }));
+              }, 1500);
+            } catch (error) {
+              console.error('Error formatting date:', error);
+            }
+          }
+        }
+      }
+    }
+  }, [mediaInfoMap]);
+  
+  // Nettoyer le timer lors du démontage
+  useEffect(() => {
+    return () => {
+      if (dateIndicatorTimerRef.current) {
+        window.clearTimeout(dateIndicatorTimerRef.current);
+      }
+    };
+  }, []);
+
   // Déterminer si nous devons afficher le panneau d'information
   const shouldShowInfoPanel = selectedIds.length > 0;
   
@@ -145,16 +219,25 @@ const Gallery: React.FC<GalleryProps> = ({
         
         {/* Panneau d'information flottant */}
         {shouldShowInfoPanel && (
-          <MediaInfoPanel
-            selectedIds={selectedIds}
-            onOpenPreview={preview.handleOpenPreview}
-            onDeleteSelected={onDeleteSelected}
-            onDownloadSelected={mediaHandler.handleDownloadSelected}
-            mediaInfoMap={mediaInfoMap}
-            selectionMode={selection.selectionMode}
-            position={position}
-            onClose={handleClearSelection}
-          />
+          <div className="absolute top-0 left-0 right-0 z-20 bg-background/85 backdrop-blur-sm shadow-md rounded-md m-2 p-4">
+            <button 
+              className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted text-muted-foreground"
+              onClick={handleClearSelection}
+              aria-label="Fermer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <MediaInfoPanel
+              selectedIds={selectedIds}
+              onOpenPreview={preview.handleOpenPreview}
+              onDeleteSelected={onDeleteSelected}
+              onDownloadSelected={mediaHandler.handleDownloadSelected}
+              mediaInfoMap={mediaInfoMap}
+              selectionMode={selection.selectionMode}
+              position={position}
+              onClose={handleClearSelection}
+            />
+          </div>
         )}
         
         {dateIndicator.visible && (
@@ -163,7 +246,12 @@ const Gallery: React.FC<GalleryProps> = ({
           </div>
         )}
         
-        <ScrollAreaWithDateIndicator className="h-full" onScroll={handleScroll} mediaInfoMap={mediaInfoMap} mediaIds={mediaIds}>
+        <ScrollAreaWithDateIndicator 
+          className="h-full" 
+          onScroll={handleScroll} 
+          mediaInfoMap={mediaInfoMap} 
+          mediaIds={mediaIds}
+        >
           {mediaIds.length === 0 ? (
             <GalleryEmptyState />
           ) : (
@@ -173,7 +261,6 @@ const Gallery: React.FC<GalleryProps> = ({
               onSelectId={selection.handleSelectItem}
               columnsCount={columnsCount}
               viewMode={viewMode}
-              showDates={true}
               updateMediaInfo={updateMediaInfo}
               position={position}
               ref={gridRef}

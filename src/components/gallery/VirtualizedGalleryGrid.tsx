@@ -13,7 +13,6 @@ interface VirtualizedGalleryGridProps {
   onSelectId: (id: string, extendSelection: boolean) => void;
   columnsCount: number;
   viewMode?: 'single' | 'split';
-  showDates?: boolean;
   updateMediaInfo?: (id: string, info: DetailedMediaInfo) => void;
   position: 'source' | 'destination';
 }
@@ -24,7 +23,6 @@ const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
   onSelectId,
   columnsCount = 5,
   viewMode = 'single',
-  showDates = true,
   updateMediaInfo,
   position = 'source'
 }, ref) => {
@@ -55,9 +53,11 @@ const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
       }
     });
 
-    // Observe the gallery container
-    const galleryContainer = document.querySelector('.gallery-container') || document.body;
-    resizeObserver.observe(galleryContainer);
+    // Observer la galerie container
+    const galleryContainer = document.querySelector('.gallery-container');
+    if (galleryContainer) {
+      resizeObserver.observe(galleryContainer);
+    }
 
     return () => {
       resizeObserver.disconnect();
@@ -100,7 +100,6 @@ const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
         {({ height, width }) => {
           // Calculate item size based on available width
           const gap = 8;
-          // Use fixed cell width to ensure consistent gallery sizing
           const cellWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
           const cellHeight = cellWidth; // Make cells square
           
@@ -114,20 +113,17 @@ const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
               rowHeight={cellHeight}
               width={width}
               itemData={itemData}
-              // Increased overscan for smoother scrolling
               overscanRowCount={5}
               overscanColumnCount={2}
-              // Use stable item key for better rendering efficiency
               itemKey={({ columnIndex, rowIndex }) => {
                 const index = rowIndex * columnsCount + columnIndex;
                 return index < mediaIds.length ? mediaIds[index] : `empty-${rowIndex}-${columnIndex}`;
               }}
-              // Save scroll position during scroll events
               onScroll={({ scrollTop }) => {
                 scrollPositionRef.current = scrollTop;
               }}
-              // Initialize with saved scroll position
               initialScrollTop={scrollPositionRef.current}
+              className="gallery-grid"
             >
               {GalleryGridCell}
             </FixedSizeGrid>

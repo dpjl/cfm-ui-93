@@ -20,7 +20,7 @@
   /* Poignée de défilement visible */
   .scrollbar-handle {
     position: absolute;
-    right: 0;
+    right: 4px;
     top: 0;
     width: 8px;
     border-radius: 4px;
@@ -67,6 +67,16 @@
 
   .scrollbar-pull-tab.faded {
     opacity: 0;
+  }
+
+  /* Styles spécifiques pour la grille */
+  .gallery-grid {
+    z-index: 0; /* Ensure it's below the scrollbar */
+  }
+
+  .gallery-cell {
+    position: relative;
+    z-index: 1; /* Ensure cells are visible */
   }
 
   /* Styles mobile */

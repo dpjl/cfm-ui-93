@@ -20,7 +20,7 @@ interface GalleryGridCellProps {
 const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGridCellProps) => {
   const index = rowIndex * data.columnsCount + columnIndex;
   
-  // Return null for out of bounds indices
+  // Return empty cell if index is out of bounds
   if (index >= data.mediaIds.length) return null;
   
   const id = data.mediaIds[index];
@@ -35,7 +35,7 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
   };
   
   return (
-    <div style={adjustedStyle}>
+    <div style={adjustedStyle} className="gallery-cell">
       <LazyMediaItem
         key={id}
         id={id}
