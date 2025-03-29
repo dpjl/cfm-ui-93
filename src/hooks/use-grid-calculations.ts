@@ -21,30 +21,37 @@ export function useGridCalculations(
 ) {
   /**
    * Use the combined grid parameters calculation for better precision
+   * with scrollbar width consideration
    */
   const gridParams = useMemo(() => {
-    return calculateGridParameters(containerWidth, columnsCount, gap, showDates);
+    // Standard scrollbar width approximation
+    const scrollbarWidth = 17;
+    // Calculate available width accounting for scrollbar
+    const availableWidth = containerWidth - scrollbarWidth;
+    
+    return calculateGridParameters(availableWidth, columnsCount, gap, showDates);
   }, [containerWidth, columnsCount, gap, showDates]);
 
   /**
-   * Calculate cell style with gap considerations
+   * Calculate cell style with gap considerations and uniform sizing
    */
   const calculateCellStyle = useMemo(() => {
     return (originalStyle: React.CSSProperties, columnIndex: number): React.CSSProperties => {
       const isLastColumn = columnIndex === columnsCount - 1;
       
-      // Adjust width and height to account for gap
+      // Ensure all cells have identical dimensions by applying the same gap treatment
       const adjustedStyle = { 
         ...originalStyle,
-        width: `${parseFloat(originalStyle.width as string) - gap}px`,
-        height: `${parseFloat(originalStyle.height as string) - gap}px`,
-        paddingRight: isLastColumn ? 0 : gap,
-        paddingBottom: gap
+        width: `${gridParams.itemWidth}px`,
+        height: `${gridParams.itemHeight - gap}px`,
+        paddingRight: gap,
+        paddingBottom: gap,
+        boxSizing: 'border-box' as 'border-box'
       };
       
       return adjustedStyle;
     };
-  }, [gap, columnsCount]);
+  }, [gap, columnsCount, gridParams.itemWidth, gridParams.itemHeight]);
 
   return {
     ...gridParams,

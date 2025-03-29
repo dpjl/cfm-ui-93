@@ -21,7 +21,7 @@ interface GalleryGridCellProps {
 
 /**
  * A cell component for the virtualized grid that renders a media item
- * With improved positioning calculations
+ * With improved positioning calculations for uniform sizes
  */
 const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGridCellProps) => {
   // Calculate the index in the flat array based on row and column
@@ -38,7 +38,7 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
   const adjustedStyle = data.calculateCellStyle(style, columnIndex);
   
   return (
-    <div style={adjustedStyle}>
+    <div style={adjustedStyle} className="gallery-grid-cell">
       <LazyMediaItem
         key={id}
         id={id}
