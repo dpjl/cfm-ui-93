@@ -12,6 +12,8 @@ import GalleryToolbar from './gallery/GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from './media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
+import { format } from 'date-fns';
+import { Calendar } from 'lucide-react';
 
 export interface ImageItem {
   id: string;
@@ -61,6 +63,7 @@ const Gallery: React.FC<GalleryProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [visibleDateInfo, setVisibleDateInfo] = useState<string | null>(null);
   
   const selection = useGallerySelection({
     mediaIds,
@@ -86,6 +89,34 @@ const Gallery: React.FC<GalleryProps> = ({
     });
   }, []);
 
+  // Helper to find the date of the first visible media item
+  const updateVisibleDate = useCallback(() => {
+    const galleryElement = containerRef.current?.querySelector('.gallery-scrollbar');
+    if (!galleryElement) return;
+    
+    // Find the first visible media item
+    const visibleItems = galleryElement.querySelectorAll('.image-card');
+    
+    if (visibleItems.length > 0) {
+      const firstVisibleItem = Array.from(visibleItems).find(item => {
+        const rect = item.getBoundingClientRect();
+        return rect.top >= 0 && rect.bottom <= window.innerHeight;
+      });
+      
+      if (firstVisibleItem) {
+        const mediaId = firstVisibleItem.getAttribute('data-media-id');
+        if (mediaId) {
+          const mediaInfo = mediaInfoMap.get(mediaId);
+          if (mediaInfo?.createdAt) {
+            setVisibleDateInfo(mediaInfo.createdAt);
+          } else {
+            setVisibleDateInfo(null);
+          }
+        }
+      }
+    }
+  }, [mediaInfoMap]);
+
   // Handle scroll events for the pull tabs
   useEffect(() => {
     const galleryElement = containerRef.current?.querySelector('.gallery-scrollbar');
@@ -94,6 +125,7 @@ const Gallery: React.FC<GalleryProps> = ({
     
     const handleScroll = () => {
       setIsScrolling(true);
+      updateVisibleDate();
       
       // Clear previous timeout if exists
       if (scrollTimeoutRef.current) {
@@ -114,13 +146,22 @@ const Gallery: React.FC<GalleryProps> = ({
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, []);
+  }, [updateVisibleDate]);
 
   const shouldShowInfoPanel = selectedIds.length > 0;
   
   const handleCloseInfoPanel = useCallback(() => {
     selectedIds.forEach(id => onSelectId(id));
   }, [selectedIds, onSelectId]);
+  
+  const formatDateDisplay = (dateString: string | null) => {
+    if (!dateString) return '';
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy');
+    } catch (e) {
+      return '';
+    }
+  };
   
   if (isLoading) {
     return (
@@ -166,7 +207,14 @@ const Gallery: React.FC<GalleryProps> = ({
       <div className={`flex-1 overflow-hidden relative gallery-scrollbar ${isScrolling ? 'scrolling' : ''}`}>
         {isMobile && (
           <>
-            <div className={`scrollbar-pull-tab top ${isScrolling ? '' : 'faded'}`} />
+            <div className={`scrollbar-pull-tab top ${isScrolling ? '' : 'faded'}`}>
+              {visibleDateInfo && isScrolling && (
+                <span className="date-label">
+                  <Calendar className="date-icon" size={12} />
+                  {formatDateDisplay(visibleDateInfo)}
+                </span>
+              )}
+            </div>
             <div className={`scrollbar-pull-tab bottom ${isScrolling ? '' : 'faded'}`} />
           </>
         )}

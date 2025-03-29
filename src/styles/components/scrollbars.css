@@ -35,13 +35,17 @@
 /* Indicateur de défilement mobile */
 .scrollbar-pull-tab {
   position: absolute;
-  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
   height: 5px;
   background-color: rgba(128, 128, 128, 0.25);
   border-radius: 6px;
   left: 50%;
   transform: translateX(-50%);
-  transition: opacity 0.3s ease;
+  transition: all 0.3s ease;
+  z-index: 50;
 }
 
 .scrollbar-pull-tab.top {
@@ -52,9 +56,29 @@
   bottom: 4px;
 }
 
+/* Style pour l'étiquette de date */
+.scrollbar-pull-tab .date-label {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 12px;
+  font-size: 10px;
+  height: 22px;
+  white-space: nowrap;
+  transform: translateY(-100%);
+  margin-top: -8px;
+}
+
+.scrollbar-pull-tab .date-icon {
+  margin-right: 4px;
+}
+
 /* Afficher l'indicateur uniquement lors d'un défilement */
 .scrolling .scrollbar-pull-tab {
   opacity: 1;
+  height: 5px;
 }
 
 .scrollbar-pull-tab.faded {
@@ -71,6 +95,11 @@
   
   .dark .scrollbar-pull-tab {
     background-color: rgba(200, 200, 200, 0.3);
+  }
+  
+  .scrollbar-pull-tab.top.has-date {
+    height: auto;
+    padding-top: 24px;
   }
 }
 
