@@ -12,8 +12,6 @@ import GalleryToolbar from './gallery/GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from './media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { format } from 'date-fns';
-import { Calendar } from 'lucide-react';
 
 export interface ImageItem {
   id: string;
@@ -61,16 +59,8 @@ const Gallery: React.FC<GalleryProps> = ({
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollbarContainerRef = useRef<HTMLDivElement>(null);
-  const scrollHandleRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [visibleDateInfo, setVisibleDateInfo] = useState<string | null>(null);
-  const [scrollHandleHeight, setScrollHandleHeight] = useState(100);
-  const [scrollHandleTop, setScrollHandleTop] = useState(0);
-  const isDraggingRef = useRef(false);
-  const startDragYRef = useRef(0);
-  const startScrollTopRef = useRef(0);
   
   const selection = useGallerySelection({
     mediaIds,
@@ -96,200 +86,41 @@ const Gallery: React.FC<GalleryProps> = ({
     });
   }, []);
 
-  // Helper to find the date of the first visible media item
-  const updateVisibleDate = useCallback(() => {
-    if (!scrollbarContainerRef.current) return;
-    
-    // Trouver tous les éléments image-card visibles
-    const galleryItems = scrollbarContainerRef.current.querySelectorAll('.image-card');
-    if (galleryItems.length === 0) return;
-    
-    const containerRect = scrollbarContainerRef.current.getBoundingClientRect();
-    const containerTop = containerRect.top;
-    const containerHeight = containerRect.height;
-    
-    // Trouver la première carte visible
-    let firstVisibleItem: Element | null = null;
-    
-    for (const item of Array.from(galleryItems)) {
-      const itemRect = item.getBoundingClientRect();
-      const itemTop = itemRect.top;
-      
-      // Si l'élément est visible dans le conteneur
-      if (itemTop >= containerTop && itemTop < containerTop + containerHeight) {
-        firstVisibleItem = item;
-        break;
-      }
-    }
-    
-    if (firstVisibleItem) {
-      const mediaId = firstVisibleItem.getAttribute('data-media-id');
-      if (mediaId) {
-        const mediaInfo = mediaInfoMap.get(mediaId);
-        if (mediaInfo?.createdAt) {
-          setVisibleDateInfo(mediaInfo.createdAt);
-        } else {
-          setVisibleDateInfo(null);
-        }
-      }
-    }
-  }, [mediaInfoMap]);
-
-  // Update scroll handle position and height
-  const updateScrollHandleGeometry = useCallback(() => {
-    if (!scrollbarContainerRef.current || !scrollHandleRef.current) return;
-    
-    const { scrollHeight, clientHeight, scrollTop } = scrollbarContainerRef.current;
-    
-    // Éviter la division par zéro
-    if (scrollHeight <= 0) return;
-    
-    // Calculer la hauteur proportionnelle de la poignée (min 40px, max 120px)
-    const ratio = clientHeight / scrollHeight;
-    const handleHeight = Math.max(Math.min(ratio * clientHeight, 120), 40);
-    setScrollHandleHeight(handleHeight);
-    
-    // Calculer la position verticale de la poignée
-    const maxScrollDistance = scrollHeight - clientHeight;
-    const scrollPercent = maxScrollDistance <= 0 ? 0 : scrollTop / maxScrollDistance;
-    const maxHandleTravel = clientHeight - handleHeight;
-    const handleTop = scrollPercent * maxHandleTravel;
-    
-    setScrollHandleTop(handleTop);
-  }, []);
-
-  // Handle scroll events
+  // Handle scroll events for the pull tabs
   useEffect(() => {
-    const scrollContainer = scrollbarContainerRef.current;
+    const galleryElement = containerRef.current?.querySelector('.gallery-scrollbar');
     
-    if (!scrollContainer) return;
+    if (!galleryElement) return;
     
     const handleScroll = () => {
       setIsScrolling(true);
-      updateVisibleDate();
-      updateScrollHandleGeometry();
       
-      // Reset timeout to hide indicators
+      // Clear previous timeout if exists
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
       
+      // Set timeout to hide pull tabs after scrolling stops
       scrollTimeoutRef.current = setTimeout(() => {
         setIsScrolling(false);
-      }, 1500);
+      }, 1000);
     };
     
-    scrollContainer.addEventListener('scroll', handleScroll);
+    galleryElement.addEventListener('scroll', handleScroll);
     
     return () => {
-      scrollContainer.removeEventListener('scroll', handleScroll);
+      galleryElement.removeEventListener('scroll', handleScroll);
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [updateVisibleDate, updateScrollHandleGeometry]);
-
-  // Initialize scroll handle on component mount and update on window resize
-  useEffect(() => {
-    updateScrollHandleGeometry();
-    
-    const handleResize = () => {
-      updateScrollHandleGeometry();
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Initial update
-    setTimeout(updateScrollHandleGeometry, 100);
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [updateScrollHandleGeometry]);
-
-  // Mouse and touch events for scroll handle dragging
-  useEffect(() => {
-    const scrollHandle = scrollHandleRef.current;
-    const scrollContainer = scrollbarContainerRef.current;
-    
-    if (!scrollHandle || !scrollContainer) return;
-    
-    const handleMouseDown = (e: MouseEvent | TouchEvent) => {
-      e.preventDefault();
-      isDraggingRef.current = true;
-      scrollHandle.classList.add('active');
-      
-      // Get start positions
-      const clientY = 'touches' in e 
-        ? e.touches[0].clientY 
-        : e.clientY;
-      
-      startDragYRef.current = clientY;
-      startScrollTopRef.current = scrollContainer.scrollTop;
-    };
-    
-    const handleMouseMove = (e: MouseEvent | TouchEvent) => {
-      if (!isDraggingRef.current || !scrollContainer) return;
-      
-      const clientY = 'touches' in e 
-        ? e.touches[0].clientY 
-        : e.clientY;
-      
-      const deltaY = clientY - startDragYRef.current;
-      const { scrollHeight, clientHeight } = scrollContainer;
-      
-      // Calculate scroll ratio and new position
-      const scrollableDistance = scrollHeight - clientHeight;
-      const handleTrackSize = clientHeight - scrollHandleHeight;
-      const scrollRatio = scrollableDistance / handleTrackSize;
-      
-      // Apply new scroll position
-      scrollContainer.scrollTop = startScrollTopRef.current + (deltaY * scrollRatio);
-    };
-    
-    const handleMouseUp = () => {
-      isDraggingRef.current = false;
-      if (scrollHandle) {
-        scrollHandle.classList.remove('active');
-      }
-    };
-    
-    // Add mouse event listeners
-    scrollHandle.addEventListener('mousedown', handleMouseDown as EventListener);
-    document.addEventListener('mousemove', handleMouseMove as EventListener);
-    document.addEventListener('mouseup', handleMouseUp);
-    
-    // Add touch event listeners
-    scrollHandle.addEventListener('touchstart', handleMouseDown as EventListener);
-    document.addEventListener('touchmove', handleMouseMove as EventListener);
-    document.addEventListener('touchend', handleMouseUp);
-    
-    return () => {
-      // Remove all event listeners
-      scrollHandle.removeEventListener('mousedown', handleMouseDown as EventListener);
-      document.removeEventListener('mousemove', handleMouseMove as EventListener);
-      document.removeEventListener('mouseup', handleMouseUp);
-      
-      scrollHandle.removeEventListener('touchstart', handleMouseDown as EventListener);
-      document.removeEventListener('touchmove', handleMouseMove as EventListener);
-      document.removeEventListener('touchend', handleMouseUp);
-    };
-  }, [scrollHandleHeight]);
+  }, []);
 
   const shouldShowInfoPanel = selectedIds.length > 0;
   
   const handleCloseInfoPanel = useCallback(() => {
     selectedIds.forEach(id => onSelectId(id));
   }, [selectedIds, onSelectId]);
-  
-  const formatDateDisplay = (dateString: string | null) => {
-    if (!dateString) return '';
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy');
-    } catch (e) {
-      return '';
-    }
-  };
   
   if (isLoading) {
     return (
@@ -332,31 +163,13 @@ const Gallery: React.FC<GalleryProps> = ({
         onToggleSelectionMode={selection.toggleSelectionMode}
       />
       
-      <div 
-        className={`flex-1 overflow-hidden relative custom-scrollbar ${isScrolling ? 'scrolling' : ''}`}
-        ref={scrollbarContainerRef}
-      >
-        {/* Indicateur de date flottant */}
-        {visibleDateInfo && (
-          <div 
-            className={`scrollbar-indicator ${isScrolling ? 'visible' : ''}`} 
-            style={{ top: '50%', transform: 'translateY(-50%)' }}
-          >
-            <Calendar className="date-icon" size={12} />
-            {formatDateDisplay(visibleDateInfo)}
-          </div>
+      <div className={`flex-1 overflow-hidden relative gallery-scrollbar ${isScrolling ? 'scrolling' : ''}`}>
+        {isMobile && (
+          <>
+            <div className={`scrollbar-pull-tab top ${isScrolling ? '' : 'faded'}`} />
+            <div className={`scrollbar-pull-tab bottom ${isScrolling ? '' : 'faded'}`} />
+          </>
         )}
-        
-        {/* Poignée de défilement personnalisée */}
-        <div 
-          className="scrollbar-handle" 
-          ref={scrollHandleRef}
-          style={{ 
-            height: `${scrollHandleHeight}px`,
-            top: `${scrollHandleTop}px`,
-            opacity: isScrolling ? 1 : undefined
-          }}
-        />
         
         {shouldShowInfoPanel && (
           <div className="absolute top-2 left-0 right-0 z-10 flex justify-center">

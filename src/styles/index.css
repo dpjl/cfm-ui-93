@@ -1,18 +1,19 @@
 
-/* Import base styles */
+/* Base styles */
 @import './base/reset.css';
 @import './base/theme.css';
 @import './base/typography.css';
 @import './base/scrollbar.css';
 
-/* Import component styles */
+/* Component styles */
 @import './components.css';
 @import './components/glass-effects.css';
 @import './components/image-card.css';
 @import './components/transitions.css';
-@import './components/simple-transitions.css';
 @import './components/responsive.css';
-@import './components/scrollbars.css';
 
-/* Import utilities */
+/* Utilities */
 @import './utilities.css';
+
+/* App-specific styles */
+@import './app.css';

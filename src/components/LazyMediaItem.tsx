@@ -119,8 +119,7 @@ const LazyMediaItem = memo(({
       onKeyDown={handleKeyDown}
       data-media-id={id}
       data-selection-state={selected ? 'selected' : 'unselected'}
-      data-media-date={mediaInfo?.createdAt || ''}
-      style={{ touchAction: 'pan-y' }} /* Cette propriété indique au navigateur de prioriser le défilement vertical */
+      style={{ touchAction: 'pan-y' }} /* Ceci indique au navigateur de prioriser le défilement vertical */
     >
       {thumbnailUrl && (
         <>

@@ -16,92 +16,73 @@
   scrollbar-color: var(--primary-color-transparent) transparent;
 }
 
-/* Conteneur avec barre de défilement personnalisée */
-.custom-scrollbar {
-  position: relative;
-  overflow-y: auto;
-  scrollbar-width: none; /* Masquer la barre de défilement native pour Firefox */
-  -ms-overflow-style: none; /* Masquer la barre de défilement native pour IE/Edge */
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  display: none; /* Masquer la barre de défilement native pour Chrome/Safari/Opera */
-}
-
 /* Poignée de défilement visible */
 .scrollbar-handle {
   position: absolute;
-  right: 4px;
+  right: 0;
   top: 0;
   width: 8px;
-  height: 100px; /* Hauteur par défaut, sera ajustée dynamiquement */
   border-radius: 4px;
   background-color: rgba(128, 128, 128, 0.3);
   z-index: 20;
-  transition: opacity 0.3s, width 0.2s;
-  cursor: pointer;
-  opacity: 0.3;
+  transition: opacity 0.3s;
 }
 
-.scrollbar-handle:hover,
-.scrollbar-handle.active,
-.scrolling .scrollbar-handle {
-  width: 10px;
+.scrollbar-handle:hover {
   background-color: rgba(128, 128, 128, 0.5);
-  opacity: 1;
 }
 
-/* Indicateur de date flottant */
-.scrollbar-indicator {
+/* Indicateur de défilement mobile */
+.scrollbar-pull-tab {
   position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  right: 20px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
+  width: 36px;
+  height: 5px;
+  background-color: rgba(128, 128, 128, 0.25);
   border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 12px;
-  opacity: 0;
+  left: 50%;
+  transform: translateX(-50%);
   transition: opacity 0.3s ease;
-  pointer-events: none;
-  z-index: 50;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.scrollbar-indicator.visible {
+.scrollbar-pull-tab.top {
+  top: 4px;
+}
+
+.scrollbar-pull-tab.bottom {
+  bottom: 4px;
+}
+
+/* Afficher l'indicateur uniquement lors d'un défilement */
+.scrolling .scrollbar-pull-tab {
   opacity: 1;
 }
 
-.scrollbar-indicator .date-icon {
-  margin-right: 4px;
+.scrollbar-pull-tab.faded {
+  opacity: 0;
 }
 
 /* Styles mobile */
 @media (max-width: 640px) {
-  .scrollbar-handle {
-    width: 12px; /* Plus large sur mobile pour faciliter l'interaction */
-    right: 2px;
+  .scrollbar-pull-tab {
+    width: 40px;
+    height: 6px;
+    background-color: var(--primary-color-transparent, rgba(128, 128, 128, 0.5));
   }
   
-  .scrollbar-handle:hover,
-  .scrollbar-handle.active,
-  .scrolling .scrollbar-handle {
-    width: 14px;
-  }
-  
-  .scrollbar-indicator {
-    font-size: 10px;
-    padding: 3px 6px;
-    right: 20px;
+  .dark .scrollbar-pull-tab {
+    background-color: rgba(200, 200, 200, 0.3);
   }
 }
 
 /* Gestion tactile améliorée */
 @media (hover: none) and (pointer: coarse) {
-  .custom-scrollbar {
+  .scrollbar-vertical,
+  .scrollbar-horizontal {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+  }
+  
+  .scrollbar-handle {
+    width: 10px;
   }
 }
