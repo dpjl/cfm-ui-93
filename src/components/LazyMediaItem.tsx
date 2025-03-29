@@ -16,7 +16,6 @@ interface LazyMediaItemProps {
   selected: boolean;
   onSelect: (id: string, extendSelection: boolean) => void;
   index: number;
-  showDates?: boolean;
   updateMediaInfo?: (id: string, info: any) => void;
   position: 'source' | 'destination';
 }
@@ -26,7 +25,6 @@ const LazyMediaItem = memo(({
   selected,
   onSelect,
   index,
-  showDates = false,
   updateMediaInfo,
   position
 }: LazyMediaItemProps) => {

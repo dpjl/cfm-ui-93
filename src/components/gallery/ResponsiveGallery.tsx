@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import Gallery from '@/components/Gallery';
+import Gallery from '@/components/gallery/Gallery';
 import GallerySkeletons from '@/components/gallery/GallerySkeletons';
 import GalleryEmptyState from '@/components/gallery/GalleryEmptyState';
 import GalleryError from '@/components/gallery/GalleryError';

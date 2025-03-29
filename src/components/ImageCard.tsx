@@ -11,8 +11,6 @@ interface ImageCardProps {
   onPreview: () => void;
   type?: "image" | "video";
   onInView?: () => void;
-  createdAt?: string;
-  showDates?: boolean;
 }
 
 const ImageCard: React.FC<ImageCardProps> = ({
@@ -22,9 +20,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
   onSelect,
   onPreview,
   type = "image",
-  onInView,
-  createdAt,
-  showDates = false
+  onInView
 }) => {
   const [loaded, setLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);

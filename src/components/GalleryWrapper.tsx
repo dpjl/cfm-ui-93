@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-media-query';
-import GalleryGridContainer from './gallery/GalleryGridContainer';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMediaIds, fetchMediaInfo } from '../api/imageApi';
 import type { MediaItem } from '../types/gallery';
+import GalleryGrid from './gallery/GalleryGrid';
 
 interface GalleryWrapperProps {
   position: 'source' | 'destination';
@@ -65,15 +65,30 @@ const GalleryWrapper: React.FC<GalleryWrapperProps> = ({
                          info.name.toLowerCase().endsWith('.mov') : false
   }));
 
+  // Extract just the IDs and handle them directly with GalleryGrid
+  const ids = mediaItems.map(item => item.id);
+  const selectedIds: string[] = [];
+  
+  const handleSelectId = (id: string, extendSelection: boolean) => {
+    console.log('Selected:', id, 'extendSelection:', extendSelection);
+    handleMediaClick(id);
+  };
+
   return (
     <div className="h-full w-full overflow-hidden">
-      <GalleryGridContainer
-        items={mediaItems}
-        isLoading={isLoading}
-        columnCount={adaptiveColumnCount}
-        position={position}
-        onMediaClick={handleMediaClick}
-      />
+      {isLoading ? (
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      ) : (
+        <GalleryGrid
+          mediaIds={ids}
+          selectedIds={selectedIds}
+          onSelectId={handleSelectId}
+          columnsCount={adaptiveColumnCount}
+          position={position}
+        />
+      )}
     </div>
   );
 };

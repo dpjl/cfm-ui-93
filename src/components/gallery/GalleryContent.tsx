@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import Gallery from '@/components/Gallery';
+import Gallery from '@/components/gallery/Gallery';
 
 interface GalleryContentProps {
   mediaIds: string[];

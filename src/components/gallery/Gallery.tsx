@@ -12,15 +12,7 @@ import GalleryToolbar from './GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from '../media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-
-export interface ImageItem {
-  id: string;
-  src?: string;
-  alt?: string;
-  directory?: string;
-  createdAt?: string;
-  type?: "image" | "video";
-}
+import { MediaItem } from '@/types/gallery';
 
 interface GalleryProps {
   title: string;
