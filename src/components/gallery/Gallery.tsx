@@ -1,102 +1,175 @@
 
-import React, { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getMediaIds } from '@/api/imageApi';
-import { useSelectionState } from '@/hooks/use-selection-state';
-import { useGalleryActions } from '@/hooks/use-gallery-actions';
-import GalleryContent from './GalleryContent';
-import GallerySelectionBar from './GallerySelectionBar';
-import DeleteConfirmationDialog from './DeleteConfirmationDialog';
+import React, { useState, useCallback, useRef } from 'react';
+import { useLanguage } from '@/hooks/use-language';
+import VirtualizedGalleryGrid from './VirtualizedGalleryGrid';
+import GalleryEmptyState from './GalleryEmptyState';
+import GallerySkeletons from './GallerySkeletons';
+import MediaPreview from '../MediaPreview';
+import { DetailedMediaInfo } from '@/api/imageApi';
+import { useGallerySelection } from '@/hooks/use-gallery-selection';
+import { useGalleryPreviewHandler } from '@/hooks/use-gallery-preview-handler';
+import GalleryToolbar from './GalleryToolbar';
+import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
+import MediaInfoPanel from '../media/MediaInfoPanel';
+import { useIsMobile } from '@/hooks/use-breakpoint';
+import { MediaItem } from '@/types/gallery';
 
 interface GalleryProps {
-  directory: 'source' | 'destination';
   title: string;
+  mediaIds: string[];
+  selectedIds: string[];
+  onSelectId: (id: string) => void;
+  isLoading?: boolean;
+  isError?: boolean;
+  error?: unknown;
+  columnsCount: number;
+  onPreviewMedia?: (id: string) => void;
+  viewMode?: 'single' | 'split';
+  onDeleteSelected: () => void;
+  position?: 'source' | 'destination';
+  filter?: string;
+  onToggleSidebar?: () => void;
 }
 
-const Gallery: React.FC<GalleryProps> = ({ directory, title }) => {
-  const {
-    data: mediaIds = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ['mediaIds', directory],
-    queryFn: () => getMediaIds(directory),
+const Gallery: React.FC<GalleryProps> = ({
+  title,
+  mediaIds,
+  selectedIds,
+  onSelectId,
+  isLoading = false,
+  isError = false,
+  error,
+  columnsCount,
+  onPreviewMedia,
+  viewMode = 'single',
+  onDeleteSelected,
+  position = 'source',
+  filter = 'all',
+  onToggleSidebar
+}) => {
+  const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
+  const { t } = useLanguage();
+  const isMobile = useIsMobile();
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Hooks personnalisés pour la gestion des sélections et des aperçus
+  const selection = useGallerySelection({
+    mediaIds,
+    selectedIds,
+    onSelectId
   });
+  
+  const preview = useGalleryPreviewHandler({
+    mediaIds,
+    onPreviewMedia
+  });
+  
+  const mediaHandler = useGalleryMediaHandler(
+    selectedIds,
+    position
+  );
 
-  // Use the basic selection state hooks
-  const { 
-    selectedIds, 
-    setSelectedIds,
-    selectionMode,
-    toggleSelectionMode
-  } = useSelectionState();
-  
-  // Simplified selection management
-  const isSelecting = selectedIds.length > 0;
-  
-  const clearSelection = () => setSelectedIds([]);
-  
-  const toggleSelection = (id: string) => {
-    setSelectedIds(prev => {
-      if (prev.includes(id)) {
-        return prev.filter(itemId => itemId !== id);
-      } else {
-        // In single mode, replace the selection
-        if (selectionMode === 'single') {
-          return [id];
-        }
-        // In multiple mode, add to selection
-        return [...prev, id];
-      }
+  // Mettre à jour les informations sur les médias
+  const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
+    setMediaInfoMap(prev => {
+      const newMap = new Map(prev);
+      newMap.set(id, info);
+      return newMap;
     });
+  }, []);
+
+  const shouldShowInfoPanel = selectedIds.length > 0;
+  
+  const handleCloseInfoPanel = useCallback(() => {
+    selectedIds.forEach(id => onSelectId(id));
+  }, [selectedIds, onSelectId]);
+  
+  // États de chargement et d'erreur
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="mt-2">
+          <GallerySkeletons columnsCount={columnsCount} />
+        </div>
+      </div>
+    );
+  }
+  
+  if (isError) {
+    return (
+      <div className="flex flex-col h-full p-4">
+        <div className="text-destructive">Error loading gallery: {String(error)}</div>
+      </div>
+    );
+  }
+
+  // Déterminer si un élément est une vidéo
+  const isVideoPreview = (id: string): boolean => {
+    const info = mediaInfoMap.get(id);
+    if (info) {
+      const fileName = info.alt?.toLowerCase() || '';
+      return fileName.endsWith('.mp4') || fileName.endsWith('.mov');
+    }
+    return false;
   };
-
-  const {
-    isDeleteDialogOpen,
-    handleOpenDeleteDialog,
-    handleCloseDeleteDialog,
-    handleDeleteConfirm,
-  } = useGalleryActions(directory, selectedIds, clearSelection, () => refetch());
-
-  // Clear selection when directory changes
-  useEffect(() => {
-    clearSelection();
-  }, [directory]);
-
+  
   return (
-    <div className="relative flex h-full w-full flex-col">
-      <GalleryContent
-        title={title}
+    <div className="flex flex-col h-full relative" ref={containerRef}>
+      <GalleryToolbar
         mediaIds={mediaIds}
-        isLoading={isLoading}
-        isError={isError}
-        error={error}
         selectedIds={selectedIds}
-        onSelectId={toggleSelection}
-        columnsCount={4} // Default value
-        viewMode="single"
-        onPreviewItem={() => {}} // Empty handler
-        onDeleteSelected={handleOpenDeleteDialog}
-        filter="all"
-        position={directory}
+        onSelectAll={selection.handleSelectAll}
+        onDeselectAll={selection.handleDeselectAll}
+        viewMode={viewMode}
+        position={position}
+        onToggleSidebar={onToggleSidebar}
+        selectionMode={selection.selectionMode}
+        onToggleSelectionMode={selection.toggleSelectionMode}
       />
-
-      {isSelecting && (
-        <GallerySelectionBar
-          selectedCount={selectedIds.length}
-          onDeselectAll={clearSelection}
-          onDelete={handleOpenDeleteDialog}
+      
+      <div className="flex-1 overflow-hidden relative scrollbar-vertical">
+        {shouldShowInfoPanel && (
+          <div className="absolute top-2 left-0 right-0 z-10 flex justify-center">
+            <MediaInfoPanel
+              selectedIds={selectedIds}
+              onOpenPreview={preview.handleOpenPreview}
+              onDeleteSelected={onDeleteSelected}
+              onDownloadSelected={mediaHandler.handleDownloadSelected}
+              mediaInfoMap={mediaInfoMap}
+              selectionMode={selection.selectionMode}
+              position={position}
+              onClose={handleCloseInfoPanel}
+            />
+          </div>
+        )}
+        
+        {mediaIds.length === 0 ? (
+          <GalleryEmptyState />
+        ) : (
+          <VirtualizedGalleryGrid
+            mediaIds={mediaIds}
+            selectedIds={selectedIds}
+            onSelectId={selection.handleSelectItem}
+            columnsCount={columnsCount}
+            viewMode={viewMode}
+            updateMediaInfo={updateMediaInfo}
+            position={position}
+          />
+        )}
+      </div>
+      
+      {preview.previewMediaId && (
+        <MediaPreview 
+          mediaId={preview.previewMediaId}
+          isVideo={isVideoPreview(preview.previewMediaId)}
+          onClose={preview.handleClosePreview}
+          onNext={mediaIds.length > 1 ? () => preview.handleNavigatePreview('next') : undefined}
+          onPrevious={mediaIds.length > 1 ? () => preview.handleNavigatePreview('prev') : undefined}
+          hasNext={mediaIds.length > 1}
+          hasPrevious={mediaIds.length > 1}
+          position={position}
         />
       )}
-
-      <DeleteConfirmationDialog
-        open={isDeleteDialogOpen}
-        onClose={handleCloseDeleteDialog}
-        onConfirm={handleDeleteConfirm}
-        selectedCount={selectedIds.length}
-      />
     </div>
   );
 };

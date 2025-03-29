@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/hooks/use-language';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,65 +10,49 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 
 interface DeleteConfirmationDialogProps {
   open: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
+  selectedIds: string[];
   onConfirm: () => void;
-  selectedCount: number;
-  selectedIds?: string[]; // Added optional prop
-  onOpenChange?: (open: boolean) => void; // Added to match interface
-  onCancel?: () => void; // Added optional prop
-  isPending?: boolean; // Added optional prop
+  onCancel: () => void;
+  isPending: boolean;
 }
 
 const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   open,
-  onClose,
-  onConfirm,
-  selectedCount,
   onOpenChange,
+  selectedIds,
+  onConfirm,
   onCancel,
-  isPending,
+  isPending
 }) => {
-  // Use onOpenChange if provided, otherwise fallback to onClose
-  const handleOpenChange = (newOpenState: boolean) => {
-    if (onOpenChange) {
-      onOpenChange(newOpenState);
-    } else if (!newOpenState) {
-      onClose();
-    }
-  };
-
-  // Use onCancel if provided, otherwise fallback to onClose
-  const handleCancel = () => {
-    if (onCancel) {
-      onCancel();
-    } else {
-      onClose();
-    }
-  };
-
+  const { t } = useLanguage();
+  
   return (
-    <AlertDialog open={open} onOpenChange={handleOpenChange}>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Supprimer {selectedCount} élément{selectedCount > 1 ? 's' : ''}
+            {t('delete_confirmation_title')}
           </AlertDialogTitle>
           <AlertDialogDescription>
             Cette action déplacera les éléments sélectionnés dans la corbeille située dans le cache de l'application CFM.
+            {selectedIds.length > 1 && ` (${selectedIds.length} items)`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancel}>Annuler</AlertDialogCancel>
+          <AlertDialogCancel onClick={onCancel} disabled={isPending}>
+            {t('cancel')}
+          </AlertDialogCancel>
           <AlertDialogAction 
-            onClick={onConfirm} 
-            className="bg-destructive hover:bg-destructive/90"
+            onClick={onConfirm}
             disabled={isPending}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Supprimer
+            {isPending ? t('deleting') : t('delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -1,58 +1,76 @@
 
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/use-toast';
 import { deleteImages } from '@/api/imageApi';
+import { useMutation } from '@tanstack/react-query';
 
-export const useGalleryActions = (
-  directory: 'source' | 'destination',
-  selectedIds: string[],
-  clearSelection: () => void,
-  refetchMediaIds: () => void
-) => {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const handleOpenDeleteDialog = () => {
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleCloseDeleteDialog = () => {
-    setIsDeleteDialogOpen(false);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (selectedIds.length === 0) {
-      toast.error('Aucun élément sélectionné');
-      handleCloseDeleteDialog();
-      return;
-    }
-
-    try {
-      console.log(`Deleting ${selectedIds.length} items from ${directory} directory`);
-      console.log('Selected IDs:', selectedIds);
+export function useGalleryActions(
+  selectedIdsLeft: string[],
+  selectedIdsRight: string[],
+  activeSide: 'left' | 'right',
+  setDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>,
+  setSelectedIdsLeft: React.Dispatch<React.SetStateAction<string[]>>,
+  setSelectedIdsRight: React.Dispatch<React.SetStateAction<string[]>>
+) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: ({ ids, directory }: { ids: string[], directory: 'source' | 'destination' }) => 
+      deleteImages(ids, directory),
+    onSuccess: (_, { directory }) => {
+      const activeSelectedIds = directory === 'source' ? selectedIdsLeft : selectedIdsRight;
+      toast({
+        title: `${activeSelectedIds.length} ${activeSelectedIds.length === 1 ? 'media' : 'media files'} deleted`,
+        description: "The selected media files have been moved to the trash.",
+      });
       
-      // Ensure we're sending the correct directory parameter and selectedIds
-      await deleteImages(directory, selectedIds);
+      if (directory === 'source') {
+        setSelectedIdsLeft([]);
+      } else {
+        setSelectedIdsRight([]);
+      }
+      setDeleteDialogOpen(false);
       
-      toast.success(`${selectedIds.length} élément${selectedIds.length > 1 ? 's' : ''} supprimé${selectedIds.length > 1 ? 's' : ''}`);
-      clearSelection();
-      refetchMediaIds();
-    } catch (error) {
-      console.error('Error deleting images:', error);
-      toast.error('Erreur lors de la suppression des éléments');
-    } finally {
-      handleCloseDeleteDialog();
+      // Invalidate only the affected directory's query
+      queryClient.invalidateQueries({ queryKey: ['mediaIds', directory] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting media files",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+      setDeleteDialogOpen(false);
+    }
+  });
+  
+  // Action handlers
+  const handleRefresh = () => {
+    toast({
+      title: "Refreshing media",
+      description: "Fetching the latest media files..."
+    });
+    queryClient.invalidateQueries({ queryKey: ['mediaIds'] });
+  };
+  
+  const handleDeleteSelected = (side: 'left' | 'right') => {
+    setDeleteDialogOpen(true);
+  };
+  
+  const handleDelete = () => {
+    if (activeSide === 'left' && selectedIdsLeft.length > 0) {
+      deleteMutation.mutate({ ids: selectedIdsLeft, directory: 'source' });
+    } else if (activeSide === 'right' && selectedIdsRight.length > 0) {
+      deleteMutation.mutate({ ids: selectedIdsRight, directory: 'destination' });
     }
   };
-
+  
   return {
-    isDeleteDialogOpen,
-    handleOpenDeleteDialog,
-    handleCloseDeleteDialog,
-    handleDeleteConfirm,
+    deleteMutation,
+    handleRefresh,
+    handleDeleteSelected,
+    handleDelete
   };
-};
-
-// Helper function to determine if an array contains elements
-export const hasSelectedItems = (selectedIds: string[]): boolean => {
-  return selectedIds && selectedIds.length > 0;
-};
+}
