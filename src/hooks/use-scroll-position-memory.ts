@@ -49,13 +49,15 @@ export function useScrollPositionMemory() {
     scrollData: Omit<ScrollPositionData, 'timestamp'>
   ) => {
     const key = getScrollKey(galleryId, directoryId, filter);
-    setScrollPositionsMap(prev => ({
-      ...prev,
+    // Créer un nouvel objet au lieu d'utiliser une fonction de mise à jour
+    const newPositionsMap: ScrollPositionsMap = { 
+      ...scrollPositionsMap,
       [key]: {
         ...scrollData,
         timestamp: Date.now() // Ajouter un timestamp pour d'éventuelles expirations futures
       }
-    }));
+    };
+    setScrollPositionsMap(newPositionsMap);
   };
 
   /**
