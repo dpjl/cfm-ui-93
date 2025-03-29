@@ -1,7 +1,6 @@
 
 import React, { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Video } from 'lucide-react';
 import DateDisplay from './media/DateDisplay';
 
@@ -57,10 +56,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
   
   // Direct handler for clicking on the card
   const handleCardClick = (e: React.MouseEvent) => {
-    // If we're not clicking on the checkbox, proceed with selection
-    if (!(e.target as HTMLElement).closest('.image-checkbox')) {
-      onSelect(e.shiftKey);
-    }
+    onSelect(e.shiftKey);
   }
   
   return (
@@ -111,21 +107,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
       <DateDisplay dateString={createdAt} showDate={showDates} />
 
       <div className="image-overlay" />
-      <div className="image-checkbox" onClick={(e) => e.stopPropagation()}>
-        <Checkbox 
-          checked={selected}
-          className={cn(
-            "h-5 w-5 border-2",
-            selected ? "border-primary bg-primary" : "border-white bg-white/20",
-            "transition-all duration-200 ease-out",
-            !loaded && "opacity-0"
-          )}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(e.shiftKey);
-          }}
-        />
-      </div>
     </div>
   );
 };

@@ -49,98 +49,100 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
   // Multi-selection mode with more than 1 item
   const isMultiSelection = selectedIds.length > 1;
 
-  const cardClassNames = `p-3 rounded-lg shadow-lg border border-border ${isMobile 
-    ? 'bg-background/95 backdrop-blur-sm max-w-[170px] max-h-[200px] overflow-auto' 
-    : 'bg-background/95 backdrop-blur-sm max-w-xs'}`;
-
   return (
-    <Card className={cardClassNames}>
-      <div className="flex justify-between items-center mb-2">
-        <h3 className={`${isMobile ? 'text-sm' : 'text-lg'} font-medium flex items-center gap-1`}>
-          {isMultiSelection ? (
-            <>Selected <span className="font-bold">{selectedIds.length}</span> items</>
-          ) : (
-            <>Media Info</>
-          )}
-        </h3>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onClose} 
-          className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'}`}
-          aria-label="Close panel"
-        >
-          <X size={isMobile ? 14 : 16} />
-        </Button>
-      </div>
-      
-      <ScrollArea className={`${isMobile ? 'max-h-[120px]' : ''}`}>
-        {isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
+    <div className="w-full p-1 max-w-full">
+      <Card className="w-full bg-background/95 backdrop-blur-sm shadow-lg border border-border p-2 rounded-lg max-w-full">
+        <div className="flex justify-between items-center mb-1">
+          <h3 className="text-sm font-medium flex items-center gap-1">
+            {isMultiSelection ? (
+              <>Selected <span className="font-bold">{selectedIds.length}</span> items</>
+            ) : (
+              <>Media Info</>
+            )}
+          </h3>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClose} 
+            className="h-6 w-6"
+            aria-label="Close panel"
+          >
+            <X size={14} />
+          </Button>
+        </div>
         
-        {error && <p className="text-sm text-destructive">Failed to load media info</p>}
-        
-        {displayInfo && !isMultiSelection && (
-          <div className="space-y-1.5">
-            <div>
-              <span className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-muted-foreground block`}>Filename</span>
-              <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate block`}>{displayInfo.alt}</span>
-            </div>
-            
-            {displayInfo.createdAt && (
+        <ScrollArea className="max-h-[120px] w-full">
+          {isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
+          
+          {error && <p className="text-sm text-destructive">Failed to load media info</p>}
+          
+          {displayInfo && !isMultiSelection && (
+            <div className="space-y-1.5 w-full">
+              <div className="w-full">
+                <span className="text-[10px] text-muted-foreground block">Filename</span>
+                <div className="overflow-x-auto">
+                  <span className="text-xs whitespace-nowrap block">{displayInfo.alt}</span>
+                </div>
+              </div>
+              
+              {displayInfo.createdAt && (
+                <div>
+                  <span className="text-[10px] text-muted-foreground block">Created</span>
+                  <div className="overflow-x-auto">
+                    <span className="text-xs whitespace-nowrap">
+                      {new Date(displayInfo.createdAt).toLocaleDateString()} 
+                      <span className="text-muted-foreground ml-1">
+                        ({formatDistanceToNow(new Date(displayInfo.createdAt), { addSuffix: true })})
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              )}
+              
               <div>
-                <span className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-muted-foreground block`}>Created</span>
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>
-                  {new Date(displayInfo.createdAt).toLocaleDateString()} 
-                  <span className="text-muted-foreground ml-1">
-                    ({formatDistanceToNow(new Date(displayInfo.createdAt), { addSuffix: true })})
-                  </span>
+                <span className="text-[10px] text-muted-foreground block">Type</span>
+                <span className="text-xs">
+                  {displayInfo.alt?.toLowerCase().endsWith('.mp4') || 
+                  displayInfo.alt?.toLowerCase().endsWith('.mov') 
+                    ? 'Video' 
+                    : 'Image'}
                 </span>
               </div>
-            )}
-            
-            <div>
-              <span className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-muted-foreground block`}>Type</span>
-              <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>
-                {displayInfo.alt?.toLowerCase().endsWith('.mp4') || 
-                displayInfo.alt?.toLowerCase().endsWith('.mov') 
-                  ? 'Video' 
-                  : 'Image'}
-              </span>
             </div>
-          </div>
-        )}
-      </ScrollArea>
-      
-      <div className={`flex space-x-1 mt-3 ${isMobile ? 'justify-center' : ''}`}>
-        <Button 
-          variant="outline" 
-          size={isMobile ? "icon" : "sm"}
-          onClick={() => onOpenPreview(displayId)}
-          className={isMobile ? "h-7 w-7" : ""}
-          title="Preview"
-        >
-          {isMobile ? <Eye size={16} /> : <><Eye size={16} /><span>Preview</span></>}
-        </Button>
-        <Button 
-          variant="outline" 
-          size={isMobile ? "icon" : "sm"}
-          onClick={onDeleteSelected}
-          className={isMobile ? "h-7 w-7" : ""}
-          title="Delete"
-        >
-          {isMobile ? <Trash size={16} /> : <><Trash size={16} /><span>Delete</span></>}
-        </Button>
-        <Button 
-          variant="outline" 
-          size={isMobile ? "icon" : "sm"}
-          onClick={() => onDownloadSelected(selectedIds)}
-          className={isMobile ? "h-7 w-7" : ""}
-          title="Download"
-        >
-          {isMobile ? <Download size={16} /> : <><Download size={16} /><span>Download</span></>}
-        </Button>
-      </div>
-    </Card>
+          )}
+        </ScrollArea>
+        
+        <div className="flex space-x-1 mt-2 justify-center">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => onOpenPreview(displayId)}
+            className="h-7 w-7"
+            title="Preview"
+          >
+            <Eye size={16} />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={onDeleteSelected}
+            className="h-7 w-7"
+            title="Delete"
+          >
+            <Trash size={16} />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => onDownloadSelected(selectedIds)}
+            className="h-7 w-7"
+            title="Download"
+          >
+            <Download size={16} />
+          </Button>
+        </div>
+      </Card>
+    </div>
   );
 };
 

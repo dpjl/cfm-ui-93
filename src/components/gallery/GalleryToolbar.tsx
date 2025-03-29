@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '../ui/button';
 import { SelectionMode } from '../../hooks/use-gallery-selection';
 import { useMediaQuery } from '../../hooks/use-media-query';
-import { CheckSquare, Square, Menu, PanelsLeftRight, PanelLeft, PanelRight, Settings } from 'lucide-react';
+import { CheckSquare, Square, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 
@@ -34,8 +34,9 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
 }) => {
   const isMobile = useIsMobile();
   
-  // Define the sidebar icon based on position
-  const SidebarIcon = position === 'source' ? PanelLeft : PanelRight;
+  // Définir l'icône du bouton sidebar selon la position (gauche/droite)
+  const SidebarIcon = position === 'source' ? ChevronLeft : ChevronRight;
+  const SidebarLabel = position === 'source' ? 'Options Left' : 'Options Right';
 
   return (
     <div className="flex items-center justify-between space-x-2 py-2">
@@ -125,11 +126,21 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
                   onClick={onToggleSidebar}
                   className="h-8 w-8 ml-1"
                 >
-                  <SidebarIcon size={isMobile ? 18 : 20} />
+                  {position === 'source' ? (
+                    <div className="flex items-center justify-center">
+                      <ChevronLeft size={isMobile ? 16 : 18} className="text-muted-foreground" />
+                      <Settings size={isMobile ? 14 : 16} className="ml-[-4px]" />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center">
+                      <Settings size={isMobile ? 14 : 16} className="mr-[-4px]" />
+                      <ChevronRight size={isMobile ? 16 : 18} className="text-muted-foreground" />
+                    </div>
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>Toggle Sidebar</p>
+                <p>{SidebarLabel}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

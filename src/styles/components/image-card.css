@@ -42,11 +42,6 @@
     @apply opacity-100;
   }
   
-  .image-card .image-checkbox {
-    @apply absolute z-10;
-    transition: opacity 0.2s ease-out, transform 0.1s ease-out;
-  }
-  
   /* Special style for selection state change to prevent flickering */
   .image-card[data-selection-changing="true"] {
     transition: none !important;
