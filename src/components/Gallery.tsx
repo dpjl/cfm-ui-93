@@ -59,6 +59,8 @@ const Gallery: React.FC<GalleryProps> = ({
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const selection = useGallerySelection({
     mediaIds,
@@ -82,6 +84,36 @@ const Gallery: React.FC<GalleryProps> = ({
       newMap.set(id, info);
       return newMap;
     });
+  }, []);
+
+  // Handle scroll events for the pull tabs
+  useEffect(() => {
+    const galleryElement = containerRef.current?.querySelector('.gallery-scrollbar');
+    
+    if (!galleryElement) return;
+    
+    const handleScroll = () => {
+      setIsScrolling(true);
+      
+      // Clear previous timeout if exists
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      
+      // Set timeout to hide pull tabs after scrolling stops
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsScrolling(false);
+      }, 1000);
+    };
+    
+    galleryElement.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      galleryElement.removeEventListener('scroll', handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
   }, []);
 
   const shouldShowInfoPanel = selectedIds.length > 0;
@@ -131,11 +163,11 @@ const Gallery: React.FC<GalleryProps> = ({
         onToggleSelectionMode={selection.toggleSelectionMode}
       />
       
-      <div className="flex-1 overflow-hidden relative gallery-scrollbar">
+      <div className={`flex-1 overflow-hidden relative gallery-scrollbar ${isScrolling ? 'scrolling' : ''}`}>
         {isMobile && (
           <>
-            <div className="scrollbar-pull-indicator top"></div>
-            <div className="scrollbar-pull-indicator bottom"></div>
+            <div className={`scrollbar-pull-tab top ${isScrolling ? '' : 'faded'}`} />
+            <div className={`scrollbar-pull-tab bottom ${isScrolling ? '' : 'faded'}`} />
           </>
         )}
         

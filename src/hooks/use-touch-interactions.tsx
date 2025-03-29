@@ -10,6 +10,7 @@ export function useTouchInteractions({ id, onSelect }: UseTouchInteractionsProps
   const [touchStartPoint, setTouchStartPoint] = useState<{x: number, y: number} | null>(null);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const touchMoveCount = useRef(0);
+  const verticalMoveDistance = useRef(0);
   
   // Clean up the timer when component unmounts or when the id changes
   useEffect(() => {
@@ -25,6 +26,7 @@ export function useTouchInteractions({ id, onSelect }: UseTouchInteractionsProps
     const touch = e.touches[0];
     setTouchStartPoint({x: touch.clientX, y: touch.clientY});
     touchMoveCount.current = 0;
+    verticalMoveDistance.current = 0;
     
     // Start the long press timer
     const timer = setTimeout(() => {
@@ -44,15 +46,25 @@ export function useTouchInteractions({ id, onSelect }: UseTouchInteractionsProps
   }, [id, onSelect]);
   
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStartPoint) return;
+    
+    // Get current touch position
+    const touch = e.touches[0];
+    const currentY = touch.clientY;
+    
+    // Calculate vertical movement distance
+    const yDiff = Math.abs(currentY - touchStartPoint.y);
+    verticalMoveDistance.current = yDiff;
+    
     // Increment the movement counter
     touchMoveCount.current += 1;
     
     // Cancel long press if user moves too much
-    if (touchMoveCount.current > 10 && longPressTimer) {
+    if ((touchMoveCount.current > 10 || yDiff > 20) && longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
-  }, [longPressTimer]);
+  }, [longPressTimer, touchStartPoint]);
   
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     // Cancel the timer when touch ends
@@ -61,8 +73,9 @@ export function useTouchInteractions({ id, onSelect }: UseTouchInteractionsProps
       setLongPressTimer(null);
     }
     
-    // If minimal movement, treat as a simple tap
-    if (touchMoveCount.current < 10) {
+    // Only treat as tap if minimal movement AND minimal vertical scroll distance
+    // This is the key change to prevent selection during scrolling
+    if (touchMoveCount.current < 10 && verticalMoveDistance.current < 15) {
       e.preventDefault();
       e.stopPropagation();
       onSelect(id, false);
@@ -70,6 +83,7 @@ export function useTouchInteractions({ id, onSelect }: UseTouchInteractionsProps
     
     // Reset for next interaction
     setTouchStartPoint(null);
+    verticalMoveDistance.current = 0;
   }, [longPressTimer, id, onSelect]);
   
   return {
