@@ -1,5 +1,5 @@
 
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useEffect } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -49,7 +49,8 @@ const VirtualizedGalleryGrid = memo(({
     gridRef,
     gridKey,
     handleScroll,
-    handleResize
+    handleResize,
+    prepareViewModeChange
   } = useGalleryGrid({
     galleryId,
     directoryId: directory,
@@ -61,6 +62,14 @@ const VirtualizedGalleryGrid = memo(({
   
   // Use hook for tracking media changes to optimize rendering
   useGalleryMediaTracking(mediaIds, gridRef);
+  
+  // Sauvegarder explicitement la position avant un changement de vue
+  useEffect(() => {
+    return () => {
+      // Cette fonction sera appelée avant un changement de vue
+      prepareViewModeChange();
+    };
+  }, [viewMode, prepareViewModeChange]);
   
   // Calculate the number of rows based on media and columns
   const rowCount = calculateRowCount(mediaIds.length, columnsCount);

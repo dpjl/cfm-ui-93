@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import VirtualizedGalleryGrid from './VirtualizedGalleryGrid';
@@ -52,6 +53,15 @@ const Gallery: React.FC<GalleryProps> = ({
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
+  const previousViewMode = useRef(viewMode);
+  
+  // Détecter les changements de mode de vue
+  React.useEffect(() => {
+    if (previousViewMode.current !== viewMode) {
+      console.log(`Mode de vue changé: ${previousViewMode.current} -> ${viewMode}`);
+      previousViewMode.current = viewMode;
+    }
+  }, [viewMode]);
   
   const selection = useGallerySelection({
     mediaIds,

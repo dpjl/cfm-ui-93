@@ -1,10 +1,11 @@
 
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 // Définition du type pour stocker les informations de défilement de manière contextuelle
 export interface ScrollPositionData {
   scrollTop: number;
+  scrollRatio?: number; // Nouvelle propriété: ratio de défilement pour une meilleure adaptabilité
   firstVisibleItemId: string | null;
   firstVisibleRowIndex: number;
   columnsCount: number;
@@ -30,52 +31,67 @@ export function useScrollPositionMemory() {
 
   /**
    * Génère une clé unique pour identifier un contexte de défilement spécifique
+   * Inclut maintenant le viewMode dans la clé pour une meilleure séparation
    */
-  const getScrollKey = (
-    galleryId: 'left' | 'right',
-    directoryId: string,
-    filter: string = 'all'
-  ): string => {
-    return `${galleryId}-${directoryId}-${filter}`;
-  };
+  const getScrollKey = useCallback(
+    (
+      galleryId: 'left' | 'right',
+      directoryId: string,
+      filter: string = 'all',
+      viewMode: 'single' | 'split' = 'single'
+    ): string => {
+      return `${galleryId}-${directoryId}-${filter}-${viewMode}`;
+    },
+    []
+  );
 
   /**
    * Sauvegarde la position de défilement pour un contexte spécifique
    */
-  const saveScrollPosition = (
-    galleryId: 'left' | 'right',
-    directoryId: string,
-    filter: string = 'all',
-    scrollData: Omit<ScrollPositionData, 'timestamp'>
-  ) => {
-    const key = getScrollKey(galleryId, directoryId, filter);
-    // Créer un nouvel objet au lieu d'utiliser une fonction de mise à jour
-    const newPositionsMap: ScrollPositionsMap = { 
-      ...scrollPositionsMap,
-      [key]: {
-        ...scrollData,
-        timestamp: Date.now() // Ajouter un timestamp pour d'éventuelles expirations futures
-      }
-    };
-    setScrollPositionsMap(newPositionsMap);
-  };
+  const saveScrollPosition = useCallback(
+    (
+      galleryId: 'left' | 'right',
+      directoryId: string,
+      filter: string = 'all',
+      viewMode: 'single' | 'split',
+      scrollData: Omit<ScrollPositionData, 'timestamp'>
+    ) => {
+      if (!directoryId) return; // Ne pas sauvegarder si pas de répertoire
+      
+      const key = getScrollKey(galleryId, directoryId, filter, viewMode);
+      const newPositionsMap: ScrollPositionsMap = { 
+        ...scrollPositionsMap,
+        [key]: {
+          ...scrollData,
+          timestamp: Date.now() // Ajouter un timestamp pour d'éventuelles expirations futures
+        }
+      };
+      setScrollPositionsMap(newPositionsMap);
+    },
+    [scrollPositionsMap, getScrollKey, setScrollPositionsMap]
+  );
 
   /**
    * Récupère la position de défilement pour un contexte spécifique
    */
-  const getScrollPosition = (
-    galleryId: 'left' | 'right',
-    directoryId: string,
-    filter: string = 'all'
-  ): ScrollPositionData | null => {
-    const key = getScrollKey(galleryId, directoryId, filter);
-    return scrollPositionsMap[key] || null;
-  };
+  const getScrollPosition = useCallback(
+    (
+      galleryId: 'left' | 'right',
+      directoryId: string,
+      filter: string = 'all',
+      viewMode: 'single' | 'split' = 'single'
+    ): ScrollPositionData | null => {
+      if (!directoryId) return null;
+      const key = getScrollKey(galleryId, directoryId, filter, viewMode);
+      return scrollPositionsMap[key] || null;
+    },
+    [scrollPositionsMap, getScrollKey]
+  );
 
   /**
    * Nettoie les positions de défilement anciennes (plus de 7 jours)
    */
-  const cleanupOldPositions = () => {
+  const cleanupOldPositions = useCallback(() => {
     const now = Date.now();
     const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
     
@@ -90,15 +106,16 @@ export function useScrollPositionMemory() {
     });
     
     setScrollPositionsMap(newPositions);
-  };
+  }, [scrollPositionsMap, setScrollPositionsMap]);
 
   // Nettoyer les anciennes positions au chargement
   React.useEffect(() => {
     cleanupOldPositions();
-  }, []);
+  }, [cleanupOldPositions]);
 
   return {
     saveScrollPosition,
-    getScrollPosition
+    getScrollPosition,
+    cleanupOldPositions
   };
 }
