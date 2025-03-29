@@ -33,7 +33,7 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
             Delete {selectedCount} {selectedCount === 1 ? 'image' : 'images'}?
           </AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground">
-            This action cannot be undone. This will permanently delete the selected images from their respective directories.
+            Cette action déplacera les éléments sélectionnés dans la corbeille située dans le cache de l'application CFM.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="mt-4">

@@ -17,22 +17,24 @@ export function useGalleryActions(
   
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: deleteImages,
-    onSuccess: () => {
-      const activeSelectedIds = activeSide === 'left' ? selectedIdsLeft : selectedIdsRight;
+    mutationFn: ({ ids, directory }: { ids: string[], directory: 'source' | 'destination' }) => 
+      deleteImages(ids, directory),
+    onSuccess: (_, { directory }) => {
+      const activeSelectedIds = directory === 'source' ? selectedIdsLeft : selectedIdsRight;
       toast({
         title: `${activeSelectedIds.length} ${activeSelectedIds.length === 1 ? 'media' : 'media files'} deleted`,
-        description: "The selected media files have been removed successfully.",
+        description: "The selected media files have been moved to the trash.",
       });
       
-      if (activeSide === 'left') {
+      if (directory === 'source') {
         setSelectedIdsLeft([]);
       } else {
         setSelectedIdsRight([]);
       }
       setDeleteDialogOpen(false);
       
-      queryClient.invalidateQueries({ queryKey: ['mediaIds'] });
+      // Invalidate only the affected directory's query
+      queryClient.invalidateQueries({ queryKey: ['mediaIds', directory] });
     },
     onError: (error) => {
       toast({
@@ -58,10 +60,10 @@ export function useGalleryActions(
   };
   
   const handleDelete = () => {
-    if (selectedIdsLeft.length > 0) {
-      handleDeleteSelected('left');
-    } else if (selectedIdsRight.length > 0) {
-      handleDeleteSelected('right');
+    if (activeSide === 'left' && selectedIdsLeft.length > 0) {
+      deleteMutation.mutate({ ids: selectedIdsLeft, directory: 'source' });
+    } else if (activeSide === 'right' && selectedIdsRight.length > 0) {
+      deleteMutation.mutate({ ids: selectedIdsRight, directory: 'destination' });
     }
   };
   

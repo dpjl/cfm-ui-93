@@ -71,7 +71,7 @@ const PageHeader = memo(({
                 disabled={isDeletionPending}
                 className={isMobile ? "px-2" : ""}
               >
-                <Trash2 className={isMobile ? "h-3 w-3 mr-1" : "h-4 w-4"} />
+                <Trash2 className={isMobile ? "h-3 w-3 mr-1 text-red-500" : "h-4 w-4 text-red-500"} />
                 {isMobile && `${t('delete')} (${selectedCount})`}
               </Button>
             </TooltipTrigger>

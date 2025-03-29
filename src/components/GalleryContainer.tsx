@@ -95,7 +95,10 @@ const GalleryContainer: React.FC<GalleryContainerProps> = ({
   
   // Handle confirming deletion
   const handleConfirmDelete = () => {
-    deleteMutation.mutate(selectedIds);
+    deleteMutation.mutate({ 
+      ids: selectedIds, 
+      directory: apiPosition 
+    });
   };
 
   // Create extra controls for the header

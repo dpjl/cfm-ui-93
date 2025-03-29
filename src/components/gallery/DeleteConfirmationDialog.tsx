@@ -39,9 +39,8 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
             {t('delete_confirmation_title')}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {selectedIds.length > 1 
-              ? `${t('delete_confirmation_description')} (${selectedIds.length} items)`
-              : t('delete_confirmation_description')}
+            Cette action déplacera les éléments sélectionnés dans la corbeille située dans le cache de l'application CFM.
+            {selectedIds.length > 1 && ` (${selectedIds.length} items)`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

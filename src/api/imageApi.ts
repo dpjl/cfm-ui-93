@@ -267,8 +267,8 @@ export function getMediaUrl(id: string, position: 'source' | 'destination'): str
   return `${API_BASE_URL}/media?id=${encodeURIComponent(id)}&directory=${encodeURIComponent(position)}`;
 }
 
-export async function deleteImages(imageIds: string[]): Promise<{ success: boolean, message: string }> {
-  const url = `${API_BASE_URL}/images`;
+export async function deleteImages(imageIds: string[], directory: 'source' | 'destination'): Promise<{ success: boolean, message: string }> {
+  const url = `${API_BASE_URL}/images?directory=${encodeURIComponent(directory)}`;
   console.log("Deleting images at:", url, "IDs:", imageIds);
   
   try {
