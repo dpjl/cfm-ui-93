@@ -1,18 +1,23 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-interface UseTouchInteractionsProps {
+interface UseMediaInteractionsProps {
   id: string;
   onSelect: (id: string, extendSelection: boolean) => void;
 }
 
-export function useTouchInteractions({ id, onSelect }: UseTouchInteractionsProps) {
+/**
+ * Hook unifié qui gère tous les types d'interactions utilisateur pour les éléments médias
+ * (tactile, clavier, souris)
+ */
+export function useMediaInteractions({ id, onSelect }: UseMediaInteractionsProps) {
+  // État pour les interactions tactiles
   const [touchStartPoint, setTouchStartPoint] = useState<{x: number, y: number} | null>(null);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const touchMoveCount = useRef(0);
   const verticalMoveDistance = useRef(0);
   
-  // Clean up the timer when component unmounts or when the id changes
+  // Nettoyage du timer
   useEffect(() => {
     return () => {
       if (longPressTimer) {
@@ -21,72 +26,91 @@ export function useTouchInteractions({ id, onSelect }: UseTouchInteractionsProps
     };
   }, [id, longPressTimer]);
   
+  // Gestionnaire de clic souris
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
+  }, [id, onSelect]);
+  
+  // Gestionnaire d'appui sur les touches
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
+    }
+  }, [id, onSelect]);
+  
+  // Gestionnaire de début de toucher
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    // Store the starting touch point
+    // Enregistrer le point de départ
     const touch = e.touches[0];
     setTouchStartPoint({x: touch.clientX, y: touch.clientY});
     touchMoveCount.current = 0;
     verticalMoveDistance.current = 0;
     
-    // Start the long press timer
+    // Démarrer le timer d'appui long
     const timer = setTimeout(() => {
-      // If the user hasn't moved much, consider it a long press
+      // Si l'utilisateur n'a pas beaucoup bougé, considérer comme un appui long
       if (touchMoveCount.current < 10) {
-        // Simulate Ctrl+click for multi-selection
+        // Simuler Ctrl+clic pour la multi-sélection
         onSelect(id, true);
         
-        // Provide haptic feedback on supported devices
+        // Retour haptique sur les appareils compatibles
         if (navigator.vibrate) {
           navigator.vibrate(50);
         }
       }
-    }, 500); // 500ms for long press
+    }, 500); // 500ms pour un appui long
     
     setLongPressTimer(timer);
   }, [id, onSelect]);
   
+  // Gestionnaire de mouvement de toucher
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!touchStartPoint) return;
     
-    // Get current touch position
+    // Obtenir la position actuelle
     const touch = e.touches[0];
     const currentY = touch.clientY;
     
-    // Calculate vertical movement distance
+    // Calculer la distance de mouvement vertical
     const yDiff = Math.abs(currentY - touchStartPoint.y);
     verticalMoveDistance.current = yDiff;
     
-    // Increment the movement counter
+    // Incrémenter le compteur de mouvements
     touchMoveCount.current += 1;
     
-    // Cancel long press if user moves too much
+    // Annuler l'appui long si l'utilisateur bouge trop
     if ((touchMoveCount.current > 10 || yDiff > 20) && longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
   }, [longPressTimer, touchStartPoint]);
   
+  // Gestionnaire de fin de toucher
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    // Cancel the timer when touch ends
+    // Annuler le timer à la fin du toucher
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
     
-    // Only treat as tap if minimal movement AND minimal vertical scroll distance
-    // This is the key change to prevent selection during scrolling
+    // Traiter comme un tap uniquement si mouvement minimal ET distance de défilement vertical minimale
     if (touchMoveCount.current < 10 && verticalMoveDistance.current < 15) {
       e.preventDefault();
       e.stopPropagation();
       onSelect(id, false);
     }
     
-    // Reset for next interaction
+    // Réinitialiser pour la prochaine interaction
     setTouchStartPoint(null);
     verticalMoveDistance.current = 0;
   }, [longPressTimer, id, onSelect]);
   
   return {
+    handleClick,
+    handleKeyDown,
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd
