@@ -6,6 +6,7 @@ import { DetailedMediaInfo } from '@/api/imageApi';
 import { useGalleryGrid } from '@/hooks/use-gallery-grid';
 import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 import GalleryGridCell from './GalleryGridCell';
+import { useGridCalculations } from '@/hooks/use-grid-calculations';
 
 interface VirtualizedGalleryGridProps {
   mediaIds: string[];
@@ -28,7 +29,7 @@ const VirtualizedGalleryGrid = memo(({
   updateMediaInfo,
   position = 'source'
 }: VirtualizedGalleryGridProps) => {
-  // Utiliser notre hook personnalisé pour la gestion de la grille
+  // Use our custom hook for grid management
   const {
     gridRef,
     gridKey,
@@ -37,18 +38,18 @@ const VirtualizedGalleryGrid = memo(({
     refreshGrid
   } = useGalleryGrid();
   
-  // Utiliser notre hook pour suivre les changements de médias
+  // Use our hook for tracking media changes
   useGalleryMediaTracking(mediaIds, gridRef);
   
-  // Calculer le nombre de lignes en fonction des médias et des colonnes
+  // Calculate the number of rows based on media and columns
   const rowCount = Math.ceil(mediaIds.length / columnsCount);
   
-  // Mémoriser le callback de sélection
+  // Memorize the selection callback
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
     onSelectId(id, extendSelection);
   }, [onSelectId]);
   
-  // Mémoriser les données des éléments pour éviter les rendus inutiles
+  // Memorize item data to prevent unnecessary renders
   const itemData = React.useMemo(() => ({
     mediaIds,
     selectedIds,
@@ -64,21 +65,26 @@ const VirtualizedGalleryGrid = memo(({
     <div className="w-full h-full p-2 gallery-container">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // Calculer la taille des éléments en fonction de la largeur disponible
+          // Use our new hook for dimension calculations
           const gap = 8;
-          const cellWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
-          const cellHeight = cellWidth + (showDates ? 40 : 0);
+          const { itemWidth, itemHeight, calculateCellStyle } = useGridCalculations(width, columnsCount, gap, showDates);
+          
+          // Update itemData with the cell style calculation function
+          const enhancedItemData = { 
+            ...itemData, 
+            calculateCellStyle 
+          };
           
           return (
             <FixedSizeGrid
               ref={gridRef}
               columnCount={columnsCount}
-              columnWidth={cellWidth}
+              columnWidth={itemWidth + gap / columnsCount}
               height={height}
               rowCount={rowCount}
-              rowHeight={cellHeight}
+              rowHeight={itemHeight + gap}
               width={width}
-              itemData={itemData}
+              itemData={enhancedItemData}
               overscanRowCount={5}
               overscanColumnCount={2}
               itemKey={({ columnIndex, rowIndex }) => {
@@ -100,7 +106,7 @@ const VirtualizedGalleryGrid = memo(({
   );
 });
 
-// Définir le nom d'affichage du composant pour le débogage
+// Set component display name for debugging
 VirtualizedGalleryGrid.displayName = 'VirtualizedGalleryGrid';
 
 export default VirtualizedGalleryGrid;

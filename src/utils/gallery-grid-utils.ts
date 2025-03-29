@@ -1,13 +1,19 @@
 
 /**
  * Utility functions for gallery grid calculations
+ * 
+ * Note: Consider using the useGridCalculations hook for React components
+ * as it provides memoized calculations and additional functionality.
  */
 
 /**
  * Calculate item width based on container width, column count, and gap
  */
 export function calculateItemWidth(containerWidth: number, columnsCount: number, gap: number = 8): number {
-  return Math.floor((containerWidth - (gap * (columnsCount - 1))) / columnsCount);
+  // Calculate the total gap width
+  const totalGapWidth = gap * (columnsCount - 1);
+  // Calculate item width by dividing the remaining space
+  return Math.floor((containerWidth - totalGapWidth) / columnsCount);
 }
 
 /**
@@ -37,4 +43,20 @@ export function calculateItemIndex(rowIndex: number, columnIndex: number, column
 export function itemExistsAtIndex(rowIndex: number, columnIndex: number, columnsCount: number, totalItems: number): boolean {
   const index = calculateItemIndex(rowIndex, columnIndex, columnsCount);
   return index < totalItems;
+}
+
+/**
+ * Calculate cell style with proper gap adjustments
+ */
+export function calculateCellStyle(
+  originalStyle: React.CSSProperties,
+  isLastColumn: boolean,
+  gap: number
+): React.CSSProperties {
+  return {
+    ...originalStyle,
+    width: `${parseFloat(originalStyle.width as string) - gap}px`,
+    height: `${parseFloat(originalStyle.height as string) - gap}px`,
+    padding: 0,
+  };
 }

@@ -15,6 +15,7 @@ interface GalleryGridCellProps {
     position: 'source' | 'destination';
     columnsCount: number;
     gap: number;
+    calculateCellStyle?: (style: React.CSSProperties, isLastColumn: boolean) => React.CSSProperties;
   };
 }
 
@@ -26,14 +27,18 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
   
   const id = data.mediaIds[index];
   const isSelected = data.selectedIds.includes(id);
+  const isLastColumn = (columnIndex === data.columnsCount - 1);
   
   // Adjust style to account for gap
-  const adjustedStyle = {
-    ...style,
-    width: `${parseFloat(style.width as string) - data.gap}px`,
-    height: `${parseFloat(style.height as string) - data.gap}px`,
-    padding: 0,
-  };
+  // Use the provided calculation function if available, or fall back to the inline calculation
+  const adjustedStyle = data.calculateCellStyle 
+    ? data.calculateCellStyle(style, isLastColumn) 
+    : {
+        ...style,
+        width: `${parseFloat(style.width as string) - data.gap}px`,
+        height: `${parseFloat(style.height as string) - data.gap}px`,
+        padding: 0,
+      };
   
   return (
     <div style={adjustedStyle}>

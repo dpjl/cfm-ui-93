@@ -1,0 +1,78 @@
+
+import { useMemo } from 'react';
+
+/**
+ * Hook that provides centralized grid calculation utilities
+ */
+export function useGridCalculations(
+  containerWidth: number, 
+  columnsCount: number, 
+  gap: number = 8, 
+  showDates: boolean = false
+) {
+  /**
+   * Calculate item width based on container width, column count, and gap
+   */
+  const itemWidth = useMemo(() => {
+    // Calculate the total gap width (gaps between columns)
+    const totalGapWidth = gap * (columnsCount - 1);
+    // Calculate item width by dividing the remaining space after gaps
+    return Math.floor((containerWidth - totalGapWidth) / columnsCount);
+  }, [containerWidth, columnsCount, gap]);
+
+  /**
+   * Calculate item height, optionally accounting for date display
+   */
+  const itemHeight = useMemo(() => {
+    return itemWidth + (showDates ? 40 : 0);
+  }, [itemWidth, showDates]);
+
+  /**
+   * Calculate the number of rows needed based on item count and columns
+   */
+  const calculateRowCount = (itemCount: number): number => {
+    return Math.ceil(itemCount / columnsCount);
+  };
+
+  /**
+   * Calculate grid item index from row and column indices
+   */
+  const calculateItemIndex = (rowIndex: number, columnIndex: number): number => {
+    return rowIndex * columnsCount + columnIndex;
+  };
+
+  /**
+   * Check if an item exists at the given indices
+   */
+  const itemExistsAtIndex = (rowIndex: number, columnIndex: number, totalItems: number): boolean => {
+    const index = calculateItemIndex(rowIndex, columnIndex);
+    return index < totalItems;
+  };
+
+  /**
+   * Calculate cell style with gap considerations
+   */
+  const calculateCellStyle = (
+    originalStyle: React.CSSProperties, 
+    isLastColumn: boolean
+  ): React.CSSProperties => {
+    // Start with the original style
+    const adjustedStyle = { ...originalStyle };
+    
+    // Adjust width and height to account for gap
+    adjustedStyle.width = `${parseFloat(originalStyle.width as string) - gap}px`;
+    adjustedStyle.height = `${parseFloat(originalStyle.height as string) - gap}px`;
+    
+    return adjustedStyle;
+  };
+
+  return {
+    itemWidth,
+    itemHeight,
+    calculateRowCount,
+    calculateItemIndex,
+    itemExistsAtIndex,
+    calculateCellStyle,
+    gap
+  };
+}
