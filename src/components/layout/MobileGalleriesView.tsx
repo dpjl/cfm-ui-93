@@ -1,4 +1,3 @@
-
 import React from 'react';
 import GalleryContainer from '@/components/GalleryContainer';
 import { MobileViewMode } from '@/types/gallery';
@@ -137,15 +136,11 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   onToggleLeftPanel,
   onToggleRightPanel
 }) => {
-  // Fixed: When in left view, show LEFT panel toggle (not right)
-  // Fixed: When in right view, show RIGHT panel toggle (not left)
-  // Only show panel toggles for the galleries that are actually visible
   const showLeftPanelToggle = mobileViewMode === 'both' || mobileViewMode === 'left';
   const showRightPanelToggle = mobileViewMode === 'both' || mobileViewMode === 'right';
   
   return (
     <div className="fixed bottom-4 left-0 right-0 flex justify-center items-center gap-4 z-20">
-      {/* Use a placeholder div to maintain spacing when button is hidden */}
       {showLeftPanelToggle ? (
         <Button 
           variant="secondary" 
@@ -159,12 +154,12 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           </div>
         </Button>
       ) : (
-        <div className="h-10 w-10 opacity-0"></div> // Invisible placeholder to maintain layout
+        <div className="h-10 w-10 opacity-0"></div>
       )}
       
       <MobileViewSwitcher 
-        mobileViewMode={mobileViewMode}
-        setMobileViewMode={setMobileViewMode}
+        viewMode={mobileViewMode}
+        setViewMode={setMobileViewMode}
       />
       
       {showRightPanelToggle ? (
@@ -180,7 +175,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           </div>
         </Button>
       ) : (
-        <div className="h-10 w-10 opacity-0"></div> // Invisible placeholder to maintain layout
+        <div className="h-10 w-10 opacity-0"></div>
       )}
     </div>
   );

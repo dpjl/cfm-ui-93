@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '../ui/button';
 import { SelectionMode } from '../../hooks/use-gallery-selection';
 import { useMediaQuery } from '../../hooks/use-media-query';
-import { CheckSquare, Square, Menu, Panels, PanelLeft, PanelRight } from 'lucide-react';
+import { CheckSquare, Square, Menu, PanelsLeftRight, PanelLeft, PanelRight, Settings } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 
