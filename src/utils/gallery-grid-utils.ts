@@ -50,7 +50,6 @@ export function itemExistsAtIndex(rowIndex: number, columnIndex: number, columns
  */
 export function calculateCellStyle(
   originalStyle: React.CSSProperties,
-  isLastColumn: boolean,
   gap: number
 ): React.CSSProperties {
   return {

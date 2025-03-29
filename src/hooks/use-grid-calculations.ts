@@ -29,7 +29,6 @@ export function useGridCalculations(
 
   /**
    * Calculate cell style with gap considerations
-   * This is now properly memoized with all its dependencies
    */
   const calculateCellStyle = useMemo(() => {
     return (originalStyle: React.CSSProperties, isLastColumn: boolean): React.CSSProperties => {
@@ -44,28 +43,25 @@ export function useGridCalculations(
     };
   }, [gap]);
 
-  // These functions don't depend on hook state, so they're safe to include
-  // without useMemo as they won't cause render issues
-  const calculateRowCount = (itemCount: number): number => {
-    return Math.ceil(itemCount / columnsCount);
-  };
-
-  const calculateItemIndex = (rowIndex: number, columnIndex: number): number => {
-    return rowIndex * columnsCount + columnIndex;
-  };
-
-  const itemExistsAtIndex = (rowIndex: number, columnIndex: number, totalItems: number): boolean => {
-    const index = calculateItemIndex(rowIndex, columnIndex);
-    return index < totalItems;
-  };
-
   return {
     itemWidth,
     itemHeight,
-    calculateRowCount,
-    calculateItemIndex,
-    itemExistsAtIndex,
     calculateCellStyle,
     gap
   };
 }
+
+// These are pure functions that don't depend on React hooks
+// They can be called anywhere safely
+export const calculateRowCount = (itemCount: number, columnsCount: number): number => {
+  return Math.ceil(itemCount / columnsCount);
+};
+
+export const calculateItemIndex = (rowIndex: number, columnIndex: number, columnsCount: number): number => {
+  return rowIndex * columnsCount + columnIndex;
+};
+
+export const itemExistsAtIndex = (rowIndex: number, columnIndex: number, columnsCount: number, totalItems: number): boolean => {
+  const index = calculateItemIndex(rowIndex, columnIndex, columnsCount);
+  return index < totalItems;
+};

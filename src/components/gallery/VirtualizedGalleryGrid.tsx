@@ -6,7 +6,7 @@ import { DetailedMediaInfo } from '@/api/imageApi';
 import { useGalleryGrid } from '@/hooks/use-gallery-grid';
 import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 import GalleryGridCell from './GalleryGridCell';
-import { useGridCalculations } from '@/hooks/use-grid-calculations';
+import { useGridCalculations, calculateRowCount } from '@/hooks/use-grid-calculations';
 
 interface VirtualizedGalleryGridProps {
   mediaIds: string[];
@@ -41,7 +41,7 @@ const VirtualizedGalleryGrid = memo(({
   useGalleryMediaTracking(mediaIds, gridRef);
   
   // Calculate the number of rows based on media and columns
-  const rowCount = Math.ceil(mediaIds.length / columnsCount);
+  const rowCount = calculateRowCount(mediaIds.length, columnsCount);
   
   // Define gap here to ensure it's consistently used
   const gap = 8;
@@ -67,24 +67,35 @@ const VirtualizedGalleryGrid = memo(({
     <div className="w-full h-full p-2 gallery-container">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // IMPORTANT: We're using calculations from the hook but not calling the hook here
-          // as that would violate React's rules of hooks
-          const { itemWidth, itemHeight, calculateCellStyle } = useGridCalculations(width, columnsCount, gap, showDates);
+          // Pre-calculate values that will be used in the grid rendering
+          // but do NOT call hooks here
+          const totalGapWidth = gap * (columnsCount - 1);
+          const calculatedItemWidth = Math.floor((width - totalGapWidth) / columnsCount);
+          const calculatedItemHeight = calculatedItemWidth + (showDates ? 40 : 0);
+          
+          // Create the cell style calculation function without using useMemo
+          const cellStyleCalculator = (originalStyle: React.CSSProperties) => {
+            return {
+              ...originalStyle,
+              width: `${parseFloat(originalStyle.width as string) - gap}px`,
+              height: `${parseFloat(originalStyle.height as string) - gap}px`,
+            };
+          };
           
           // Update itemData with the cell style calculation function
           const enhancedItemData = {
             ...itemData,
-            calculateCellStyle
+            calculateCellStyle: cellStyleCalculator
           };
           
           return (
             <FixedSizeGrid
               ref={gridRef}
               columnCount={columnsCount}
-              columnWidth={itemWidth + gap / columnsCount}
+              columnWidth={calculatedItemWidth + gap / columnsCount}
               height={height}
               rowCount={rowCount}
-              rowHeight={itemHeight + gap}
+              rowHeight={calculatedItemHeight + gap}
               width={width}
               itemData={enhancedItemData}
               overscanRowCount={5}

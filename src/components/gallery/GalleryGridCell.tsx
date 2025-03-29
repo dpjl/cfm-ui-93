@@ -15,7 +15,7 @@ interface GalleryGridCellProps {
     position: 'source' | 'destination';
     columnsCount: number;
     gap: number;
-    calculateCellStyle: (style: React.CSSProperties, isLastColumn: boolean) => React.CSSProperties;
+    calculateCellStyle: (style: React.CSSProperties) => React.CSSProperties;
   };
 }
 
@@ -27,10 +27,9 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
   
   const id = data.mediaIds[index];
   const isSelected = data.selectedIds.includes(id);
-  const isLastColumn = (columnIndex === data.columnsCount - 1);
   
   // Use the provided calculation function which is now guaranteed to exist
-  const adjustedStyle = data.calculateCellStyle(style, isLastColumn);
+  const adjustedStyle = data.calculateCellStyle(style);
   
   return (
     <div style={adjustedStyle}>
