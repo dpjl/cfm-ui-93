@@ -34,7 +34,7 @@ const Gallery: React.FC<GalleryProps> = ({ directory, title }) => {
   } = useSelectionState();
   
   // Simplified selection management
-  const isSelecting = selectedIds.length > 0;
+  const isSelected = selectedIds.length > 0;
   
   const clearSelection = () => setSelectedIds([]);
   
@@ -83,7 +83,7 @@ const Gallery: React.FC<GalleryProps> = ({ directory, title }) => {
         position={directory}
       />
 
-      {isSelecting && (
+      {isSelected && (
         <GallerySelectionBar
           selectedCount={selectedIds.length}
           onDeselectAll={clearSelection}

@@ -16,7 +16,7 @@ export const useGalleryMediaHandler = (
       // For a single file, trigger direct download
       if (ids.length === 1) {
         const a = document.createElement('a');
-        a.href = getMediaUrl(ids[0], position);
+        a.href = getMediaUrl(ids[0]);
         a.download = `media-${ids[0]}`;
         document.body.appendChild(a);
         a.click();

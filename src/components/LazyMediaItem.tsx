@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, memo, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useIntersectionObserver } from '@/hooks/use-intersection-observer';
 import { useMediaInfo } from '@/hooks/use-media-info';
-import { getThumbnailUrl } from '@/api/imageApi';
+import { getMediaThumbnailUrl } from '@/api/imageApi';
 import MediaItemRenderer from './media/MediaItemRenderer';
 import { useMediaCache } from '@/hooks/use-media-cache';
 import { useTouchInteractions } from '@/hooks/use-touch-interactions';
@@ -16,7 +15,7 @@ interface LazyMediaItemProps {
   selected: boolean;
   onSelect: (id: string, extendSelection: boolean) => void;
   index: number;
-  showDates?: boolean; // Added the missing prop
+  showDates?: boolean;
   updateMediaInfo?: (id: string, info: any) => void;
   position: 'source' | 'destination';
 }
@@ -26,24 +25,21 @@ const LazyMediaItem = memo(({
   selected,
   onSelect,
   index,
-  showDates = false, // Added default value
+  showDates = false,
   updateMediaInfo,
   position
 }: LazyMediaItemProps) => {
   const [loaded, setLoaded] = useState(false);
   const itemRef = useRef<HTMLDivElement>(null);
   
-  // Observer l'intersection pour le chargement paresseux
   const { elementRef, isIntersecting } = useIntersectionObserver<HTMLDivElement>({ 
     threshold: 0.1, 
     freezeOnceVisible: true 
   });
   
-  // Utiliser le cache pour les miniatures
   const { getCachedThumbnailUrl, setCachedThumbnailUrl } = useMediaCache();
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   
-  // Hooks pour les interactions tactiles et clavier
   const { handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchInteractions({
     id,
     onSelect,
@@ -54,21 +50,17 @@ const LazyMediaItem = memo(({
     onSelect,
   });
   
-  // Référence combinée pour l'élément
   const setCombinedRef = useCombinedRef<HTMLDivElement>(elementRef, itemRef);
   
-  // Charger les informations sur le média uniquement lorsque l'élément est visible
   const shouldLoadInfo = isIntersecting;
   const { mediaInfo, isLoading } = useMediaInfo(id, shouldLoadInfo, position);
   
-  // Gérer le clic sur l'élément
   const handleItemClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
   }, [id, onSelect]);
   
-  // Charger l'URL de la miniature, en utilisant le cache si disponible
   useEffect(() => {
     if (isIntersecting) {
       const cachedUrl = getCachedThumbnailUrl(id, position);
@@ -77,23 +69,20 @@ const LazyMediaItem = memo(({
         return;
       }
       
-      const url = getThumbnailUrl(id, position);
+      const url = getMediaThumbnailUrl(id);
       setThumbnailUrl(url);
       setCachedThumbnailUrl(id, position, url);
     }
   }, [id, isIntersecting, position, getCachedThumbnailUrl, setCachedThumbnailUrl]);
   
-  // Mettre à jour le composant parent avec les informations sur le média - UNE FOIS
   useEffect(() => {
     if (mediaInfo && updateMediaInfo) {
       updateMediaInfo(id, mediaInfo);
     }
   }, [id, mediaInfo, updateMediaInfo]);
   
-  // Déterminer s'il s'agit d'une vidéo en fonction de l'extension du fichier
   const isVideo = mediaInfo?.alt ? /\.(mp4|webm|ogg|mov)$/i.test(mediaInfo.alt) : false;
   
-  // Rendre uniquement un espace réservé lorsqu'il n'est pas visible
   if (!isIntersecting) {
     return <MediaPlaceholder ref={setCombinedRef} />;
   }
@@ -138,8 +127,7 @@ const LazyMediaItem = memo(({
   );
 });
 
-// Définir le nom d'affichage pour le débogage
 LazyMediaItem.displayName = 'LazyMediaItem';
 
 export default LazyMediaItem;
-export type { LazyMediaItemProps }; // Export the props interface for better typing
+export type { LazyMediaItemProps };

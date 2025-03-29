@@ -1,7 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { DetailedMediaInfo } from '@/api/imageApi';
+import { DetailedMediaInfo } from '@/types/api';
 import { useGalleryGrid } from '@/hooks/use-gallery-grid';
 import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 import GalleryGridCell from './GalleryGridCell';

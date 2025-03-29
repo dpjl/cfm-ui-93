@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-media-query';
 import { useQuery } from '@tanstack/react-query';
-import { fetchMediaIds, fetchMediaInfo } from '../api/imageApi';
+import { getMediaIds, getMediaInfo } from '@/api/imageApi';
 import type { MediaItem } from '../types/gallery';
 import GalleryGrid from './gallery/GalleryGrid';
 
@@ -25,7 +24,7 @@ const GalleryWrapper: React.FC<GalleryWrapperProps> = ({
   // Fetch media IDs
   const { data: mediaIds = [], isLoading: isLoadingIds, error: idsError } = useQuery({
     queryKey: ['mediaIds', position, currentDirectory, filter],
-    queryFn: () => fetchMediaIds(currentDirectory, position, filter),
+    queryFn: () => getMediaIds(currentDirectory, position, filter),
   });
 
   // Fetch media info for each ID (prefetch only visible ones)
@@ -34,7 +33,7 @@ const GalleryWrapper: React.FC<GalleryWrapperProps> = ({
     queryFn: async () => {
       // Limit to first 50 for initial load
       const idsToFetch = mediaIds.slice(0, 50);
-      const infoPromises = idsToFetch.map(id => fetchMediaInfo(id, position));
+      const infoPromises = idsToFetch.map(id => getMediaInfo(id));
       return Promise.all(infoPromises);
     },
     enabled: mediaIds.length > 0,

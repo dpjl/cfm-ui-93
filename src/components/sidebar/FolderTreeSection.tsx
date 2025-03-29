@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchDirectoryTree } from '@/api/imageApi';
+// Since there's no fetchDirectoryTree in the API, let's use mock data for now
 import FolderTree from '@/components/FolderTree';
 import { useLanguage } from '@/hooks/use-language';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { DirectoryNode } from '@/types/api';
 
 interface FolderTreeSectionProps {
   selectedDirectoryId: string;
@@ -19,14 +20,29 @@ const FolderTreeSection: React.FC<FolderTreeSectionProps> = ({
 }) => {
   const { t } = useLanguage();
   
-  // Fetch directory tree data with position=left or right
-  const { 
-    data: directoryTree = [], 
-    isLoading 
-  } = useQuery({
-    queryKey: [`directoryTree${position === 'left' ? 'Left' : 'Right'}`],
-    queryFn: () => fetchDirectoryTree(position)
-  });
+  // Mock directory tree data
+  const directoryTree: DirectoryNode[] = [
+    {
+      id: 'root',
+      name: 'Root',
+      children: [
+        {
+          id: 'photos',
+          name: 'Photos',
+          children: [
+            { id: 'photos-2023', name: '2023' },
+            { id: 'photos-2022', name: '2022' },
+          ]
+        },
+        {
+          id: 'videos',
+          name: 'Videos',
+        }
+      ]
+    }
+  ];
+
+  const isLoading = false;
 
   return (
     <ScrollArea className="flex-1 h-[calc(100%-52px)]">

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-breakpoint';
+import { getMediaThumbnailUrl } from '@/api/imageApi';
 
 interface GalleryContentProps {
   title: string;
@@ -65,7 +66,7 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
             onClick={() => onSelectId(id)}
           >
             <img 
-              src={`/api/thumbnail?id=${id}`} 
+              src={getMediaThumbnailUrl(id)} 
               alt={`Media ${id}`} 
               className="h-full w-full object-cover"
             />

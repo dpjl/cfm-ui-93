@@ -1,6 +1,5 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { DetailedMediaInfo } from '@/api/imageApi';
+import { DetailedMediaInfo } from '@/types/api';
 
 // Type for our cache
 interface MediaCache {
