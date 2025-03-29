@@ -34,7 +34,7 @@ const VirtualizedGalleryGrid = memo(({
   updateMediaInfo,
   position = 'source'
 }: VirtualizedGalleryGridProps) => {
-  // Use custom hook for grid management - always call hooks at the top level
+  // Always call hooks at the top level
   const {
     gridRef,
     gridKey,
@@ -49,6 +49,28 @@ const VirtualizedGalleryGrid = memo(({
   
   // Define gap consistently
   const gap = 8;
+
+  // Since useGridCalculations requires a containerWidth that we don't have yet,
+  // we'll use useMemo to create a function that can be called later with the width
+  const getGridDimensions = useMemo(() => {
+    return (containerWidth: number) => {
+      // Standard scrollbar width approximation
+      const scrollbarWidth = 17;
+      // Calculate available width accounting for scrollbar
+      const availableWidth = Math.max(containerWidth - scrollbarWidth - 2, 0); // 2px for micro-adjustments
+      
+      // Calculate item dimensions based on available width
+      const totalGapWidth = gap * (columnsCount - 1);
+      const itemWidth = Math.floor((availableWidth - totalGapWidth) / columnsCount);
+      const itemHeight = itemWidth + (showDates ? 40 : 0);
+      
+      return {
+        itemWidth, 
+        itemHeight,
+        adjustedWidth: availableWidth
+      };
+    };
+  }, [columnsCount, gap, showDates]);
   
   // Memoize the item data to prevent unnecessary renders
   const itemData = useMemo(() => ({
@@ -62,7 +84,6 @@ const VirtualizedGalleryGrid = memo(({
     gap,
     // Pass the cell style calculator function
     calculateCellStyle: (originalStyle: React.CSSProperties, columnIndex: number) => {
-      // Ensure all cells have uniform dimensions regardless of position
       return {
         ...originalStyle,
         width: `${parseFloat(originalStyle.width as string) - gap}px`,
@@ -72,35 +93,23 @@ const VirtualizedGalleryGrid = memo(({
         boxSizing: 'border-box' as 'border-box'
       };
     }
-  }), [mediaIds, selectedIds, onSelectId, showDates, updateMediaInfo, position, columnsCount]);
+  }), [mediaIds, selectedIds, onSelectId, showDates, updateMediaInfo, position, columnsCount, gap]);
   
   return (
     <div className="w-full h-full p-2 gallery-container" style={{ overflowX: 'hidden' }}>
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // Account for scrollbar width and container padding
-          const adjustedWidth = width - 2; // 2px for borders or micro-adjustments
-          
-          // We need to call useGridCalculations here unconditionally
-          const { itemWidth, itemHeight } = useGridCalculations(
-            adjustedWidth, 
-            columnsCount, 
-            gap, 
-            showDates
-          );
-          
-          // Calculate column width including gap
-          const columnWidth = itemWidth;
-          const rowHeight = itemHeight;
+          // Get dimensions using our memoized function
+          const { itemWidth, itemHeight, adjustedWidth } = getGridDimensions(width);
           
           return (
             <FixedSizeGrid
               ref={gridRef}
               columnCount={columnsCount}
-              columnWidth={columnWidth}
+              columnWidth={itemWidth}
               height={height}
               rowCount={rowCount}
-              rowHeight={rowHeight}
+              rowHeight={itemHeight}
               width={adjustedWidth}
               itemData={itemData}
               overscanRowCount={5}

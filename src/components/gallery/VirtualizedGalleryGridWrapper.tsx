@@ -1,5 +1,5 @@
 
-import React, { useCallback, useRef, useState, useEffect } from 'react';
+import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import type { MediaItem } from '../../types/gallery';
@@ -38,6 +38,13 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
     setKey(prevKey => prevKey + 1);
   }, [items.length, columnCount]);
 
+  // Create a memoized function to calculate item dimensions
+  const getItemSize = useMemo(() => {
+    return (width: number) => {
+      return Math.floor((width - (columnGap * (columnCount - 1))) / columnCount);
+    };
+  }, [columnCount, columnGap]);
+
   const cellRenderer = useCallback(({ columnIndex, rowIndex, style }: any) => {
     const index = rowIndex * columnCount + columnIndex;
     
@@ -56,11 +63,6 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
     
     return renderItem(items[index], adjustedStyle);
   }, [items, columnCount, columnGap, rowGap, renderItem]);
-
-  // Calculer les dimensions en tenant compte des espaces
-  const getItemSize = (width: number) => {
-    return Math.floor((width - (columnGap * (columnCount - 1))) / columnCount);
-  };
 
   return (
     <div className="w-full h-full">

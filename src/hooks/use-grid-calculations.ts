@@ -49,7 +49,7 @@ export function useGridCalculations(
       
       return adjustedStyle;
     };
-  }, [gap, columnsCount, gridParams.itemWidth, gridParams.itemHeight]);
+  }, [gap, gridParams.itemWidth, gridParams.itemHeight]);
 
   return {
     ...gridParams,
