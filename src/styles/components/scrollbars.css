@@ -16,57 +16,61 @@
   scrollbar-color: var(--primary-color-transparent) transparent;
 }
 
-/* Styles pour les ancres d'année */
-.year-anchors-container {
+/* Poignée de défilement visible */
+.scrollbar-handle {
   position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px 4px;
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 16px;
-  backdrop-filter: blur(4px);
-  transition: opacity 0.2s ease;
+  right: 0;
+  top: 0;
+  width: 8px;
+  border-radius: 4px;
+  background-color: rgba(128, 128, 128, 0.3);
+  z-index: 20;
+  transition: opacity 0.3s;
 }
 
-.year-anchor {
-  background-color: rgba(0, 0, 0, 0.6);
-  color: white;
-  padding: 6px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-  transition: transform 0.2s ease, background-color 0.2s ease;
-  text-align: center;
-  min-width: 60px;
-  user-select: none;
+.scrollbar-handle:hover {
+  background-color: rgba(128, 128, 128, 0.5);
 }
 
-.year-anchor:hover, .year-anchor:active {
-  transform: scale(1.1);
-  background-color: rgba(0, 0, 0, 0.75);
+/* Indicateur de défilement mobile */
+.scrollbar-pull-tab {
+  position: absolute;
+  width: 36px;
+  height: 5px;
+  background-color: rgba(128, 128, 128, 0.25);
+  border-radius: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: opacity 0.3s ease;
 }
 
-.year-anchor.current {
-  background-color: var(--primary-color, rgba(37, 99, 235, 0.8));
-  font-weight: bold;
+.scrollbar-pull-tab.top {
+  top: 4px;
+}
+
+.scrollbar-pull-tab.bottom {
+  bottom: 4px;
+}
+
+/* Afficher l'indicateur uniquement lors d'un défilement */
+.scrolling .scrollbar-pull-tab {
+  opacity: 1;
+}
+
+.scrollbar-pull-tab.faded {
+  opacity: 0;
 }
 
 /* Styles mobile */
 @media (max-width: 640px) {
-  .year-anchors-container {
-    right: 8px;
+  .scrollbar-pull-tab {
+    width: 40px;
+    height: 6px;
+    background-color: var(--primary-color-transparent, rgba(128, 128, 128, 0.5));
   }
   
-  .year-anchor {
-    font-size: 11px;
-    padding: 4px 8px;
-    min-width: 50px;
+  .dark .scrollbar-pull-tab {
+    background-color: rgba(200, 200, 200, 0.3);
   }
 }
 
@@ -78,7 +82,7 @@
     scroll-behavior: smooth;
   }
   
-  .year-anchor {
-    padding: 8px 12px;
+  .scrollbar-handle {
+    width: 10px;
   }
 }

@@ -53,24 +53,15 @@ const FILE_EXTENSIONS = [
   ".mp4", ".mov", ".avi", ".webm"
 ];
 
-// Fonction pour générer une date dans une plage de 15 ans
-function generateChronologicalDate(index: number, totalCount: number) {
-  // Calculer une date sur 15 ans, du plus ancien (il y a 15 ans) au plus récent (aujourd'hui)
+// Fonction pour générer une date aléatoire dans les 3 dernières années
+function randomDate() {
   const now = new Date();
-  const fifteenYearsAgo = new Date();
-  fifteenYearsAgo.setFullYear(now.getFullYear() - 15);
+  const threeYearsAgo = new Date();
+  threeYearsAgo.setFullYear(now.getFullYear() - 3);
   
-  // Calculer la position relative de cet index dans la plage totale
-  const position = index / totalCount;
-  
-  // Calculer la date en fonction de la position (plus l'index est élevé, plus la date est récente)
-  const timestamp = fifteenYearsAgo.getTime() + position * (now.getTime() - fifteenYearsAgo.getTime());
-  
-  // Ajouter une petite variation aléatoire pour que les dates ne soient pas parfaitement équidistantes
-  const randomVariation = Math.random() * 1000 * 60 * 60 * 24 * 15; // variation de ±15 jours max
-  const finalTimestamp = timestamp + (randomVariation - 1000 * 60 * 60 * 24 * 7.5);
-  
-  return new Date(finalTimestamp).toISOString();
+  return new Date(
+    threeYearsAgo.getTime() + Math.random() * (now.getTime() - threeYearsAgo.getTime())
+  ).toISOString();
 }
 
 // Fonction pour générer une taille de fichier aléatoire entre 500KB et 20MB
@@ -201,10 +192,6 @@ export async function fetchMediaInfo(id: string, position: 'source' | 'destinati
   } catch (error) {
     console.error(`Error fetching media info for ID ${id}:`, error);
     
-    // Extract a number from the ID to create stable dates
-    const idNum = parseInt(id.replace(/\D/g, '')) || 0;
-    const totalMockCount = 220; // Approximate total count used in fetchMediaIds
-    
     // Déterminer si c'est une image ou une vidéo basé sur l'ID
     const isVideo = id.includes('vid-');
     
@@ -219,16 +206,12 @@ export async function fetchMediaInfo(id: string, position: 'source' | 'destinati
     // Générer un chemin de fichier réaliste
     const basePath = `/media/${position === 'source' ? 'source' : 'destination'}`;
     const subFolder = isVideo ? 'videos' : 'photos';
-    
-    // Generate chronological date based on ID
-    const createdAt = generateChronologicalDate(idNum % totalMockCount, totalMockCount);
-    const date = new Date(createdAt);
-    const yearFolder = `${date.getFullYear()}`;
-    const monthFolder = `${date.getMonth() + 1}`.padStart(2, '0');
+    const yearFolder = `${2021 + Math.floor(Math.random() * 3)}`;
+    const monthFolder = `${Math.floor(Math.random() * 12) + 1}`.padStart(2, '0');
     
     const mockInfo: DetailedMediaInfo = { 
       alt: fileName,
-      createdAt: createdAt,
+      createdAt: randomDate(),
       name: fileName,
       path: `${basePath}/${subFolder}/${yearFolder}/${monthFolder}/${fileName}`,
       size: randomFileSize(),
