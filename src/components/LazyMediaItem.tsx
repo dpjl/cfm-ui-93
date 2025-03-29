@@ -1,12 +1,13 @@
 
-import React, { useState, useEffect, memo, useRef } from 'react';
+import React, { useState, useEffect, memo, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useIntersectionObserver } from '@/hooks/use-intersection-observer';
 import { useMediaInfo } from '@/hooks/use-media-info';
 import { getThumbnailUrl } from '@/api/imageApi';
 import MediaItemRenderer from './media/MediaItemRenderer';
 import { useMediaCache } from '@/hooks/use-media-cache';
-import { useMediaInteractions } from '@/hooks/use-media-interactions';
+import { useTouchInteractions } from '@/hooks/use-touch-interactions';
+import { useKeyboardInteractions } from '@/hooks/use-keyboard-interactions';
 import { useCombinedRef } from '@/hooks/use-combined-ref';
 import MediaPlaceholder from './media/MediaPlaceholder';
 
@@ -15,7 +16,7 @@ interface LazyMediaItemProps {
   selected: boolean;
   onSelect: (id: string, extendSelection: boolean) => void;
   index: number;
-  showDates?: boolean;
+  showDates?: boolean; // Added the missing prop
   updateMediaInfo?: (id: string, info: any) => void;
   position: 'source' | 'destination';
 }
@@ -25,7 +26,7 @@ const LazyMediaItem = memo(({
   selected,
   onSelect,
   index,
-  showDates = false,
+  showDates = false, // Added default value
   updateMediaInfo,
   position
 }: LazyMediaItemProps) => {
@@ -42,14 +43,13 @@ const LazyMediaItem = memo(({
   const { getCachedThumbnailUrl, setCachedThumbnailUrl } = useMediaCache();
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   
-  // Utiliser notre hook d'interactions unifié pour gérer les clics, touches et interactions tactiles
-  const { 
-    handleClick, 
-    handleKeyDown, 
-    handleTouchStart, 
-    handleTouchMove, 
-    handleTouchEnd 
-  } = useMediaInteractions({
+  // Hooks pour les interactions tactiles et clavier
+  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchInteractions({
+    id,
+    onSelect,
+  });
+  
+  const { handleKeyDown } = useKeyboardInteractions({
     id,
     onSelect,
   });
@@ -60,6 +60,13 @@ const LazyMediaItem = memo(({
   // Charger les informations sur le média uniquement lorsque l'élément est visible
   const shouldLoadInfo = isIntersecting;
   const { mediaInfo, isLoading } = useMediaInfo(id, shouldLoadInfo, position);
+  
+  // Gérer le clic sur l'élément
+  const handleItemClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
+  }, [id, onSelect]);
   
   // Charger l'URL de la miniature, en utilisant le cache si disponible
   useEffect(() => {
@@ -76,7 +83,7 @@ const LazyMediaItem = memo(({
     }
   }, [id, isIntersecting, position, getCachedThumbnailUrl, setCachedThumbnailUrl]);
   
-  // Mettre à jour le composant parent avec les informations sur le média
+  // Mettre à jour le composant parent avec les informations sur le média - UNE FOIS
   useEffect(() => {
     if (mediaInfo && updateMediaInfo) {
       updateMediaInfo(id, mediaInfo);
@@ -99,7 +106,7 @@ const LazyMediaItem = memo(({
         "aspect-square cursor-pointer", 
         selected && "selected",
       )}
-      onClick={handleClick}
+      onClick={handleItemClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -135,4 +142,4 @@ const LazyMediaItem = memo(({
 LazyMediaItem.displayName = 'LazyMediaItem';
 
 export default LazyMediaItem;
-export type { LazyMediaItemProps };
+export type { LazyMediaItemProps }; // Export the props interface for better typing

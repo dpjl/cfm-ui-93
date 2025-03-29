@@ -1,6 +1,6 @@
-
-import { useCallback, useState } from 'react';
-import { SelectionMode } from '@/types/gallery';
+import { useCallback } from 'react';
+import { useSelectionState, SelectionMode } from './use-selection-state';
+import { useSelectionHandlers } from './use-selection-handlers';
 
 interface UseGallerySelectionProps {
   mediaIds: string[];
@@ -10,97 +10,110 @@ interface UseGallerySelectionProps {
 }
 
 /**
- * Hook simplifié pour la gestion de la sélection dans la galerie
- * Utilise une approche de délégation vers le parent plutôt que de gérer l'état en interne
+ * Refactored hook to manage gallery selection with improved structure
  */
 export function useGallerySelection({
   mediaIds,
   selectedIds,
   onSelectId,
-  initialSelectionMode = 'multiple'
+  initialSelectionMode = 'single'
 }: UseGallerySelectionProps) {
-  const [selectionMode, setSelectionMode] = useState<SelectionMode>(initialSelectionMode);
-  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
-  
-  // Fonction de sélection d'un élément avec support Shift pour sélection multiple
+  // Create a selection handler that interfaces with the parent component
+  const handleSelectChange = useCallback((id: string) => {
+    onSelectId(id);
+  }, [onSelectId]);
+
+  // Use selection state from refactored hook
+  const {
+    lastSelectedId,
+    setLastSelectedId,
+    selectionMode,
+    toggleSelectionMode
+  } = useSelectionState(initialSelectionMode);
+
+  // Use selection handlers from refactored hook
+  const {
+    handleSelectItem: baseHandleSelectItem,
+    handleSelectAll,
+    handleDeselectAll,
+    preventResetRef
+  } = useSelectionHandlers({
+    mediaIds,
+    selectedIds,
+    setSelectedIds: () => {}, // We don't manage the state here, but in the parent
+    lastSelectedId,
+    setLastSelectedId,
+    selectionMode
+  });
+
+  // Create a wrapped handler that calls onSelectId for each selection change
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
     if (extendSelection && lastSelectedId && selectionMode === 'multiple') {
-      // Pour la sélection de plage avec la touche Shift
+      // For range selection with shift key
       const lastIndex = mediaIds.indexOf(lastSelectedId);
       const currentIndex = mediaIds.indexOf(id);
       
       if (lastIndex !== -1 && currentIndex !== -1) {
-        // Définir la plage de sélection
         const start = Math.min(lastIndex, currentIndex);
         const end = Math.max(lastIndex, currentIndex);
         const idsToSelect = mediaIds.slice(start, end + 1);
         
-        // Sélectionner tous les éléments de la plage
+        // Call onSelectId for each id in the range that needs its selection toggled
         idsToSelect.forEach(mediaId => {
           if (!selectedIds.includes(mediaId)) {
-            onSelectId(mediaId);
+            handleSelectChange(mediaId);
           }
         });
       }
     } else if (selectionMode === 'single') {
-      // Mode sélection unique
+      // For single selection mode
       if (selectedIds.includes(id)) {
-        // Désélectionner si déjà sélectionné
-        onSelectId(id);
+        // Deselect the item
+        handleSelectChange(id);
       } else {
-        // Sinon désélectionner tous les autres et sélectionner celui-ci
+        // Deselect all others first
         selectedIds.forEach(selectedId => {
           if (selectedId !== id) {
-            onSelectId(selectedId);
+            handleSelectChange(selectedId);
           }
         });
-        onSelectId(id);
+        // Then select the new item
+        handleSelectChange(id);
       }
     } else {
-      // Si plusieurs éléments sont déjà sélectionnés, ou si on clique sur un élément déjà sélectionné
-      onSelectId(id);
+      // For multiple selection mode (toggle)
+      handleSelectChange(id);
     }
     
-    // Garder une trace du dernier élément sélectionné pour la fonctionnalité Shift
+    // Keep track of last selected for shift functionality
     setLastSelectedId(id);
-  }, [mediaIds, selectedIds, onSelectId, lastSelectedId, selectionMode]);
+  }, [mediaIds, selectedIds, selectionMode, lastSelectedId, setLastSelectedId, handleSelectChange]);
 
-  // Sélectionner tous les médias
-  const handleSelectAll = useCallback(() => {
-    // Limiter pour des raisons de performance
+  // Wrap selectAll to call onSelectId for each new selection
+  const wrappedSelectAll = useCallback(() => {
     if (mediaIds.length > 100) {
-      console.warn("Trop d'éléments à sélectionner (>100)");
+      console.warn("Too many items to select (>100)");
       return;
     }
     
-    // Sélectionner tous les médias
     mediaIds.forEach(id => {
       if (!selectedIds.includes(id)) {
-        onSelectId(id);
+        handleSelectChange(id);
       }
     });
-  }, [mediaIds, selectedIds, onSelectId]);
+  }, [mediaIds, selectedIds, handleSelectChange]);
 
-  // Désélectionner tous les médias
-  const handleDeselectAll = useCallback(() => {
-    // Désélectionner tous les médias
-    selectedIds.forEach(id => onSelectId(id));
-  }, [selectedIds, onSelectId]);
-
-  // Basculer entre les modes de sélection
-  const toggleSelectionMode = useCallback(() => {
-    // Effacer la sélection lors du basculement des modes
-    if (selectedIds.length > 0) {
-      handleDeselectAll();
-    }
-    setSelectionMode(prev => prev === 'single' ? 'multiple' : 'single');
-  }, [selectedIds, handleDeselectAll]);
+  // Wrap deselectAll to call onSelectId for each deselection
+  const wrappedDeselectAll = useCallback(() => {
+    selectedIds.forEach(id => handleSelectChange(id));
+  }, [selectedIds, handleSelectChange]);
 
   return {
-    handleSelectItem,
-    handleSelectAll,
-    handleDeselectAll,
     selectionMode,
-    toggleSelectionMode
+    handleSelectItem,
+    handleSelectAll: wrappedSelectAll,
+    handleDeselectAll: wrappedDeselectAll,
+    toggleSelectionMode,
+    preventResetRef
   };
 }

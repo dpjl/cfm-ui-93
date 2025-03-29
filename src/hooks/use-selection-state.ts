@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
 
 export type SelectionMode = 'single' | 'multiple';
 
 /**
- * Hook simplifié pour gérer l'état de sélection
+ * Hook to manage selection state
  */
 export function useSelectionState(initialSelectionMode: SelectionMode = 'single') {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -15,8 +14,8 @@ export function useSelectionState(initialSelectionMode: SelectionMode = 'single'
     setSelectionMode(prev => {
       const newMode = prev === 'single' ? 'multiple' : 'single';
       
-      // Lorsqu'on passe du mode multiple à simple avec plusieurs sélections,
-      // ne conserver que le dernier élément sélectionné
+      // When switching from multiple to single with more than one selection,
+      // keep only the last selected item
       if (prev === 'multiple' && selectedIds.length > 1) {
         const lastId = lastSelectedId || selectedIds[selectedIds.length - 1];
         setSelectedIds(lastId ? [lastId] : []);

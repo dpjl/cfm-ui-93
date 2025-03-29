@@ -1,41 +1,44 @@
 
 /**
- * Utilitaires simplifiés pour les calculs de grille de galerie
+ * Utility functions for gallery grid calculations
+ * 
+ * Note: Consider using the useGridCalculations hook for React components
+ * as it provides memoized calculations and additional functionality.
  */
 
 /**
- * Calcule la largeur d'un élément en fonction de la largeur du conteneur, du nombre de colonnes et de l'espacement
+ * Calculate item width based on container width, column count, and gap
  */
 export function calculateItemWidth(containerWidth: number, columnsCount: number, gap: number = 8): number {
-  // Calculer la largeur totale des espaces
+  // Calculate the total gap width
   const totalGapWidth = gap * (columnsCount - 1);
-  // Calculer la largeur des éléments en divisant l'espace restant
+  // Calculate item width by dividing the remaining space
   return Math.floor((containerWidth - totalGapWidth) / columnsCount);
 }
 
 /**
- * Calcule la hauteur d'un élément en fonction de sa largeur et de l'affichage des dates
+ * Calculate item height, optionally accounting for date display
  */
 export function calculateItemHeight(itemWidth: number, showDates: boolean = false): number {
   return itemWidth + (showDates ? 40 : 0);
 }
 
 /**
- * Calcule le nombre de lignes nécessaires en fonction du nombre d'éléments et de colonnes
+ * Calculate the number of rows needed based on item count and columns
  */
 export function calculateRowCount(itemCount: number, columnsCount: number): number {
   return Math.ceil(itemCount / columnsCount);
 }
 
 /**
- * Calcule l'index d'un élément à partir des indices de ligne et de colonne
+ * Calculate grid item index from row and column indices
  */
 export function calculateItemIndex(rowIndex: number, columnIndex: number, columnsCount: number): number {
   return rowIndex * columnsCount + columnIndex;
 }
 
 /**
- * Vérifie si un élément existe à un index donné
+ * Check if an item exists at the given indices
  */
 export function itemExistsAtIndex(rowIndex: number, columnIndex: number, columnsCount: number, totalItems: number): boolean {
   const index = calculateItemIndex(rowIndex, columnIndex, columnsCount);
@@ -43,7 +46,7 @@ export function itemExistsAtIndex(rowIndex: number, columnIndex: number, columns
 }
 
 /**
- * Calcule le style de cellule avec les ajustements d'espacement appropriés
+ * Calculate cell style with proper gap adjustments
  */
 export function calculateCellStyle(
   originalStyle: React.CSSProperties,
