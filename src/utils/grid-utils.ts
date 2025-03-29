@@ -9,9 +9,9 @@
  */
 export function calculateItemWidth(containerWidth: number, columnsCount: number, gap: number = 8): number {
   // Calculate the total gap width
-  const totalGapWidth = gap * columnsCount;
-  // Calculate item width with more precision
-  return Math.floor((containerWidth - totalGapWidth) / columnsCount) + gap;
+  const totalGapWidth = gap * (columnsCount - 1);
+  // Calculate item width with more precision (using Math.ceil to avoid empty space)
+  return Math.floor((containerWidth - totalGapWidth) / columnsCount);
 }
 
 /**
@@ -53,27 +53,32 @@ export function calculateGridParameters(
   gap: number = 8,
   showDates: boolean = false
 ) {
-  // Ensure we're working with a valid container width
-  const availableWidth = Math.max(containerWidth, columnsCount * gap);
+  // Calculate total available width for items (account for right scrollbar)
+  const availableWidth = containerWidth - 2; // Subtract scrollbar width approximation
   
-  // Calculate item width ensuring equal distribution
-  const itemWidth = Math.floor((availableWidth - (columnsCount * gap)) / columnsCount) + gap;
+  // Calculate the total gap width
+  const totalGapWidth = gap * (columnsCount - 1);
   
-  // Make sure width is at least the gap size to avoid negative values
-  const safeItemWidth = Math.max(itemWidth, gap);
+  // Calculate item width with more precision
+  const rawItemWidth = (availableWidth - totalGapWidth) / columnsCount;
+  const itemWidth = Math.floor(rawItemWidth);
+  
+  // Calculate effective total width (to avoid cumulative errors)
+  const effectiveGridWidth = (itemWidth * columnsCount) + totalGapWidth;
+  
+  // Calculate leftover space that needs to be distributed
+  const leftoverSpace = availableWidth - effectiveGridWidth;
   
   // Calculate item height based on width
-  const itemHeight = calculateItemHeight(safeItemWidth, showDates);
-  
-  // Calculate effective total width to ensure full coverage
-  const effectiveGridWidth = (safeItemWidth * columnsCount);
-  
+  const itemHeight = calculateItemHeight(itemWidth, showDates);
+
   return {
-    itemWidth: safeItemWidth,
+    itemWidth,
     itemHeight,
     gap,
+    leftoverSpace,
     effectiveGridWidth,
-    containerWidth: availableWidth,
+    containerWidth,
     columnsCount
   };
 }
@@ -90,10 +95,8 @@ export function calculateCellStyle(
 ): React.CSSProperties {
   return {
     ...originalStyle,
-    width: `${parseFloat(originalStyle.width as string)}px`,
-    height: `${parseFloat(originalStyle.height as string)}px`,
-    paddingRight: gap,
-    paddingBottom: gap,
-    boxSizing: 'border-box',
+    width: `${parseFloat(originalStyle.width as string) - (isLastColumn ? 0 : gap)}px`,
+    height: `${parseFloat(originalStyle.height as string) - (isLastRow ? 0 : gap)}px`,
+    padding: 0,
   };
 }
