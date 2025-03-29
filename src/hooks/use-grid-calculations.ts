@@ -29,6 +29,7 @@ export function useGridCalculations(
 
   /**
    * Calculate cell style with gap considerations
+   * This is now properly memoized with all its dependencies
    */
   const calculateCellStyle = useMemo(() => {
     return (originalStyle: React.CSSProperties, isLastColumn: boolean): React.CSSProperties => {

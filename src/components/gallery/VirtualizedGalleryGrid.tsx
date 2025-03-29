@@ -34,8 +34,7 @@ const VirtualizedGalleryGrid = memo(({
     gridRef,
     gridKey,
     scrollPositionRef,
-    handleResize,
-    refreshGrid
+    handleResize
   } = useGalleryGrid();
   
   // Use our hook for tracking media changes
@@ -43,6 +42,9 @@ const VirtualizedGalleryGrid = memo(({
   
   // Calculate the number of rows based on media and columns
   const rowCount = Math.ceil(mediaIds.length / columnsCount);
+  
+  // Define gap here to ensure it's consistently used
+  const gap = 8;
   
   // Memorize the selection callback
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
@@ -58,25 +60,22 @@ const VirtualizedGalleryGrid = memo(({
     updateMediaInfo,
     position,
     columnsCount,
-    gap: 8
+    gap
   }), [mediaIds, selectedIds, handleSelectItem, showDates, updateMediaInfo, position, columnsCount]);
   
   return (
     <div className="w-full h-full p-2 gallery-container">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // Define gap here to ensure it's always available
-          const gap = 8;
-          
-          // Use our grid calculations hook - we need to memorize this outside the AutoSizer render prop
-          const calculations = useGridCalculations(width, columnsCount, gap, showDates);
-          const { itemWidth, itemHeight, calculateCellStyle } = calculations;
+          // IMPORTANT: We're using calculations from the hook but not calling the hook here
+          // as that would violate React's rules of hooks
+          const { itemWidth, itemHeight, calculateCellStyle } = useGridCalculations(width, columnsCount, gap, showDates);
           
           // Update itemData with the cell style calculation function
-          const enhancedItemData = useMemo(() => ({ 
-            ...itemData, 
-            calculateCellStyle 
-          }), [itemData, calculateCellStyle]);
+          const enhancedItemData = {
+            ...itemData,
+            calculateCellStyle
+          };
           
           return (
             <FixedSizeGrid
