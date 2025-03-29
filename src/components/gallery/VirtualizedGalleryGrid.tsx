@@ -93,12 +93,10 @@ const VirtualizedGalleryGrid = memo(({
     <div className="w-full h-full p-2 gallery-container">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // Calculate item size based on container width
-          // Important: Use fixed cell width for consistent gallery sizing
+          // Calculate item size based on available width
           const gap = 8;
-          const totalGapWidth = gap * (columnsCount - 1);
-          const availableWidth = width - totalGapWidth;
-          const cellWidth = Math.floor(availableWidth / columnsCount);
+          // Use fixed cell width to ensure consistent gallery sizing
+          const cellWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
           const cellHeight = cellWidth + (showDates ? 40 : 0); // Add space for date display if needed
           
           return (

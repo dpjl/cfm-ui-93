@@ -11,6 +11,7 @@ export function useCombinedRef<T>(elementRef: RefType<T>, localRef: React.RefObj
       if (typeof elementRef === 'function') {
         (elementRef as React.RefCallback<T>)(node);
       } else if (elementRef && 'current' in elementRef) {
+        // Vérifier si la propriété current est en lecture seule
         try {
           (elementRef as React.MutableRefObject<T | null>).current = node;
         } catch (error) {

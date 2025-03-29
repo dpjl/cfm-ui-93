@@ -8,8 +8,9 @@ export function useGalleryMediaTracking(
   gridRef: React.RefObject<FixedSizeGrid>
 ) {
   const prevMediaIdsRef = useRef<string[]>([]);
+  const prevSelectedIdsRef = useRef<string[]>([]);
   
-  // Détecter les changements importants dans les médias et réinitialiser la grille seulement dans ce cas
+  // Détecter les changements importants dans les médias
   useEffect(() => {
     const prevMediaIds = prevMediaIdsRef.current;
     
@@ -25,12 +26,15 @@ export function useGalleryMediaTracking(
         // Faire remonter la grille vers le haut
         gridRef.current.scrollTo({ scrollTop: 0 });
       }
-    } else {
-      // Mettre à jour la référence même sans changement significatif
-      prevMediaIdsRef.current = [...mediaIds];
     }
   }, [mediaIds, gridRef]);
   
-  // Ne pas réagir aux changements de sélection pour éviter les resets inutiles
-  // Les changements de sélection sont gérés dans le useGallerySelection
+  // Optimisation pour les changements de sélection
+  useEffect(() => {
+    // Ne pas réagir aux changements de sélection pour l'instant, car cela cause des resets
+    // Nous gérons déjà cela dans useGallerySelection
+    
+    // Stocker la sélection actuelle comme référence
+    prevSelectedIdsRef.current = [...selectedIds];
+  }, [selectedIds]);
 }

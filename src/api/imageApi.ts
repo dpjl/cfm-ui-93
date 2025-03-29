@@ -1,3 +1,4 @@
+
 import { ImageItem } from '@/components/Gallery';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -16,7 +17,6 @@ export interface DetailedMediaInfo {
   name?: string;
   path?: string;
   size?: string;
-  dimensions?: string;
   cameraModel?: string;
   hash?: string;
   duplicatesCount?: number;
@@ -54,11 +54,6 @@ export async function fetchDirectoryTree(position?: 'left' | 'right'): Promise<D
   }
 }
 
-// Helper function to generate mock media IDs with more variety
-function generateMockMediaIds(count: number = 200): string[] {
-  return Array.from({ length: count }, (_, i) => `mock-media-${i}`);
-}
-
 export async function fetchMediaIds(directory: string, position: 'source' | 'destination', filter: string = 'all'): Promise<string[]> {
   const url = `${API_BASE_URL}/media?directory=${encodeURIComponent(position)}${filter !== 'all' ? `&filter=${filter}` : ''}`;
   console.log("Fetching media IDs from:", url);
@@ -79,57 +74,11 @@ export async function fetchMediaIds(directory: string, position: 'source' | 'des
   } catch (error) {
     console.error("Error fetching media IDs:", error);
     
-    // Return more mock data for development
+    // Return mock data for development
     console.log("Using mock media IDs due to error");
-    const mockMediaIds = generateMockMediaIds(200);
+    const mockMediaIds = Array.from({ length: 20 }, (_, i) => `mock-media-${i}`);
     return mockMediaIds;
   }
-}
-
-// Generate realistic camera models
-const cameraModels = [
-  "iPhone 13 Pro", "iPhone 14 Pro Max", "iPhone 15 Pro", 
-  "Samsung Galaxy S21", "Samsung Galaxy S22 Ultra", "Samsung Galaxy S23",
-  "Canon EOS 5D Mark IV", "Canon EOS R5", "Canon EOS R6",
-  "Nikon Z6 II", "Nikon Z7 II", "Nikon D850",
-  "Sony Alpha A7 III", "Sony Alpha A7R V", "Sony Alpha A1",
-  "Google Pixel 7 Pro", "Google Pixel 8", "Google Pixel 6",
-  "Fujifilm X-T4", "Fujifilm X-H2", "Fujifilm X-Pro3",
-  "Panasonic Lumix S5", "Panasonic GH6", "Olympus OM-D E-M1 Mark III"
-];
-
-// Generate file size formats
-function generateFileSize(): string {
-  const sizes = ["KB", "MB"];
-  const size = Math.floor(Math.random() * 30) + 1;
-  const sizeUnit = sizes[Math.floor(Math.random() * sizes.length)];
-  
-  if (sizeUnit === "KB") {
-    return `${Math.floor(Math.random() * 900) + 100} ${sizeUnit}`;
-  } else {
-    return `${(Math.random() * 20).toFixed(1)} ${sizeUnit}`;
-  }
-}
-
-// Generate image dimensions
-function generateDimensions(): string {
-  const widths = [1920, 3840, 4032, 3024, 6016, 5472, 4000, 2048];
-  const heights = [1080, 2160, 3024, 4032, 4000, 3648, 3000, 1536];
-  
-  const width = widths[Math.floor(Math.random() * widths.length)];
-  const height = heights[Math.floor(Math.random() * heights.length)];
-  
-  return `${width}×${height}`;
-}
-
-// Generate random date within last 3 years
-function generateDate(): string {
-  const now = new Date();
-  const threeYearsAgo = new Date(now);
-  threeYearsAgo.setFullYear(now.getFullYear() - 3);
-  
-  const randomTimestamp = threeYearsAgo.getTime() + Math.random() * (now.getTime() - threeYearsAgo.getTime());
-  return new Date(randomTimestamp).toISOString();
 }
 
 export async function fetchMediaInfo(id: string, position: 'source' | 'destination'): Promise<DetailedMediaInfo> {
@@ -150,21 +99,16 @@ export async function fetchMediaInfo(id: string, position: 'source' | 'destinati
   } catch (error) {
     console.error(`Error fetching media info for ID ${id}:`, error);
     
-    // Return enhanced mock data for development
-    const idNumber = parseInt(id.replace("mock-media-", "")) || 0;
-    const isPhoto = idNumber % 10 !== 0; // Every 10th item is a video
-    const fileExt = isPhoto ? ".jpg" : ".mp4";
-    
+    // Return mock data for development
     const mockInfo: DetailedMediaInfo = { 
-      alt: isPhoto ? `Photo ${id}${fileExt}` : `Video ${id}${fileExt}`, 
-      createdAt: generateDate(),
-      name: `IMG_${10000 + idNumber}${fileExt}`,
-      path: `/media/photos/${Math.floor(idNumber / 50) + 1}/${id}${fileExt}`,
-      size: generateFileSize(),
-      dimensions: generateDimensions(),
-      cameraModel: cameraModels[idNumber % cameraModels.length],
+      alt: `Mock Media ${id}`, 
+      createdAt: new Date().toISOString(),
+      name: `file_${id}.jpg`,
+      path: `/media/photos/${id}`,
+      size: `${Math.floor(Math.random() * 10000) + 500}KB`,
+      cameraModel: ["iPhone 13 Pro", "Canon EOS 5D", "Sony Alpha A7III", "Nikon Z6"][Math.floor(Math.random() * 4)],
       hash: `${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
-      duplicatesCount: Math.floor(Math.random() * 3) // 0, 1, or 2 duplicates
+      duplicatesCount: Math.floor(Math.random() * 3)
     };
     
     console.log(`Using mock media info for ${id}:`, mockInfo);
@@ -177,12 +121,8 @@ export async function fetchMediaInfo(id: string, position: 'source' | 'destinati
 export function getThumbnailUrl(id: string, position: 'source' | 'destination'): string {
   // If it looks like a mock ID, return a placeholder image
   if (id.startsWith('mock-media-')) {
-    const idNumber = parseInt(id.replace("mock-media-", "")) || 0;
-    const isVideo = idNumber % 10 === 0; // Every 10th item is a video
-    
-    // Use Lorem Picsum for random high-quality images
-    // Add the ID as a seed to get consistent but varied images
-    return `https://picsum.photos/seed/${id}/300/300${isVideo ? "?blur" : ""}`;
+    // Use a placeholder service to generate a random colored image
+    return `https://via.placeholder.com/300x300/${Math.floor(Math.random()*16777215).toString(16)}/FFFFFF?text=${id}`;
   }
   return `${API_BASE_URL}/thumbnail?id=${encodeURIComponent(id)}&directory=${encodeURIComponent(position)}`;
 }
@@ -190,16 +130,7 @@ export function getThumbnailUrl(id: string, position: 'source' | 'destination'):
 export function getMediaUrl(id: string, position: 'source' | 'destination'): string {
   // If it looks like a mock ID, return a placeholder image
   if (id.startsWith('mock-media-')) {
-    const idNumber = parseInt(id.replace("mock-media-", "")) || 0;
-    const isVideo = idNumber % 10 === 0; // Every 10th item is a video
-    
-    if (isVideo) {
-      // For video placeholders, we could use a static video or keep it as an image
-      return `https://picsum.photos/seed/${id}/800/600?blur`;
-    }
-    
-    // Use Lorem Picsum for random high-quality images
-    return `https://picsum.photos/seed/${id}/800/600`;
+    return `https://via.placeholder.com/800x600/${Math.floor(Math.random()*16777215).toString(16)}/FFFFFF?text=${id}`;
   }
   return `${API_BASE_URL}/media?id=${encodeURIComponent(id)}&directory=${encodeURIComponent(position)}`;
 }

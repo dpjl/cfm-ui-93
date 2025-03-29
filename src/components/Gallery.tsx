@@ -57,7 +57,7 @@ const Gallery: React.FC<GalleryProps> = ({
 }) => {
   const [showDates, setShowDates] = useState(false);
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
-  const [showInfoPanel, setShowInfoPanel] = useState(false);
+  const [galleryKey, setGalleryKey] = useState(0); // Clé pour forcer le rendu complet
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,6 +81,16 @@ const Gallery: React.FC<GalleryProps> = ({
     position
   );
 
+  // Forcer le rendu complet lorsque le panneau d'information change d'état
+  useEffect(() => {
+    // Une légère temporisation pour laisser le temps au DOM de se mettre à jour
+    const timer = setTimeout(() => {
+      setGalleryKey(prev => prev + 1);
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, [selectedIds.length > 0]);
+
   // Collecter les informations sur les médias à partir des composants enfants
   const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
     setMediaInfoMap(prev => {
@@ -94,15 +104,8 @@ const Gallery: React.FC<GalleryProps> = ({
     setShowDates(prev => !prev);
   }, []);
   
-  // Afficher le panneau d'info quand des éléments sont sélectionnés
-  useEffect(() => {
-    setShowInfoPanel(selectedIds.length > 0);
-  }, [selectedIds.length]);
-  
-  // Fermer le panneau d'info
-  const handleCloseInfoPanel = useCallback(() => {
-    setShowInfoPanel(false);
-  }, []);
+  // Déterminer si nous devons afficher le panneau d'information
+  const shouldShowInfoPanel = selectedIds.length > 0;
   
   if (isLoading) {
     return (
@@ -123,7 +126,7 @@ const Gallery: React.FC<GalleryProps> = ({
   }
   
   return (
-    <div className="flex flex-col h-full relative" ref={containerRef}>
+    <div className="flex flex-col h-full relative" key={`gallery-container-${galleryKey}`} ref={containerRef}>
       <GalleryToolbar
         selectedIds={selectedIds}
         mediaIds={mediaIds}
@@ -137,6 +140,18 @@ const Gallery: React.FC<GalleryProps> = ({
         selectionMode={selection.selectionMode}
         onToggleSelectionMode={selection.toggleSelectionMode}
       />
+      
+      {/* Panneau d'information des médias */}
+      {shouldShowInfoPanel && (
+        <MediaInfoPanel
+          selectedIds={selectedIds}
+          onOpenPreview={preview.handleOpenPreview}
+          onDeleteSelected={onDeleteSelected}
+          onDownloadSelected={mediaHandler.handleDownloadSelected}
+          mediaInfoMap={mediaInfoMap}
+          selectionMode={selection.selectionMode}
+        />
+      )}
       
       {mediaIds.length === 0 ? (
         <GalleryEmptyState />
@@ -161,19 +176,6 @@ const Gallery: React.FC<GalleryProps> = ({
             position={position}
           />
         </div>
-      )}
-      
-      {/* Panneau d'information flottant */}
-      {showInfoPanel && (
-        <MediaInfoPanel
-          selectedIds={selectedIds}
-          onOpenPreview={preview.handleOpenPreview}
-          onDeleteSelected={onDeleteSelected}
-          onDownloadSelected={mediaHandler.handleDownloadSelected}
-          mediaInfoMap={mediaInfoMap}
-          selectionMode={selection.selectionMode}
-          onClose={handleCloseInfoPanel}
-        />
       )}
       
       <MediaPreview 

@@ -69,11 +69,8 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
 
   if (!mediaId) return null;
 
-  // Determine if this is a video based on the file extension or ID pattern
-  const isVideo = mediaInfo?.alt ? 
-    mediaInfo.alt.match(/\.(mp4|webm|ogg|mov)$/i) || 
-    (parseInt(mediaId.replace('mock-media-', '')) % 10 === 0) : 
-    false;
+  // Determine if this is a video based on the file extension
+  const isVideo = mediaInfo?.alt ? mediaInfo.alt.match(/\.(mp4|webm|ogg|mov)$/i) : false;
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
@@ -138,11 +135,6 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
                   <div>{mediaInfo.size}</div>
                 </div>}
               
-              {mediaInfo.dimensions && <div>
-                  <div className="font-medium">{t('dimensions')}</div>
-                  <div>{mediaInfo.dimensions}</div>
-                </div>}
-
               {mediaInfo.cameraModel && <div>
                   <div className="font-medium">{t('camera')}</div>
                   <div>{mediaInfo.cameraModel}</div>
