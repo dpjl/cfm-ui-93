@@ -1,4 +1,3 @@
-
 import React, { memo, useMemo } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -66,15 +65,13 @@ const VirtualizedGalleryGrid = memo(({
     position,
     columnsCount,
     gap,
-    // More precise cell style calculator function
-    calculateCellStyle: (originalStyle: React.CSSProperties, columnIndex: number) => {
-      const isLastColumn = columnIndex === columnsCount - 1;
-      
+    // Simplified cell style calculator - now uniform for all columns
+    calculateCellStyle: (originalStyle: React.CSSProperties) => {
       return {
         ...originalStyle,
         width: `${parseFloat(originalStyle.width as string) - gap}px`,
         height: `${parseFloat(originalStyle.height as string) - gap}px`,
-        paddingRight: isLastColumn ? 0 : gap,
+        paddingRight: gap,
         paddingBottom: gap,
       };
     }
