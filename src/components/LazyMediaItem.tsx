@@ -5,7 +5,6 @@ import { useIntersectionObserver } from '@/hooks/use-intersection-observer';
 import { useMediaInfo } from '@/hooks/use-media-info';
 import { getThumbnailUrl } from '@/api/imageApi';
 import MediaItemRenderer from './media/MediaItemRenderer';
-import SelectionCheckbox from './media/SelectionCheckbox';
 import { useMediaCache } from '@/hooks/use-media-cache';
 import { useTouchInteractions } from '@/hooks/use-touch-interactions';
 import { useKeyboardInteractions } from '@/hooks/use-keyboard-interactions';
@@ -134,15 +133,6 @@ const LazyMediaItem = memo(({
           />
 
           <div className="image-overlay pointer-events-none" />
-          <SelectionCheckbox
-            selected={selected}
-            onSelect={(e) => {
-              e.stopPropagation();
-              onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
-            }}
-            loaded={loaded}
-            mediaId={id}
-          />
         </>
       )}
     </div>

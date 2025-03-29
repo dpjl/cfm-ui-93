@@ -2,8 +2,7 @@
 import React from 'react';
 import GalleryContainer from '@/components/GalleryContainer';
 import { MobileViewMode } from '@/types/gallery';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { MediaFilter } from '@/components/AppSidebar';
 import MobileViewSwitcher from './MobileViewSwitcher';
 
 interface MobileGalleriesViewProps {
@@ -20,8 +19,8 @@ interface MobileGalleriesViewProps {
   activeSide: 'left' | 'right' | null;
   setDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   deleteMutation: any;
-  leftFilter?: string;
-  rightFilter?: string;
+  leftFilter?: MediaFilter;
+  rightFilter?: MediaFilter;
   mobileViewMode: MobileViewMode;
   setMobileViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
   onToggleLeftPanel: () => void;
@@ -42,8 +41,8 @@ const MobileGalleriesView: React.FC<MobileGalleriesViewProps> = ({
   activeSide,
   setDeleteDialogOpen,
   deleteMutation,
-  leftFilter = 'all',
-  rightFilter = 'all',
+  leftFilter = 'all' as MediaFilter,
+  rightFilter = 'all' as MediaFilter,
   mobileViewMode,
   setMobileViewMode,
   onToggleLeftPanel,
@@ -101,6 +100,8 @@ const MobileGalleriesView: React.FC<MobileGalleriesViewProps> = ({
       
       <div className="fixed bottom-4 left-0 right-0 flex justify-center items-center z-20">
         <MobileViewSwitcher 
+          viewMode={mobileViewMode}
+          setViewMode={setMobileViewMode}
           mobileViewMode={mobileViewMode}
           setMobileViewMode={setMobileViewMode}
         />
