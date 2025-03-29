@@ -1,40 +1,36 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Image, Video } from 'lucide-react';
+import React, { useState } from 'react';
+import { Video } from 'lucide-react';
 
 interface MediaItemRendererProps {
   mediaId: string;
+  src?: string;
+  alt?: string;
   isVideo: boolean;
   isSelected?: boolean;
   onLoad?: () => void;
+  loaded?: boolean;
   className?: string;
-  alt?: string;
 }
 
 const MediaItemRenderer: React.FC<MediaItemRendererProps> = ({
   mediaId,
+  src,
   isVideo,
   isSelected,
   onLoad,
+  loaded = false,
   className = '',
   alt = 'Media item',
 }) => {
-  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
-  // Nous utilisons maintenant l'endpoint thumbnail pour tous les médias
-  const thumbnailUrl = `${apiBaseUrl}/thumbnail?id=${mediaId}`;
-
-  useEffect(() => {
-    setLoaded(false);
-    setError(false);
-  }, [mediaId]);
+  // Use provided src or build the thumbnail URL
+  const thumbnailUrl = src || `${apiBaseUrl}/thumbnail?id=${mediaId}`;
 
   const handleImageLoad = () => {
-    setLoaded(true);
-    onLoad?.();
+    if (onLoad) onLoad();
   };
 
   const handleError = () => {
@@ -44,7 +40,7 @@ const MediaItemRenderer: React.FC<MediaItemRendererProps> = ({
 
   return (
     <div className={`relative w-full h-full overflow-hidden ${className}`}>
-      {/* Tous les médias utilisent une image thumbnail */}
+      {/* All media use an image thumbnail */}
       <img
         src={thumbnailUrl}
         alt={alt}
@@ -56,25 +52,25 @@ const MediaItemRenderer: React.FC<MediaItemRendererProps> = ({
         loading="lazy"
       />
 
-      {/* Indicateur de type de média (vidéo) */}
+      {/* Video indicator */}
       {isVideo && (
         <div className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-md backdrop-blur-sm">
           <Video size={16} />
         </div>
       )}
 
-      {/* Indicateur de chargement */}
+      {/* Loading indicator */}
       {!loaded && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
           <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
 
-      {/* Indicateur d'erreur */}
+      {/* Error indicator */}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
           <div className="text-red-500">
-            <Image size={24} />
+            {/* Error icon */}
           </div>
         </div>
       )}

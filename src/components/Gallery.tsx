@@ -55,32 +55,31 @@ const Gallery: React.FC<GalleryProps> = ({
   filter = 'all',
   onToggleSidebar
 }) => {
-  const [showDates, setShowDates] = useState(false);
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Initialiser les fonctionnalités de sélection de la galerie
+  // Initialize gallery selection functionality
   const selection = useGallerySelection({
     mediaIds,
     selectedIds,
     onSelectId
   });
   
-  // Initialiser les fonctionnalités d'aperçu
+  // Initialize preview functionality
   const preview = useGalleryPreviewHandler({
     mediaIds,
     onPreviewMedia
   });
   
-  // Initialiser les opérations sur les médias
+  // Initialize media operations
   const mediaHandler = useGalleryMediaHandler(
     selectedIds,
     position
   );
 
-  // Collecter les informations sur les médias à partir des composants enfants
+  // Collect media info from child components
   const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
     setMediaInfoMap(prev => {
       const newMap = new Map(prev);
@@ -89,12 +88,14 @@ const Gallery: React.FC<GalleryProps> = ({
     });
   }, []);
 
-  const toggleDates = useCallback(() => {
-    setShowDates(prev => !prev);
-  }, []);
-  
-  // Déterminer si nous devons afficher le panneau d'information
+  // Determine if we should show the info panel
   const shouldShowInfoPanel = selectedIds.length > 0;
+  
+  // Handle closing the info panel
+  const handleCloseInfoPanel = useCallback(() => {
+    // Clear selection when closing the panel
+    selectedIds.forEach(id => onSelectId(id));
+  }, [selectedIds, onSelectId]);
   
   if (isLoading) {
     return (
@@ -117,12 +118,10 @@ const Gallery: React.FC<GalleryProps> = ({
   return (
     <div className="flex flex-col h-full relative" ref={containerRef}>
       <GalleryToolbar
-        selectedIds={selectedIds}
         mediaIds={mediaIds}
+        selectedIds={selectedIds}
         onSelectAll={selection.handleSelectAll}
         onDeselectAll={selection.handleDeselectAll}
-        showDates={showDates}
-        onToggleDates={toggleDates}
         viewMode={viewMode}
         position={position}
         onToggleSidebar={onToggleSidebar}
@@ -131,7 +130,7 @@ const Gallery: React.FC<GalleryProps> = ({
       />
       
       <div className="flex-1 overflow-hidden relative gallery-scrollbar">
-        {/* Indicateurs de défilement pour mobile */}
+        {/* Scroll indicators for mobile */}
         {isMobile && (
           <>
             <div className="scrollbar-pull-indicator top"></div>
@@ -139,17 +138,20 @@ const Gallery: React.FC<GalleryProps> = ({
           </>
         )}
         
-        {/* Panneau d'information flottant */}
+        {/* Floating info panel */}
         {shouldShowInfoPanel && (
-          <MediaInfoPanel
-            selectedIds={selectedIds}
-            onOpenPreview={preview.handleOpenPreview}
-            onDeleteSelected={onDeleteSelected}
-            onDownloadSelected={mediaHandler.handleDownloadSelected}
-            mediaInfoMap={mediaInfoMap}
-            selectionMode={selection.selectionMode}
-            position={position}
-          />
+          <div className="absolute top-2 right-2 z-10">
+            <MediaInfoPanel
+              selectedIds={selectedIds}
+              onOpenPreview={preview.handleOpenPreview}
+              onDeleteSelected={onDeleteSelected}
+              onDownloadSelected={mediaHandler.handleDownloadSelected}
+              mediaInfoMap={mediaInfoMap}
+              selectionMode={selection.selectionMode}
+              position={position}
+              onClose={handleCloseInfoPanel}
+            />
+          </div>
         )}
         
         {mediaIds.length === 0 ? (
@@ -161,21 +163,21 @@ const Gallery: React.FC<GalleryProps> = ({
             onSelectId={selection.handleSelectItem}
             columnsCount={columnsCount}
             viewMode={viewMode}
-            showDates={showDates}
             updateMediaInfo={updateMediaInfo}
             position={position}
           />
         )}
       </div>
       
-      <MediaPreview 
-        mediaId={preview.previewMediaId}
-        isOpen={preview.previewMediaId !== null}
-        onClose={preview.handleClosePreview}
-        allMediaIds={mediaIds}
-        onNavigate={preview.handleNavigatePreview}
-        position={position}
-      />
+      {preview.previewMediaId && (
+        <MediaPreview 
+          mediaId={preview.previewMediaId}
+          onClose={preview.handleClosePreview}
+          allMediaIds={mediaIds}
+          onNavigate={preview.handleNavigatePreview}
+          position={position}
+        />
+      )}
     </div>
   );
 };

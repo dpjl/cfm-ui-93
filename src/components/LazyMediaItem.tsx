@@ -5,7 +5,6 @@ import { useIntersectionObserver } from '@/hooks/use-intersection-observer';
 import { useMediaInfo } from '@/hooks/use-media-info';
 import { getThumbnailUrl } from '@/api/imageApi';
 import MediaItemRenderer from './media/MediaItemRenderer';
-import DateDisplay from './media/DateDisplay';
 import SelectionCheckbox from './media/SelectionCheckbox';
 import { useMediaCache } from '@/hooks/use-media-cache';
 import { useTouchInteractions } from '@/hooks/use-touch-interactions';
@@ -125,14 +124,14 @@ const LazyMediaItem = memo(({
       {thumbnailUrl && (
         <>
           <MediaItemRenderer
+            mediaId={id}
             src={thumbnailUrl}
             alt={mediaInfo?.alt || id}
             isVideo={Boolean(isVideo)}
+            isSelected={selected}
             onLoad={() => setLoaded(true)}
             loaded={loaded}
           />
-
-          <DateDisplay dateString={mediaInfo?.createdAt} showDate={showDates} />
 
           <div className="image-overlay pointer-events-none" />
           <SelectionCheckbox
