@@ -20,6 +20,7 @@ interface LazyMediaItemProps {
   index: number;
   updateMediaInfo?: (id: string, info: any) => void;
   position: 'source' | 'destination';
+  showDates?: boolean;
 }
 
 // Using memo to prevent unnecessary re-renders
@@ -29,7 +30,8 @@ const LazyMediaItem = memo(({
   onSelect,
   index,
   updateMediaInfo,
-  position
+  position,
+  showDates = true
 }: LazyMediaItemProps) => {
   const [loaded, setLoaded] = useState(false);
   const itemRef = useRef<HTMLDivElement>(null);
@@ -130,7 +132,7 @@ const LazyMediaItem = memo(({
             loaded={loaded}
           />
 
-          <DateDisplay dateString={mediaInfo?.createdAt} showDate={true} />
+          <DateDisplay dateString={mediaInfo?.createdAt} showDate={showDates} />
 
           <div className="image-overlay pointer-events-none" />
           <SelectionCheckbox

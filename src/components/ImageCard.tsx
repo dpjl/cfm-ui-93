@@ -28,7 +28,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
   type = "image",
   onInView,
   createdAt,
-  showDates = false
+  showDates = true
 }) => {
   const [loaded, setLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);

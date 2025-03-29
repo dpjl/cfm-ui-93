@@ -22,7 +22,7 @@ const GalleryGrid = memo(({
   onSelectId,
   columnsCount = 5,
   viewMode = 'single',
-  showDates = false,
+  showDates = true,
   updateMediaInfo,
   position = 'source'
 }: GalleryGridProps) => {
