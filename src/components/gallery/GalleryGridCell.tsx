@@ -1,6 +1,6 @@
 
 import React, { memo } from 'react';
-import LazyMediaItem from '@/components/LazyMediaItem';
+import LazyMediaItem, { LazyMediaItemProps } from '@/components/LazyMediaItem';
 
 interface GalleryGridCellProps {
   columnIndex: number;

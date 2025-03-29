@@ -16,6 +16,7 @@ interface LazyMediaItemProps {
   selected: boolean;
   onSelect: (id: string, extendSelection: boolean) => void;
   index: number;
+  showDates?: boolean; // Added the missing prop
   updateMediaInfo?: (id: string, info: any) => void;
   position: 'source' | 'destination';
 }
@@ -25,6 +26,7 @@ const LazyMediaItem = memo(({
   selected,
   onSelect,
   index,
+  showDates = false, // Added default value
   updateMediaInfo,
   position
 }: LazyMediaItemProps) => {
@@ -140,3 +142,4 @@ const LazyMediaItem = memo(({
 LazyMediaItem.displayName = 'LazyMediaItem';
 
 export default LazyMediaItem;
+export type { LazyMediaItemProps }; // Export the props interface for better typing
