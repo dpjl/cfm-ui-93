@@ -129,7 +129,7 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
             className="h-7 w-7"
             title="Delete"
           >
-            <Trash size={16} />
+            <Trash size={16} className="text-red-500" />
           </Button>
           <Button 
             variant="outline" 

@@ -20,12 +20,14 @@ export function useGalleryActions(
     mutationFn: ({ ids, directory }: { ids: string[], directory: 'source' | 'destination' }) => 
       deleteImages(ids, directory),
     onSuccess: (_, { directory }) => {
+      // Récupération des IDs correspondants à la galerie active (gauche ou droite)
       const activeSelectedIds = directory === 'source' ? selectedIdsLeft : selectedIdsRight;
       toast({
         title: `${activeSelectedIds.length} ${activeSelectedIds.length === 1 ? 'media' : 'media files'} deleted`,
         description: "The selected media files have been moved to the trash.",
       });
       
+      // Réinitialisation des IDs sélectionnés pour la galerie concernée
       if (directory === 'source') {
         setSelectedIdsLeft([]);
       } else {
@@ -60,6 +62,7 @@ export function useGalleryActions(
   };
   
   const handleDelete = () => {
+    // Utilisation correcte de activeSide pour déterminer quels IDs envoyer et quelle direction utiliser
     if (activeSide === 'left' && selectedIdsLeft.length > 0) {
       deleteMutation.mutate({ ids: selectedIdsLeft, directory: 'source' });
     } else if (activeSide === 'right' && selectedIdsRight.length > 0) {
