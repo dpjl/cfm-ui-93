@@ -1,88 +1,85 @@
 
-import React, { useRef, memo } from 'react';
-import { cn } from '@/lib/utils';
-import { Video } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Image, Video } from 'lucide-react';
 
 interface MediaItemRendererProps {
-  src: string;
-  alt: string;
+  mediaId: string;
   isVideo: boolean;
-  onLoad: () => void;
-  loaded: boolean;
+  isSelected?: boolean;
+  onLoad?: () => void;
+  className?: string;
+  alt?: string;
 }
 
-// Using memo to prevent unnecessary re-renders
-const MediaItemRenderer: React.FC<MediaItemRendererProps> = memo(({
-  src,
-  alt,
+const MediaItemRenderer: React.FC<MediaItemRendererProps> = ({
+  mediaId,
   isVideo,
+  isSelected,
   onLoad,
-  loaded
+  className = '',
+  alt = 'Media item',
 }) => {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  
-  const handleMouseOver = () => {
-    if (isVideo && videoRef.current) {
-      videoRef.current.play().catch(err => console.error('Error playing video:', err));
-    }
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+
+  // Nous utilisons maintenant l'endpoint thumbnail pour tous les médias
+  const thumbnailUrl = `${apiBaseUrl}/thumbnail?id=${mediaId}`;
+
+  useEffect(() => {
+    setLoaded(false);
+    setError(false);
+  }, [mediaId]);
+
+  const handleImageLoad = () => {
+    setLoaded(true);
+    onLoad?.();
   };
-  
-  const handleMouseOut = () => {
-    if (isVideo && videoRef.current) {
-      videoRef.current.pause();
-    }
+
+  const handleError = () => {
+    setError(true);
+    console.error(`Failed to load media with ID: ${mediaId}`);
   };
-  
-  // Common classes and styles
-  const mediaClasses = cn(
-    "w-full h-full object-cover pointer-events-none", // Disable pointer events on the media itself
-    loaded ? "opacity-100" : "opacity-0"
-  );
-  
-  const containerClasses = cn(
-    "w-full h-full rounded-md overflow-hidden",
-    !loaded && "animate-pulse bg-muted"
-  );
-  
+
   return (
-    <div 
-      onMouseOver={handleMouseOver}
-      onMouseOut={handleMouseOut}
-      className={containerClasses}
-      aria-hidden="true" // The parent element handles interaction
-    >
-      {isVideo ? (
-        <>
-          <video 
-            ref={videoRef}
-            src={src}
-            title={alt}
-            className={mediaClasses}
-            onLoadedData={onLoad}
-            muted
-            loop
-            playsInline
-            style={{ transition: 'opacity 300ms ease' }}
-          />
-          {/* Video icon overlay */}
-          <div className="absolute top-2 right-2 z-10 bg-black/70 p-1 rounded-md text-white pointer-events-none">
-            <Video className="h-4 w-4" />
+    <div className={`relative w-full h-full overflow-hidden ${className}`}>
+      {/* Tous les médias utilisent une image thumbnail */}
+      <img
+        src={thumbnailUrl}
+        alt={alt}
+        className={`w-full h-full object-cover transition-opacity duration-200 ${
+          loaded ? 'opacity-100' : 'opacity-0'
+        } ${isSelected ? 'ring-2 ring-primary' : ''}`}
+        onLoad={handleImageLoad}
+        onError={handleError}
+        loading="lazy"
+      />
+
+      {/* Indicateur de type de média (vidéo) */}
+      {isVideo && (
+        <div className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-md backdrop-blur-sm">
+          <Video size={16} />
+        </div>
+      )}
+
+      {/* Indicateur de chargement */}
+      {!loaded && !error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
+
+      {/* Indicateur d'erreur */}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+          <div className="text-red-500">
+            <Image size={24} />
           </div>
-        </>
-      ) : (
-        <img
-          src={src}
-          alt=""  // Empty alt because parent has aria-label
-          className={mediaClasses}
-          onLoad={onLoad}
-          style={{ transition: 'opacity 300ms ease' }}
-        />
+        </div>
       )}
     </div>
   );
-});
-
-// Set component display name for debugging
-MediaItemRenderer.displayName = 'MediaItemRenderer';
+};
 
 export default MediaItemRenderer;
