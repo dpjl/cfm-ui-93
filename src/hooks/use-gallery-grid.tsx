@@ -40,8 +40,8 @@ export function useGalleryGrid() {
   const handleResize = useCallback((width: number, height: number) => {
     // Check if size change is significant
     if (
-      Math.abs(previousSizeRef.current.width - width) > 5 || 
-      Math.abs(previousSizeRef.current.height - height) > 5
+      Math.abs(previousSizeRef.current.width - width) > 20 || 
+      Math.abs(previousSizeRef.current.height - height) > 20
     ) {
       // Save position before update
       saveScrollPosition();
@@ -49,7 +49,7 @@ export function useGalleryGrid() {
       // Update size reference
       previousSizeRef.current = { width, height };
       
-      // Force grid refresh
+      // Force grid refresh when dimensions change significantly
       refreshGrid();
       
       // Restore position after update

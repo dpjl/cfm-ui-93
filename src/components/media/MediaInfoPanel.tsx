@@ -16,7 +16,8 @@ import {
   Copy,
   Trash2,
   Download,
-  Eye
+  Eye,
+  X
 } from 'lucide-react';
 
 interface MediaInfoPanelProps {
@@ -26,6 +27,7 @@ interface MediaInfoPanelProps {
   onDownloadSelected: (ids: string[]) => void;
   mediaInfoMap?: Map<string, DetailedMediaInfo | null>;
   selectionMode: 'single' | 'multiple';
+  onClose: () => void;
 }
 
 const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
@@ -34,7 +36,8 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
   onDeleteSelected,
   onDownloadSelected,
   mediaInfoMap = new Map(),
-  selectionMode
+  selectionMode,
+  onClose
 }) => {
   const isMobile = useIsMobile();
   const { t } = useLanguage();
@@ -51,24 +54,22 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="bg-background/80 backdrop-blur-sm border border-border/40 shadow-sm rounded-md p-3 mb-2"
+      className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-11/12 md:w-3/4 lg:w-1/2 xl:w-1/3 bg-background/95 backdrop-blur-md border border-border/40 shadow-lg rounded-md p-3"
     >
       {/* Header with action buttons */}
       <div className="flex justify-between items-center mb-2">
-        {!isMobile && (
-          <h3 className="text-sm font-medium">
-            {selectedIds.length === 1 
-              ? "Media Information" 
-              : `${selectedIds.length} items selected`}
-          </h3>
-        )}
-        <div className={`flex space-x-1 ${isMobile ? "w-full justify-center" : ""}`}>
+        <h3 className="text-sm font-medium">
+          {selectedIds.length === 1 
+            ? t("mediaInformation") || "Media Information" 
+            : `${selectedIds.length} ${t("itemsSelected") || "items selected"}`}
+        </h3>
+        <div className="flex space-x-1">
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => selectedIds.length === 1 ? onOpenPreview(selectedIds[0]) : null}
             disabled={selectedIds.length !== 1}
-            title="Preview"
+            title={t("preview") || "Preview"}
           >
             <Eye className="h-4 w-4" />
           </Button>
@@ -76,7 +77,7 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
             variant="ghost" 
             size="sm" 
             onClick={() => onDownloadSelected(selectedIds)}
-            title="Download"
+            title={t("download") || "Download"}
           >
             <Download className="h-4 w-4" />
           </Button>
@@ -85,9 +86,17 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
             size="sm" 
             onClick={onDeleteSelected}
             className="text-destructive hover:text-destructive"
-            title="Delete"
+            title={t("delete") || "Delete"}
           >
             <Trash2 className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={onClose}
+            title={t("close") || "Close"}
+          >
+            <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -99,14 +108,14 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
           <div className="text-xs space-y-1.5">
             {!detailedInfo ? (
               <div className="text-center py-2 text-muted-foreground">
-                No detailed information available
+                {t("noDetailedInformation") || "No detailed information available"}
               </div>
             ) : (
               <div className={`grid ${isMobile ? "grid-cols-1 gap-y-2" : "grid-cols-2 gap-x-2 gap-y-1"}`}>
                 {detailedInfo.name && (
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
-                    {!isMobile && <span className="text-muted-foreground">Name:</span>}
+                    {!isMobile && <span className="text-muted-foreground">{t("name") || "Name"}:</span>}
                     <span className="truncate">{detailedInfo.name}</span>
                   </div>
                 )}
@@ -114,7 +123,7 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
                 {detailedInfo.createdAt && (
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {!isMobile && <span className="text-muted-foreground">Date:</span>}
+                    {!isMobile && <span className="text-muted-foreground">{t("date") || "Date"}:</span>}
                     <span>{new Date(detailedInfo.createdAt).toLocaleString()}</span>
                   </div>
                 )}
@@ -122,7 +131,7 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
                 {detailedInfo.path && (
                   <div className="flex items-center gap-2">
                     <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                    {!isMobile && <span className="text-muted-foreground">Path:</span>}
+                    {!isMobile && <span className="text-muted-foreground">{t("path") || "Path"}:</span>}
                     <span className="truncate">{detailedInfo.path}</span>
                   </div>
                 )}
@@ -130,7 +139,7 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
                 {detailedInfo.size && (
                   <div className="flex items-center gap-2">
                     <HardDrive className="h-4 w-4 text-muted-foreground" />
-                    {!isMobile && <span className="text-muted-foreground">Size:</span>}
+                    {!isMobile && <span className="text-muted-foreground">{t("size") || "Size"}:</span>}
                     <span>{detailedInfo.size}</span>
                   </div>
                 )}
@@ -138,15 +147,23 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
                 {detailedInfo.cameraModel && (
                   <div className="flex items-center gap-2">
                     <Camera className="h-4 w-4 text-muted-foreground" />
-                    {!isMobile && <span className="text-muted-foreground">Camera:</span>}
+                    {!isMobile && <span className="text-muted-foreground">{t("camera") || "Camera"}:</span>}
                     <span className="truncate">{detailedInfo.cameraModel}</span>
+                  </div>
+                )}
+                
+                {detailedInfo.dimensions && (
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 text-muted-foreground flex items-center justify-center text-xs">⊞</span>
+                    {!isMobile && <span className="text-muted-foreground">{t("dimensions") || "Dimensions"}:</span>}
+                    <span>{detailedInfo.dimensions}</span>
                   </div>
                 )}
 
                 {detailedInfo.hash && (
                   <div className="flex items-center gap-2">
                     <Hash className="h-4 w-4 text-muted-foreground" />
-                    {!isMobile && <span className="text-muted-foreground">Hash:</span>}
+                    {!isMobile && <span className="text-muted-foreground">{t("hash") || "Hash"}:</span>}
                     <span className="truncate">{detailedInfo.hash}</span>
                   </div>
                 )}
@@ -154,7 +171,7 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
                 {detailedInfo.duplicatesCount !== undefined && (
                   <div className="flex items-center gap-2">
                     <Copy className="h-4 w-4 text-muted-foreground" />
-                    {!isMobile && <span className="text-muted-foreground">Duplicates:</span>}
+                    {!isMobile && <span className="text-muted-foreground">{t("duplicates") || "Duplicates"}:</span>}
                     <span>{detailedInfo.duplicatesCount}</span>
                   </div>
                 )}

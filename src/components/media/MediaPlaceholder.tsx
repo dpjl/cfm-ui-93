@@ -2,7 +2,7 @@
 import React from 'react';
 
 interface MediaPlaceholderProps {
-  // Suppression de ref des props car forwardRef la gère
+  // Propriétés supplémentaires si nécessaire
 }
 
 const MediaPlaceholder = React.forwardRef<HTMLDivElement, MediaPlaceholderProps>(
