@@ -15,12 +15,13 @@ interface GalleryGridCellProps {
     position: 'source' | 'destination';
     columnsCount: number;
     gap: number;
-    calculateCellStyle: (style: React.CSSProperties) => React.CSSProperties;
+    calculateCellStyle: (style: React.CSSProperties, columnIndex: number) => React.CSSProperties;
   };
 }
 
 /**
  * A cell component for the virtualized grid that renders a media item
+ * With improved positioning calculations
  */
 const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGridCellProps) => {
   // Calculate the index in the flat array based on row and column
@@ -34,7 +35,7 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
   const isSelected = data.selectedIds.includes(id);
   
   // Calculate the cell style with proper gap adjustments
-  const adjustedStyle = data.calculateCellStyle(style);
+  const adjustedStyle = data.calculateCellStyle(style, columnIndex);
   
   return (
     <div style={adjustedStyle}>

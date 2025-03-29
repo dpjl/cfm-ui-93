@@ -6,7 +6,10 @@ import { DetailedMediaInfo } from '@/api/imageApi';
 import { useGalleryGrid } from '@/hooks/use-gallery-grid';
 import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 import GalleryGridCell from './GalleryGridCell';
-import { calculateRowCount, calculateItemWidth, calculateItemHeight } from '@/utils/grid-utils';
+import { 
+  calculateRowCount, 
+  calculateGridParameters
+} from '@/utils/grid-utils';
 
 interface VirtualizedGalleryGridProps {
   mediaIds: string[];
@@ -21,6 +24,7 @@ interface VirtualizedGalleryGridProps {
 
 /**
  * A virtualized grid component that efficiently renders large collections of media items
+ * With improved dimension calculations to prevent gaps
  */
 const VirtualizedGalleryGrid = memo(({
   mediaIds,
@@ -58,12 +62,16 @@ const VirtualizedGalleryGrid = memo(({
     position,
     columnsCount,
     gap,
-    // Simple cell style calculator function
-    calculateCellStyle: (originalStyle: React.CSSProperties) => {
+    // More precise cell style calculator function
+    calculateCellStyle: (originalStyle: React.CSSProperties, columnIndex: number) => {
+      const isLastColumn = columnIndex === columnsCount - 1;
+      
       return {
         ...originalStyle,
         width: `${parseFloat(originalStyle.width as string) - gap}px`,
         height: `${parseFloat(originalStyle.height as string) - gap}px`,
+        paddingRight: isLastColumn ? 0 : gap,
+        paddingBottom: gap,
       };
     }
   }), [mediaIds, selectedIds, onSelectId, showDates, updateMediaInfo, position, columnsCount]);
@@ -72,19 +80,28 @@ const VirtualizedGalleryGrid = memo(({
     <div className="w-full h-full p-2 gallery-container">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // Calculate dimensions outside of render
-          const itemWidth = calculateItemWidth(width, columnsCount, gap);
-          const itemHeight = calculateItemHeight(itemWidth, showDates);
+          // Use the enhanced calculation function for all grid parameters
+          const { 
+            itemWidth, 
+            itemHeight, 
+            leftoverSpace 
+          } = calculateGridParameters(width, columnsCount, gap, showDates);
+          
+          // Calculate the actual column width including gap distribution
+          const columnWidth = itemWidth + gap;
+          
+          // Add tiny padding to the right to ensure no gap
+          const adjustedWidth = width + 1;
           
           return (
             <FixedSizeGrid
               ref={gridRef}
               columnCount={columnsCount}
-              columnWidth={itemWidth + gap / columnsCount}
+              columnWidth={columnWidth}
               height={height}
               rowCount={rowCount}
               rowHeight={itemHeight + gap}
-              width={width}
+              width={adjustedWidth}
               itemData={itemData}
               overscanRowCount={5}
               overscanColumnCount={2}
@@ -97,6 +114,7 @@ const VirtualizedGalleryGrid = memo(({
               }}
               initialScrollTop={scrollPositionRef.current}
               className="scrollbar-vertical"
+              style={{ overflowX: 'hidden' }} // Prevent horizontal scrolling
             >
               {GalleryGridCell}
             </FixedSizeGrid>

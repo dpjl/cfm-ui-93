@@ -5,11 +5,13 @@ import {
   calculateItemHeight, 
   calculateRowCount, 
   calculateItemIndex, 
-  itemExistsAtIndex
+  itemExistsAtIndex,
+  calculateGridParameters
 } from '../utils/grid-utils';
 
 /**
  * Hook that provides centralized grid calculation utilities
+ * with improved precision to avoid spacing issues
  */
 export function useGridCalculations(
   containerWidth: number, 
@@ -18,40 +20,35 @@ export function useGridCalculations(
   showDates: boolean = false
 ) {
   /**
-   * Calculate item width based on container width, column count, and gap
+   * Use the combined grid parameters calculation for better precision
    */
-  const itemWidth = useMemo(() => {
-    return calculateItemWidth(containerWidth, columnsCount, gap);
-  }, [containerWidth, columnsCount, gap]);
-
-  /**
-   * Calculate item height, optionally accounting for date display
-   */
-  const itemHeight = useMemo(() => {
-    return calculateItemHeight(itemWidth, showDates);
-  }, [itemWidth, showDates]);
+  const gridParams = useMemo(() => {
+    return calculateGridParameters(containerWidth, columnsCount, gap, showDates);
+  }, [containerWidth, columnsCount, gap, showDates]);
 
   /**
    * Calculate cell style with gap considerations
    */
   const calculateCellStyle = useMemo(() => {
-    return (originalStyle: React.CSSProperties, isLastColumn: boolean): React.CSSProperties => {
-      // Start with the original style
-      const adjustedStyle = { ...originalStyle };
+    return (originalStyle: React.CSSProperties, columnIndex: number): React.CSSProperties => {
+      const isLastColumn = columnIndex === columnsCount - 1;
       
       // Adjust width and height to account for gap
-      adjustedStyle.width = `${parseFloat(originalStyle.width as string) - gap}px`;
-      adjustedStyle.height = `${parseFloat(originalStyle.height as string) - gap}px`;
+      const adjustedStyle = { 
+        ...originalStyle,
+        width: `${parseFloat(originalStyle.width as string) - gap}px`,
+        height: `${parseFloat(originalStyle.height as string) - gap}px`,
+        paddingRight: isLastColumn ? 0 : gap,
+        paddingBottom: gap
+      };
       
       return adjustedStyle;
     };
-  }, [gap]);
+  }, [gap, columnsCount]);
 
   return {
-    itemWidth,
-    itemHeight,
+    ...gridParams,
     calculateCellStyle,
-    gap
   };
 }
 
