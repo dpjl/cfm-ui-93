@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getMediaIds } from '@/api/imageApi';
+import { fetchMediaIds } from '@/api/imageApi';
 import GalleryHeader from '@/components/GalleryHeader';
 import { useLanguage } from '@/hooks/use-language';
 import GalleryContent from '@/components/gallery/GalleryContent';
@@ -47,8 +48,10 @@ const GalleryContainer: React.FC<GalleryContainerProps> = ({
   const [mediaIds, setMediaIds] = useState<string[]>([]);
   const isMobile = useIsMobile();
   
+  // Map the left/right position to source/destination
   const apiPosition = position === 'left' ? 'source' : 'destination';
   
+  // Fetch media IDs for the selected directory
   const { 
     data = [], 
     isLoading,
@@ -56,17 +59,19 @@ const GalleryContainer: React.FC<GalleryContainerProps> = ({
     error
   } = useQuery({
     queryKey: ['mediaIds', directory, apiPosition, filter],
-    queryFn: () => getMediaIds(directory, apiPosition, filter),
+    queryFn: () => fetchMediaIds(directory, apiPosition, filter),
     enabled: !!directory,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
+  // Update mediaIds when data changes
   useEffect(() => {
     if (data && Array.isArray(data)) {
       setMediaIds(data);
     }
   }, [data]);
   
+  // Handle selecting/deselecting an item - simplified direct approach
   const handleSelectItem = (id: string) => {
     setSelectedIds(prev => {
       if (prev.includes(id)) {
@@ -77,14 +82,18 @@ const GalleryContainer: React.FC<GalleryContainerProps> = ({
     });
   };
   
+  // Handle previewing an item
   const handlePreviewItem = (id: string) => {
     console.log(`Preview item: ${id}`);
+    // Preview functionality would be implemented here
   };
   
+  // Handle canceling deletion
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
   };
   
+  // Handle confirming deletion
   const handleConfirmDelete = () => {
     deleteMutation.mutate({ 
       ids: selectedIds, 
@@ -92,12 +101,15 @@ const GalleryContainer: React.FC<GalleryContainerProps> = ({
     });
   };
 
+  // Create extra controls for the header
   const extraControls = React.useMemo(() => {
+    // You would implement any extra controls here if needed
     return null;
   }, []);
-
+  
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      {/* Gallery Header - only shown if hideHeader is false */}
       {!hideHeader && (
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-2">
           <GalleryHeader
@@ -110,6 +122,7 @@ const GalleryContainer: React.FC<GalleryContainerProps> = ({
         </div>
       )}
       
+      {/* Gallery Content */}
       <div className="flex-1 overflow-auto">
         <GalleryContent
           mediaIds={mediaIds}
@@ -129,11 +142,14 @@ const GalleryContainer: React.FC<GalleryContainerProps> = ({
         />
       </div>
       
+      {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
-        onClose={handleCancelDelete}
+        onOpenChange={setDeleteDialogOpen}
+        selectedIds={selectedIds}
         onConfirm={handleConfirmDelete}
-        selectedCount={selectedIds.length}
+        onCancel={handleCancelDelete}
+        isPending={deleteMutation.isPending}
       />
     </div>
   );

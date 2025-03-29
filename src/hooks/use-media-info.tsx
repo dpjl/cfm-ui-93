@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getMediaInfo } from '@/api/imageApi';
-import { DetailedMediaInfo } from '@/types/api';
+import { fetchMediaInfo, DetailedMediaInfo } from '@/api/imageApi';
 import { useMediaCache } from './use-media-cache';
 
 export const useMediaInfo = (id: string, isIntersecting: boolean, position: 'source' | 'destination' = 'source') => {
@@ -36,7 +35,7 @@ export const useMediaInfo = (id: string, isIntersecting: boolean, position: 'sou
         // Mettre en cache les informations fictives
         setCachedMediaInfo(id, position, mockInfo);
       } else {
-        const data = await getMediaInfo(id);
+        const data = await fetchMediaInfo(id, position);
         setMediaInfo(data);
         // Mettre en cache les informations récupérées
         setCachedMediaInfo(id, position, data);

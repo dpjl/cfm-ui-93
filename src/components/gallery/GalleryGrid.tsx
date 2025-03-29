@@ -1,7 +1,8 @@
+
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import LazyMediaItem from '@/components/LazyMediaItem';
-import { DetailedMediaInfo } from '@/types/api';
+import { DetailedMediaInfo } from '@/api/imageApi';
 
 interface GalleryGridProps {
   mediaIds: string[];
