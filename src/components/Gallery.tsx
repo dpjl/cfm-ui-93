@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import VirtualizedGalleryGrid from './gallery/VirtualizedGalleryGrid';
@@ -60,26 +59,22 @@ const Gallery: React.FC<GalleryProps> = ({
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Initialize gallery selection functionality
   const selection = useGallerySelection({
     mediaIds,
     selectedIds,
     onSelectId
   });
   
-  // Initialize preview functionality
   const preview = useGalleryPreviewHandler({
     mediaIds,
     onPreviewMedia
   });
   
-  // Initialize media operations
   const mediaHandler = useGalleryMediaHandler(
     selectedIds,
     position
   );
 
-  // Collect media info from child components
   const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
     setMediaInfoMap(prev => {
       const newMap = new Map(prev);
@@ -88,12 +83,9 @@ const Gallery: React.FC<GalleryProps> = ({
     });
   }, []);
 
-  // Determine if we should show the info panel
   const shouldShowInfoPanel = selectedIds.length > 0;
   
-  // Handle closing the info panel
   const handleCloseInfoPanel = useCallback(() => {
-    // Clear selection when closing the panel
     selectedIds.forEach(id => onSelectId(id));
   }, [selectedIds, onSelectId]);
   
@@ -115,7 +107,6 @@ const Gallery: React.FC<GalleryProps> = ({
     );
   }
 
-  // Determine whether the current item is a video
   const isVideoPreview = (id: string): boolean => {
     const info = mediaInfoMap.get(id);
     if (info) {
@@ -140,7 +131,6 @@ const Gallery: React.FC<GalleryProps> = ({
       />
       
       <div className="flex-1 overflow-hidden relative gallery-scrollbar">
-        {/* Scroll indicators for mobile */}
         {isMobile && (
           <>
             <div className="scrollbar-pull-indicator top"></div>
@@ -148,7 +138,6 @@ const Gallery: React.FC<GalleryProps> = ({
           </>
         )}
         
-        {/* Floating info panel */}
         {shouldShowInfoPanel && (
           <div className="absolute top-2 right-2 z-10">
             <MediaInfoPanel

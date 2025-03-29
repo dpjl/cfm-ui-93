@@ -39,5 +39,16 @@
       width: 4px;
       height: 4px;
     }
+    
+    /* Enable horizontal scrolling for info panels */
+    .scrollable-content {
+      overflow-x: auto;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .scrollable-content::-webkit-scrollbar {
+      height: 3px;
+    }
   }
 }

@@ -39,13 +39,31 @@
       @apply py-1 px-2;
     }
     
-    /* Date display adjustments for small thumbnails on mobile */
-    .date-display-small {
-      @apply text-[7px] px-0.5 py-0.5;
+    /* Media info panel for small screens */
+    .media-info-panel-mobile {
+      max-width: 160px;
+      font-size: 0.75rem;
     }
     
-    .date-display-small .date-icon {
-      @apply h-1.5 w-1.5;
+    .media-info-panel-mobile .panel-title {
+      font-size: 0.8rem;
+    }
+    
+    .media-info-panel-mobile .panel-label {
+      font-size: 0.65rem;
+    }
+    
+    .media-info-panel-mobile .panel-value {
+      font-size: 0.75rem;
+    }
+    
+    /* Gallery toolbar icons for mobile */
+    .gallery-toolbar-mobile .button-icon {
+      @apply h-6 w-6;
+    }
+    
+    .gallery-toolbar-mobile .button-text {
+      font-size: 0.7rem;
     }
     
     /* Fix for mobile dual gallery layout */
@@ -87,5 +105,31 @@
   
   .column-slider-label {
     @apply flex items-center justify-between text-xs text-muted-foreground mb-1;
+  }
+  
+  /* Enhance mobile scrollbar experience */
+  @media (max-width: 768px) {
+    .gallery-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    .gallery-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(128, 128, 128, 0.4);
+      border-radius: 4px;
+    }
+    
+    .gallery-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(128, 128, 128, 0.4) transparent;
+    }
+    
+    /* Media info panel horizontal scroll */
+    .media-info-horizontal-scroll {
+      overflow-x: auto;
+      white-space: nowrap;
+      max-width: 100%;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
   }
 }

@@ -1,61 +1,54 @@
 
-import React, { useCallback } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-breakpoint';
 import { MobileViewMode } from '@/types/gallery';
-import { PanelLeft, PanelsLeftRight, PanelRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Columns } from 'lucide-react';
 
 interface MobileViewSwitcherProps {
-  mobileViewMode: MobileViewMode;
-  setMobileViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
+  viewMode: MobileViewMode;
+  setViewMode: (mode: MobileViewMode) => void;
+  className?: string;
 }
 
 const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({
-  mobileViewMode,
-  setMobileViewMode
+  viewMode,
+  setViewMode,
+  className = ''
 }) => {
-  // Use memoized callbacks to prevent unnecessary re-renders
-  const handleLeftView = useCallback(() => {
-    setMobileViewMode('left');
-  }, [setMobileViewMode]);
+  const isMobile = useIsMobile();
   
-  const handleSplitView = useCallback(() => {
-    setMobileViewMode('both');
-  }, [setMobileViewMode]);
-  
-  const handleRightView = useCallback(() => {
-    setMobileViewMode('right');
-  }, [setMobileViewMode]);
+  if (!isMobile) {
+    return null;
+  }
   
   return (
-    <div className="bg-background shadow-md border border-border rounded-full p-2 flex gap-2">
-      <Button 
-        variant={mobileViewMode === 'left' ? "default" : "ghost"} 
-        size="icon" 
-        onClick={handleLeftView}
-        className="h-9 w-9 rounded-full"
-        title="Source Gallery View"
+    <div className={`mobile-view-switcher ${className}`}>
+      <Button
+        variant={viewMode === 'left' ? 'default' : 'outline'}
+        size="icon"
+        onClick={() => setViewMode('left')}
+        className="h-9 w-9"
       >
-        <PanelLeft className="h-3.5 w-3.5" />
+        <ArrowLeft className="h-4 w-4" />
       </Button>
       
-      <Button 
-        variant={mobileViewMode === 'both' ? "default" : "ghost"} 
-        size="icon" 
-        onClick={handleSplitView}
-        className="h-9 w-9 rounded-full"
-        title="Split View"
+      <Button
+        variant={viewMode === 'both' ? 'default' : 'outline'}
+        size="icon"
+        onClick={() => setViewMode('both')}
+        className="h-9 w-9"
       >
-        <PanelsLeftRight className="h-3.5 w-3.5" />
+        <Columns className="h-4 w-4" />
       </Button>
       
-      <Button 
-        variant={mobileViewMode === 'right' ? "default" : "ghost"} 
-        size="icon" 
-        onClick={handleRightView}
-        className="h-9 w-9 rounded-full"
-        title="Destination Gallery Only"
+      <Button
+        variant={viewMode === 'right' ? 'default' : 'outline'}
+        size="icon"
+        onClick={() => setViewMode('right')}
+        className="h-9 w-9"
       >
-        <PanelRight className="h-3.5 w-3.5" />
+        <ArrowRight className="h-4 w-4" />
       </Button>
     </div>
   );
