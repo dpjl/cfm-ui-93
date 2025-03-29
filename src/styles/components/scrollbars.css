@@ -16,7 +16,7 @@
   scrollbar-color: var(--primary-color-transparent) transparent;
 }
 
-/* Poignée de défilement personnalisée */
+/* Conteneur avec barre de défilement personnalisée */
 .custom-scrollbar {
   position: relative;
   overflow-y: auto;
@@ -34,17 +34,21 @@
   right: 4px;
   top: 0;
   width: 8px;
+  height: 100px; /* Hauteur par défaut, sera ajustée dynamiquement */
   border-radius: 4px;
   background-color: rgba(128, 128, 128, 0.3);
   z-index: 20;
   transition: opacity 0.3s, width 0.2s;
   cursor: pointer;
+  opacity: 0.3;
 }
 
 .scrollbar-handle:hover,
-.scrollbar-handle.active {
+.scrollbar-handle.active,
+.scrolling .scrollbar-handle {
   width: 10px;
   background-color: rgba(128, 128, 128, 0.5);
+  opacity: 1;
 }
 
 /* Indicateur de date flottant */
@@ -53,7 +57,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  right: 16px;
+  right: 20px;
   background-color: rgba(0, 0, 0, 0.7);
   color: white;
   border-radius: 6px;
@@ -82,7 +86,8 @@
   }
   
   .scrollbar-handle:hover,
-  .scrollbar-handle.active {
+  .scrollbar-handle.active,
+  .scrolling .scrollbar-handle {
     width: 14px;
   }
   

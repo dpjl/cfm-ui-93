@@ -61,7 +61,7 @@ const Gallery: React.FC<GalleryProps> = ({
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollbarRef = useRef<HTMLDivElement>(null);
+  const scrollbarContainerRef = useRef<HTMLDivElement>(null);
   const scrollHandleRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -98,27 +98,38 @@ const Gallery: React.FC<GalleryProps> = ({
 
   // Helper to find the date of the first visible media item
   const updateVisibleDate = useCallback(() => {
-    const galleryElement = containerRef.current?.querySelector('.gallery-scrollbar');
-    if (!galleryElement) return;
+    if (!scrollbarContainerRef.current) return;
     
-    // Find the first visible media item
-    const visibleItems = galleryElement.querySelectorAll('.image-card');
+    // Trouver tous les éléments image-card visibles
+    const galleryItems = scrollbarContainerRef.current.querySelectorAll('.image-card');
+    if (galleryItems.length === 0) return;
     
-    if (visibleItems.length > 0) {
-      const firstVisibleItem = Array.from(visibleItems).find(item => {
-        const rect = item.getBoundingClientRect();
-        return rect.top >= 0 && rect.bottom <= window.innerHeight;
-      });
+    const containerRect = scrollbarContainerRef.current.getBoundingClientRect();
+    const containerTop = containerRect.top;
+    const containerHeight = containerRect.height;
+    
+    // Trouver la première carte visible
+    let firstVisibleItem: Element | null = null;
+    
+    for (const item of Array.from(galleryItems)) {
+      const itemRect = item.getBoundingClientRect();
+      const itemTop = itemRect.top;
       
-      if (firstVisibleItem) {
-        const mediaId = firstVisibleItem.getAttribute('data-media-id');
-        if (mediaId) {
-          const mediaInfo = mediaInfoMap.get(mediaId);
-          if (mediaInfo?.createdAt) {
-            setVisibleDateInfo(mediaInfo.createdAt);
-          } else {
-            setVisibleDateInfo(null);
-          }
+      // Si l'élément est visible dans le conteneur
+      if (itemTop >= containerTop && itemTop < containerTop + containerHeight) {
+        firstVisibleItem = item;
+        break;
+      }
+    }
+    
+    if (firstVisibleItem) {
+      const mediaId = firstVisibleItem.getAttribute('data-media-id');
+      if (mediaId) {
+        const mediaInfo = mediaInfoMap.get(mediaId);
+        if (mediaInfo?.createdAt) {
+          setVisibleDateInfo(mediaInfo.createdAt);
+        } else {
+          setVisibleDateInfo(null);
         }
       }
     }
@@ -126,69 +137,71 @@ const Gallery: React.FC<GalleryProps> = ({
 
   // Update scroll handle position and height
   const updateScrollHandleGeometry = useCallback(() => {
-    const galleryElement = containerRef.current?.querySelector('.gallery-scrollbar');
-    const scrollHandle = scrollHandleRef.current;
+    if (!scrollbarContainerRef.current || !scrollHandleRef.current) return;
     
-    if (!galleryElement || !scrollHandle) return;
+    const { scrollHeight, clientHeight, scrollTop } = scrollbarContainerRef.current;
     
-    const { scrollHeight, clientHeight, scrollTop } = galleryElement as HTMLElement;
-    const scrollRatio = clientHeight / scrollHeight;
+    // Éviter la division par zéro
+    if (scrollHeight <= 0) return;
     
-    // Set handle height (min 40px, max 120px)
-    const handleHeight = Math.max(
-      Math.min(scrollRatio * clientHeight, 120),
-      40
-    );
+    // Calculer la hauteur proportionnelle de la poignée (min 40px, max 120px)
+    const ratio = clientHeight / scrollHeight;
+    const handleHeight = Math.max(Math.min(ratio * clientHeight, 120), 40);
     setScrollHandleHeight(handleHeight);
     
-    // Set handle position
-    const scrollPercent = scrollTop / (scrollHeight - clientHeight);
-    const handleTop = scrollPercent * (clientHeight - handleHeight);
+    // Calculer la position verticale de la poignée
+    const maxScrollDistance = scrollHeight - clientHeight;
+    const scrollPercent = maxScrollDistance <= 0 ? 0 : scrollTop / maxScrollDistance;
+    const maxHandleTravel = clientHeight - handleHeight;
+    const handleTop = scrollPercent * maxHandleTravel;
+    
     setScrollHandleTop(handleTop);
   }, []);
 
   // Handle scroll events
   useEffect(() => {
-    const galleryElement = containerRef.current?.querySelector('.gallery-scrollbar');
+    const scrollContainer = scrollbarContainerRef.current;
     
-    if (!galleryElement) return;
+    if (!scrollContainer) return;
     
     const handleScroll = () => {
       setIsScrolling(true);
       updateVisibleDate();
       updateScrollHandleGeometry();
       
-      // Clear previous timeout if exists
+      // Reset timeout to hide indicators
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
       
-      // Set timeout to hide indicators after scrolling stops
       scrollTimeoutRef.current = setTimeout(() => {
         setIsScrolling(false);
       }, 1500);
     };
     
-    galleryElement.addEventListener('scroll', handleScroll);
+    scrollContainer.addEventListener('scroll', handleScroll);
     
     return () => {
-      galleryElement.removeEventListener('scroll', handleScroll);
+      scrollContainer.removeEventListener('scroll', handleScroll);
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
     };
   }, [updateVisibleDate, updateScrollHandleGeometry]);
 
-  // Initialize scroll handle on component mount
+  // Initialize scroll handle on component mount and update on window resize
   useEffect(() => {
     updateScrollHandleGeometry();
     
-    // Also update on window resize
     const handleResize = () => {
       updateScrollHandleGeometry();
     };
     
     window.addEventListener('resize', handleResize);
+    
+    // Initial update
+    setTimeout(updateScrollHandleGeometry, 100);
+    
     return () => {
       window.removeEventListener('resize', handleResize);
     };
@@ -197,9 +210,9 @@ const Gallery: React.FC<GalleryProps> = ({
   // Mouse and touch events for scroll handle dragging
   useEffect(() => {
     const scrollHandle = scrollHandleRef.current;
-    const galleryElement = containerRef.current?.querySelector('.gallery-scrollbar') as HTMLElement;
+    const scrollContainer = scrollbarContainerRef.current;
     
-    if (!scrollHandle || !galleryElement) return;
+    if (!scrollHandle || !scrollContainer) return;
     
     const handleMouseDown = (e: MouseEvent | TouchEvent) => {
       e.preventDefault();
@@ -212,53 +225,56 @@ const Gallery: React.FC<GalleryProps> = ({
         : e.clientY;
       
       startDragYRef.current = clientY;
-      startScrollTopRef.current = galleryElement.scrollTop;
+      startScrollTopRef.current = scrollContainer.scrollTop;
     };
     
     const handleMouseMove = (e: MouseEvent | TouchEvent) => {
-      if (!isDraggingRef.current) return;
+      if (!isDraggingRef.current || !scrollContainer) return;
       
       const clientY = 'touches' in e 
         ? e.touches[0].clientY 
         : e.clientY;
       
       const deltaY = clientY - startDragYRef.current;
-      const { scrollHeight, clientHeight } = galleryElement;
+      const { scrollHeight, clientHeight } = scrollContainer;
       
-      // Calculate new scroll position
-      const scrollRatio = scrollHeight / clientHeight;
-      const newScrollTop = startScrollTopRef.current + (deltaY * scrollRatio);
+      // Calculate scroll ratio and new position
+      const scrollableDistance = scrollHeight - clientHeight;
+      const handleTrackSize = clientHeight - scrollHandleHeight;
+      const scrollRatio = scrollableDistance / handleTrackSize;
       
       // Apply new scroll position
-      galleryElement.scrollTop = newScrollTop;
+      scrollContainer.scrollTop = startScrollTopRef.current + (deltaY * scrollRatio);
     };
     
     const handleMouseUp = () => {
       isDraggingRef.current = false;
-      scrollHandle.classList.remove('active');
+      if (scrollHandle) {
+        scrollHandle.classList.remove('active');
+      }
     };
     
     // Add mouse event listeners
-    scrollHandle.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mousemove', handleMouseMove);
+    scrollHandle.addEventListener('mousedown', handleMouseDown as EventListener);
+    document.addEventListener('mousemove', handleMouseMove as EventListener);
     document.addEventListener('mouseup', handleMouseUp);
     
     // Add touch event listeners
-    scrollHandle.addEventListener('touchstart', handleMouseDown);
-    document.addEventListener('touchmove', handleMouseMove);
+    scrollHandle.addEventListener('touchstart', handleMouseDown as EventListener);
+    document.addEventListener('touchmove', handleMouseMove as EventListener);
     document.addEventListener('touchend', handleMouseUp);
     
     return () => {
       // Remove all event listeners
-      scrollHandle.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('mousemove', handleMouseMove);
+      scrollHandle.removeEventListener('mousedown', handleMouseDown as EventListener);
+      document.removeEventListener('mousemove', handleMouseMove as EventListener);
       document.removeEventListener('mouseup', handleMouseUp);
       
-      scrollHandle.removeEventListener('touchstart', handleMouseDown);
-      document.removeEventListener('touchmove', handleMouseMove);
+      scrollHandle.removeEventListener('touchstart', handleMouseDown as EventListener);
+      document.removeEventListener('touchmove', handleMouseMove as EventListener);
       document.removeEventListener('touchend', handleMouseUp);
     };
-  }, []);
+  }, [scrollHandleHeight]);
 
   const shouldShowInfoPanel = selectedIds.length > 0;
   
@@ -317,17 +333,19 @@ const Gallery: React.FC<GalleryProps> = ({
       />
       
       <div 
-        className={`flex-1 overflow-hidden relative custom-scrollbar gallery-scrollbar ${isScrolling ? 'scrolling' : ''}`}
-        ref={scrollbarRef}
+        className={`flex-1 overflow-hidden relative custom-scrollbar ${isScrolling ? 'scrolling' : ''}`}
+        ref={scrollbarContainerRef}
       >
         {/* Indicateur de date flottant */}
-        <div 
-          className={`scrollbar-indicator ${isScrolling ? 'visible' : ''}`} 
-          style={{ top: `${scrollHandleTop + scrollHandleHeight/2}px`, transform: 'translateY(-50%)' }}
-        >
-          <Calendar className="date-icon" size={12} />
-          {formatDateDisplay(visibleDateInfo)}
-        </div>
+        {visibleDateInfo && (
+          <div 
+            className={`scrollbar-indicator ${isScrolling ? 'visible' : ''}`} 
+            style={{ top: '50%', transform: 'translateY(-50%)' }}
+          >
+            <Calendar className="date-icon" size={12} />
+            {formatDateDisplay(visibleDateInfo)}
+          </div>
+        )}
         
         {/* Poignée de défilement personnalisée */}
         <div 
@@ -336,7 +354,7 @@ const Gallery: React.FC<GalleryProps> = ({
           style={{ 
             height: `${scrollHandleHeight}px`,
             top: `${scrollHandleTop}px`,
-            opacity: isScrolling ? 1 : 0.3
+            opacity: isScrolling ? 1 : undefined
           }}
         />
         
