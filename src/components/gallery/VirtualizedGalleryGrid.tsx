@@ -34,7 +34,7 @@ const VirtualizedGalleryGrid = memo(({
   updateMediaInfo,
   position = 'source'
 }: VirtualizedGalleryGridProps) => {
-  // Use custom hook for grid management
+  // Use custom hook for grid management - always call hooks at the top level
   const {
     gridRef,
     gridKey,
@@ -81,7 +81,7 @@ const VirtualizedGalleryGrid = memo(({
           // Account for scrollbar width and container padding
           const adjustedWidth = width - 2; // 2px for borders or micro-adjustments
           
-          // Use our custom hook for precise grid calculations
+          // We need to call useGridCalculations here unconditionally
           const { itemWidth, itemHeight } = useGridCalculations(
             adjustedWidth, 
             columnsCount, 

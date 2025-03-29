@@ -27,7 +27,7 @@ export function useGridCalculations(
     // Standard scrollbar width approximation
     const scrollbarWidth = 17;
     // Calculate available width accounting for scrollbar
-    const availableWidth = containerWidth - scrollbarWidth;
+    const availableWidth = Math.max(containerWidth - scrollbarWidth, 0);
     
     return calculateGridParameters(availableWidth, columnsCount, gap, showDates);
   }, [containerWidth, columnsCount, gap, showDates]);
@@ -37,8 +37,6 @@ export function useGridCalculations(
    */
   const calculateCellStyle = useMemo(() => {
     return (originalStyle: React.CSSProperties, columnIndex: number): React.CSSProperties => {
-      const isLastColumn = columnIndex === columnsCount - 1;
-      
       // Ensure all cells have identical dimensions by applying the same gap treatment
       const adjustedStyle = { 
         ...originalStyle,
