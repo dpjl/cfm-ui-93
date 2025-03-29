@@ -1,19 +1,119 @@
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import VirtualizedGalleryGrid from './VirtualizedGalleryGrid';
 import GalleryEmptyState from './GalleryEmptyState';
 import GallerySkeletons from './GallerySkeletons';
 import MediaPreview from '../MediaPreview';
-import { DetailedMediaInfo } from '@/api/imageApi';
-import { useGallerySelection } from '@/hooks/use-gallery-selection';
-import { useGalleryPreviewHandler } from '@/hooks/use-gallery-preview-handler';
-import GalleryToolbar from './GalleryToolbar';
-import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from '../media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { MediaItem } from '@/types/gallery';
+import GalleryToolbar from './GalleryToolbar';
+import { GalleryProvider, useGalleryContext } from '@/hooks/use-gallery-context';
 
+// Composant interne qui utilise le contexte
+const GalleryContent: React.FC = () => {
+  const {
+    mediaIds,
+    selectedIds,
+    handleSelectItem,
+    handleSelectAll,
+    handleDeselectAll,
+    selectionMode,
+    toggleSelectionMode,
+    previewMediaId,
+    handleOpenPreview,
+    handleClosePreview,
+    handleNavigatePreview,
+    handleDeleteSelected,
+    handleDownloadSelected,
+    position,
+    mediaInfoMap,
+    columnsCount,
+    viewMode
+  } = useGalleryContext();
+  
+  const { t } = useLanguage();
+  const isMobile = useIsMobile();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleCloseInfoPanel = React.useCallback(() => {
+    // Désélectionner tous les éléments
+    handleDeselectAll();
+  }, [handleDeselectAll]);
+
+  const shouldShowInfoPanel = selectedIds.length > 0;
+
+  // Déterminer si un élément est une vidéo
+  const isVideoPreview = (id: string): boolean => {
+    const info = mediaInfoMap.get(id);
+    if (info) {
+      const fileName = info.alt?.toLowerCase() || '';
+      return fileName.endsWith('.mp4') || fileName.endsWith('.mov');
+    }
+    return false;
+  };
+  
+  return (
+    <div className="flex flex-col h-full relative" ref={containerRef}>
+      <GalleryToolbar
+        mediaIds={mediaIds}
+        selectedIds={selectedIds}
+        onSelectAll={handleSelectAll}
+        onDeselectAll={handleDeselectAll}
+        viewMode={viewMode}
+        position={position}
+        onToggleSidebar={undefined}
+        selectionMode={selectionMode}
+        onToggleSelectionMode={toggleSelectionMode}
+      />
+      
+      <div className="flex-1 overflow-hidden relative scrollbar-vertical">
+        {shouldShowInfoPanel && (
+          <div className="absolute top-2 left-0 right-0 z-10 flex justify-center">
+            <MediaInfoPanel
+              selectedIds={selectedIds}
+              onOpenPreview={handleOpenPreview}
+              onDeleteSelected={handleDeleteSelected}
+              onDownloadSelected={handleDownloadSelected}
+              mediaInfoMap={mediaInfoMap}
+              selectionMode={selectionMode}
+              position={position}
+              onClose={handleCloseInfoPanel}
+            />
+          </div>
+        )}
+        
+        {mediaIds.length === 0 ? (
+          <GalleryEmptyState />
+        ) : (
+          <VirtualizedGalleryGrid
+            mediaIds={mediaIds}
+            selectedIds={selectedIds}
+            onSelectId={handleSelectItem}
+            columnsCount={columnsCount}
+            viewMode={viewMode}
+            position={position}
+          />
+        )}
+      </div>
+      
+      {previewMediaId && (
+        <MediaPreview 
+          mediaId={previewMediaId}
+          isVideo={isVideoPreview(previewMediaId)}
+          onClose={handleClosePreview}
+          onNext={mediaIds.length > 1 ? () => handleNavigatePreview('next') : undefined}
+          onPrevious={mediaIds.length > 1 ? () => handleNavigatePreview('prev') : undefined}
+          hasNext={mediaIds.length > 1}
+          hasPrevious={mediaIds.length > 1}
+          position={position}
+        />
+      )}
+    </div>
+  );
+};
+
+// Props pour le composant Gallery externe
 interface GalleryProps {
   title: string;
   mediaIds: string[];
@@ -31,6 +131,7 @@ interface GalleryProps {
   onToggleSidebar?: () => void;
 }
 
+// Composant principal qui fournit le contexte
 const Gallery: React.FC<GalleryProps> = ({
   title,
   mediaIds,
@@ -47,43 +148,6 @@ const Gallery: React.FC<GalleryProps> = ({
   filter = 'all',
   onToggleSidebar
 }) => {
-  const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
-  const { t } = useLanguage();
-  const isMobile = useIsMobile();
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Hooks personnalisés pour la gestion des sélections et des aperçus
-  const selection = useGallerySelection({
-    mediaIds,
-    selectedIds,
-    onSelectId
-  });
-  
-  const preview = useGalleryPreviewHandler({
-    mediaIds,
-    onPreviewMedia
-  });
-  
-  const mediaHandler = useGalleryMediaHandler(
-    selectedIds,
-    position
-  );
-
-  // Mettre à jour les informations sur les médias
-  const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
-    setMediaInfoMap(prev => {
-      const newMap = new Map(prev);
-      newMap.set(id, info);
-      return newMap;
-    });
-  }, []);
-
-  const shouldShowInfoPanel = selectedIds.length > 0;
-  
-  const handleCloseInfoPanel = useCallback(() => {
-    selectedIds.forEach(id => onSelectId(id));
-  }, [selectedIds, onSelectId]);
-  
   // États de chargement et d'erreur
   if (isLoading) {
     return (
@@ -103,74 +167,19 @@ const Gallery: React.FC<GalleryProps> = ({
     );
   }
 
-  // Déterminer si un élément est une vidéo
-  const isVideoPreview = (id: string): boolean => {
-    const info = mediaInfoMap.get(id);
-    if (info) {
-      const fileName = info.alt?.toLowerCase() || '';
-      return fileName.endsWith('.mp4') || fileName.endsWith('.mov');
-    }
-    return false;
-  };
-  
   return (
-    <div className="flex flex-col h-full relative" ref={containerRef}>
-      <GalleryToolbar
-        mediaIds={mediaIds}
-        selectedIds={selectedIds}
-        onSelectAll={selection.handleSelectAll}
-        onDeselectAll={selection.handleDeselectAll}
-        viewMode={viewMode}
-        position={position}
-        onToggleSidebar={onToggleSidebar}
-        selectionMode={selection.selectionMode}
-        onToggleSelectionMode={selection.toggleSelectionMode}
-      />
-      
-      <div className="flex-1 overflow-hidden relative scrollbar-vertical">
-        {shouldShowInfoPanel && (
-          <div className="absolute top-2 left-0 right-0 z-10 flex justify-center">
-            <MediaInfoPanel
-              selectedIds={selectedIds}
-              onOpenPreview={preview.handleOpenPreview}
-              onDeleteSelected={onDeleteSelected}
-              onDownloadSelected={mediaHandler.handleDownloadSelected}
-              mediaInfoMap={mediaInfoMap}
-              selectionMode={selection.selectionMode}
-              position={position}
-              onClose={handleCloseInfoPanel}
-            />
-          </div>
-        )}
-        
-        {mediaIds.length === 0 ? (
-          <GalleryEmptyState />
-        ) : (
-          <VirtualizedGalleryGrid
-            mediaIds={mediaIds}
-            selectedIds={selectedIds}
-            onSelectId={selection.handleSelectItem}
-            columnsCount={columnsCount}
-            viewMode={viewMode}
-            updateMediaInfo={updateMediaInfo}
-            position={position}
-          />
-        )}
-      </div>
-      
-      {preview.previewMediaId && (
-        <MediaPreview 
-          mediaId={preview.previewMediaId}
-          isVideo={isVideoPreview(preview.previewMediaId)}
-          onClose={preview.handleClosePreview}
-          onNext={mediaIds.length > 1 ? () => preview.handleNavigatePreview('next') : undefined}
-          onPrevious={mediaIds.length > 1 ? () => preview.handleNavigatePreview('prev') : undefined}
-          hasNext={mediaIds.length > 1}
-          hasPrevious={mediaIds.length > 1}
-          position={position}
-        />
-      )}
-    </div>
+    <GalleryProvider
+      mediaIds={mediaIds}
+      selectedIds={selectedIds}
+      onSelectId={onSelectId}
+      onDeleteSelected={onDeleteSelected}
+      columnsCount={columnsCount}
+      viewMode={viewMode}
+      position={position}
+      onPreviewMedia={onPreviewMedia}
+    >
+      <GalleryContent />
+    </GalleryProvider>
   );
 };
 
