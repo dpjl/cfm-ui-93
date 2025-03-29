@@ -8,10 +8,18 @@
  * Using a more precise calculation to avoid cumulative rounding errors
  */
 export function calculateItemWidth(containerWidth: number, columnsCount: number, gap: number = 8): number {
-  // Calculate the total gap width
-  const totalGapWidth = gap * columnsCount;
-  // Calculate item width with more precision
-  return Math.floor((containerWidth - totalGapWidth) / columnsCount) + gap;
+  // Calculate total gap width between columns
+  const totalGapWidth = gap * (columnsCount - 1);
+  
+  // Calculate the available width for all items
+  const availableWidth = containerWidth - totalGapWidth;
+  
+  // Calculate base item width with potential fractional part
+  const exactItemWidth = availableWidth / columnsCount;
+  
+  // Use ceiling instead of floor to maximize space utilization
+  // This prevents accumulation of empty space on the right
+  return Math.ceil(exactItemWidth);
 }
 
 /**
@@ -46,6 +54,7 @@ export function itemExistsAtIndex(rowIndex: number, columnIndex: number, columns
 /**
  * Calculate grid parameters including width and height adjustments
  * This function provides all necessary dimensions for a responsive grid
+ * with optimal space utilization
  */
 export function calculateGridParameters(
   containerWidth: number,
@@ -54,22 +63,28 @@ export function calculateGridParameters(
   showDates: boolean = false
 ) {
   // Ensure we're working with a valid container width
-  const availableWidth = Math.max(containerWidth, columnsCount * gap);
+  const availableWidth = Math.max(containerWidth, 0);
   
-  // Calculate item width ensuring equal distribution
-  const itemWidth = Math.floor((availableWidth - (columnsCount * gap)) / columnsCount) + gap;
+  // Calculate total gap width
+  const totalGapWidth = gap * (columnsCount - 1);
   
-  // Make sure width is at least the gap size to avoid negative values
-  const safeItemWidth = Math.max(itemWidth, gap);
+  // Calculate exact item width to optimize space utilization
+  const exactItemWidth = (availableWidth - totalGapWidth) / columnsCount;
+  
+  // Use ceiling to maximize space usage and avoid right-side gaps
+  const itemWidth = Math.ceil(exactItemWidth);
+  
+  // Calculate total width used by all items
+  const totalItemsWidth = itemWidth * columnsCount;
+  
+  // Calculate total width including gaps
+  const effectiveGridWidth = totalItemsWidth + totalGapWidth;
   
   // Calculate item height based on width
-  const itemHeight = calculateItemHeight(safeItemWidth, showDates);
-  
-  // Calculate effective total width to ensure full coverage
-  const effectiveGridWidth = (safeItemWidth * columnsCount);
+  const itemHeight = calculateItemHeight(itemWidth, showDates);
   
   return {
-    itemWidth: safeItemWidth,
+    itemWidth,
     itemHeight,
     gap,
     effectiveGridWidth,

@@ -1,12 +1,11 @@
 
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useRef } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
 import { useGalleryGrid } from '@/hooks/use-gallery-grid';
 import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 import GalleryGridCell from './GalleryGridCell';
-import { useGridCalculations } from '@/hooks/use-grid-calculations';
 import { calculateRowCount } from '@/utils/grid-utils';
 
 interface VirtualizedGalleryGridProps {
@@ -50,28 +49,6 @@ const VirtualizedGalleryGrid = memo(({
   // Define gap consistently
   const gap = 8;
 
-  // Since useGridCalculations requires a containerWidth that we don't have yet,
-  // we'll use useMemo to create a function that can be called later with the width
-  const getGridDimensions = useMemo(() => {
-    return (containerWidth: number) => {
-      // Standard scrollbar width approximation
-      const scrollbarWidth = 17;
-      // Calculate available width accounting for scrollbar
-      const availableWidth = Math.max(containerWidth - scrollbarWidth - 2, 0); // 2px for micro-adjustments
-      
-      // Calculate item dimensions based on available width
-      const totalGapWidth = gap * (columnsCount - 1);
-      const itemWidth = Math.floor((availableWidth - totalGapWidth) / columnsCount);
-      const itemHeight = itemWidth + (showDates ? 40 : 0);
-      
-      return {
-        itemWidth, 
-        itemHeight,
-        adjustedWidth: availableWidth
-      };
-    };
-  }, [columnsCount, gap, showDates]);
-  
   // Memoize the item data to prevent unnecessary renders
   const itemData = useMemo(() => ({
     mediaIds,
@@ -94,6 +71,31 @@ const VirtualizedGalleryGrid = memo(({
       };
     }
   }), [mediaIds, selectedIds, onSelectId, showDates, updateMediaInfo, position, columnsCount, gap]);
+  
+  // Define a function to get optimal grid dimensions
+  const getGridDimensions = useMemo(() => {
+    return (containerWidth: number) => {
+      // Standardized scrollbar estimate for consistency across browsers
+      const scrollbarWidth = 12;
+      
+      // Add a small buffer (1px) to ensure full space utilization
+      const availableWidth = Math.max(containerWidth - scrollbarWidth + 1, 0);
+      
+      // Distribute space optimally for items with ceiling to avoid right-side gaps
+      const totalGapWidth = gap * (columnsCount - 1);
+      const exactItemWidth = (availableWidth - totalGapWidth) / columnsCount;
+      const itemWidth = Math.ceil(exactItemWidth);
+      
+      // Calculate height accommodating optional date display
+      const itemHeight = itemWidth + (showDates ? 40 : 0);
+      
+      return {
+        itemWidth, 
+        itemHeight,
+        adjustedWidth: availableWidth
+      };
+    };
+  }, [columnsCount, gap, showDates]);
   
   return (
     <div className="w-full h-full p-2 gallery-container" style={{ overflowX: 'hidden' }}>

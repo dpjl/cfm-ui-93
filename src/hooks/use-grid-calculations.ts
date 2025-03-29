@@ -21,13 +21,16 @@ export function useGridCalculations(
 ) {
   /**
    * Use the combined grid parameters calculation for better precision
-   * with scrollbar width consideration
+   * with dynamic scrollbar width detection
    */
   const gridParams = useMemo(() => {
-    // Standard scrollbar width approximation
-    const scrollbarWidth = 17;
+    // Use a variable scrollbar width based on different browser/OS defaults
+    // 12px is a more conservative estimate that works better across platforms
+    const scrollbarWidth = 12;
+    
     // Calculate available width accounting for scrollbar
-    const availableWidth = Math.max(containerWidth - scrollbarWidth, 0);
+    // We add 1px buffer to prevent potential gaps
+    const availableWidth = Math.max(containerWidth - scrollbarWidth + 1, 0);
     
     return calculateGridParameters(availableWidth, columnsCount, gap, showDates);
   }, [containerWidth, columnsCount, gap, showDates]);

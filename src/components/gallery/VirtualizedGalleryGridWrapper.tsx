@@ -38,10 +38,17 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
     setKey(prevKey => prevKey + 1);
   }, [items.length, columnCount]);
 
-  // Create a memoized function to calculate item dimensions
+  // Create a memoized function to calculate item dimensions with improved space distribution
   const getItemSize = useMemo(() => {
     return (width: number) => {
-      return Math.floor((width - (columnGap * (columnCount - 1))) / columnCount);
+      // Use total gaps between columns
+      const totalGapWidth = columnGap * (columnCount - 1);
+      
+      // Precise calculation without rounding down
+      const exactItemWidth = (width - totalGapWidth) / columnCount;
+      
+      // Use ceiling to prevent accumulation of empty space on the right
+      return Math.ceil(exactItemWidth);
     };
   }, [columnCount, columnGap]);
 
@@ -68,7 +75,10 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
     <div className="w-full h-full">
       <AutoSizer key={`gallery-grid-${key}`}>
         {({ height, width }) => {
-          const itemWidth = getItemSize(width);
+          // Adjust width to account for scrollbar (standardized estimate)
+          const scrollbarWidth = 12;
+          const adjustedWidth = Math.max(width - scrollbarWidth + 1, 0);
+          const itemWidth = getItemSize(adjustedWidth);
           
           return (
             <FixedSizeGrid
@@ -78,7 +88,7 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
               height={height}
               rowCount={rowCount}
               rowHeight={itemSize}
-              width={width}
+              width={adjustedWidth}
               overscanRowCount={5}
               overscanColumnCount={2}
               itemKey={({ columnIndex, rowIndex }) => {
