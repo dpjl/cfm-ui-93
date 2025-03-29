@@ -1,8 +1,6 @@
-
 import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
-import { MediaItem, SelectionMode } from '@/types/gallery';
+import { MediaItem, SelectionMode, MediaFilter } from '@/types/gallery';
 import { DetailedMediaInfo } from '@/api/imageApi';
-import { MediaFilter } from '@/components/AppSidebar';
 
 // Types pour le contexte
 interface GalleryContextType {

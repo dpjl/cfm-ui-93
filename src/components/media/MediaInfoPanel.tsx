@@ -6,7 +6,7 @@ import { useMediaInfo } from '../../hooks/use-media-info';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { DetailedMediaInfo } from '@/api/imageApi';
-import { SelectionMode } from '@/hooks/use-gallery-selection';
+import { SelectionMode } from '@/types/gallery';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { ScrollArea } from '@/components/ui/scroll-area';
 

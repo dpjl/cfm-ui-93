@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '../ui/button';
-import { SelectionMode } from '../../hooks/use-gallery-selection';
+import { SelectionMode } from '@/types/gallery';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { CheckSquare, Square, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';

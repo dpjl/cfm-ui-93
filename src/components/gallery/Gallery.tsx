@@ -7,6 +7,7 @@ import GalleryToolbar from './GalleryToolbar';
 import MediaInfoPanel from '../media/MediaInfoPanel';
 import MediaPreview from '../MediaPreview';
 import { DetailedMediaInfo } from '@/api/imageApi';
+import { MediaFilter } from '@/types/gallery';
 
 // Contenu interne de la galerie qui utilise le contexte
 const GalleryContent: React.FC = () => {
@@ -149,8 +150,9 @@ interface GalleryProps {
   onPreviewMedia?: (id: string) => void;
   onDeleteSelected: () => void;
   position?: 'source' | 'destination';
-  filter?: 'all' | 'favorites' | 'images' | 'videos'; // Affiner le type
+  filter?: MediaFilter;
   onToggleSidebar?: () => void;
+  title?: string; // Ajout de la prop title
 }
 
 const Gallery: React.FC<GalleryProps> = ({
@@ -165,7 +167,8 @@ const Gallery: React.FC<GalleryProps> = ({
   onDeleteSelected,
   position = 'source',
   filter = 'all',
-  onToggleSidebar
+  onToggleSidebar,
+  title
 }) => {
   // Cette fonction adapte l'API externe à l'API interne du contexte
   const handleSelectId = (id: string) => {

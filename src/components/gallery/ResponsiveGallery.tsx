@@ -5,7 +5,7 @@ import Gallery from '@/components/gallery/Gallery';
 import GallerySkeletons from '@/components/gallery/GallerySkeletons';
 import GalleryEmptyState from '@/components/gallery/GalleryEmptyState';
 import GalleryError from '@/components/gallery/GalleryError';
-import { MobileViewMode } from '@/types/gallery';
+import { MobileViewMode, MediaFilter } from '@/types/gallery';
 
 interface ResponsiveGalleryProps {
   title: string;
@@ -18,7 +18,7 @@ interface ResponsiveGalleryProps {
   columnsCount: number;
   onPreviewItem: (id: string) => void;
   onDeleteSelected: () => void;
-  filter?: string;
+  filter?: MediaFilter;
   position?: 'source' | 'destination';
   mobileViewMode: MobileViewMode;
   isActive?: boolean;
@@ -89,6 +89,9 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
           viewMode={viewMode}
           onDeleteSelected={onDeleteSelected}
           position={position}
+          filter={filter}
+          isError={isError}
+          error={error}
         />
       </div>
     </div>

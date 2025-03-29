@@ -41,8 +41,8 @@ export const GalleryError: React.FC<GalleryErrorProps> = ({ error }) => {
       transition={{ duration: 0.3 }}
     >
       <AlertTriangle size={48} className="text-destructive mb-4" />
-      <h3 className="text-xl font-semibold mb-2">{t('gallery.error.title')}</h3>
-      <p className="text-muted-foreground mb-4">{t('gallery.error.description')}</p>
+      <h3 className="text-xl font-semibold mb-2">{t('errorLoadingMedia')}</h3>
+      <p className="text-muted-foreground mb-4">{t('errorLoadingMedia')}</p>
       <div className="p-4 bg-destructive/10 rounded-md text-sm text-destructive w-full max-w-md overflow-auto">
         <pre className="whitespace-pre-wrap">{errorMessage}</pre>
       </div>
@@ -61,8 +61,8 @@ export const GalleryEmpty: React.FC = () => {
       transition={{ duration: 0.3 }}
     >
       <FolderOpen size={48} className="text-muted-foreground mb-4" />
-      <h3 className="text-xl font-semibold mb-2">{t('gallery.empty.title')}</h3>
-      <p className="text-muted-foreground">{t('gallery.empty.description')}</p>
+      <h3 className="text-xl font-semibold mb-2">{t('noMediaFound')}</h3>
+      <p className="text-muted-foreground">{t('noMediaFound')}</p>
     </motion.div>
   );
 };

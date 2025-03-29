@@ -1,6 +1,6 @@
 
-import { useCallback } from 'react';
-import { SelectionMode } from './use-selection-state';
+import { useCallback, useState } from 'react';
+import { SelectionMode } from '@/types/gallery';
 
 interface UseGallerySelectionProps {
   mediaIds: string[];
@@ -19,8 +19,8 @@ export function useGallerySelection({
   onSelectId,
   initialSelectionMode = 'multiple'
 }: UseGallerySelectionProps) {
-  const [selectionMode, setSelectionMode] = React.useState<SelectionMode>(initialSelectionMode);
-  const [lastSelectedId, setLastSelectedId] = React.useState<string | null>(null);
+  const [selectionMode, setSelectionMode] = useState<SelectionMode>(initialSelectionMode);
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   
   // Fonction de sélection d'un élément avec support Shift pour sélection multiple
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {

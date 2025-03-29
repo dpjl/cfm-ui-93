@@ -1,5 +1,7 @@
+
 import React, { useState } from 'react';
 import Gallery from '@/components/gallery/Gallery';
+import { MediaFilter } from '@/types/gallery';
 
 interface GalleryContentProps {
   mediaIds: string[];
@@ -13,7 +15,7 @@ interface GalleryContentProps {
   onPreviewItem: (id: string) => void;
   onDeleteSelected: () => void;
   title: string;
-  filter?: string;
+  filter?: MediaFilter;
   position?: 'source' | 'destination';
   onToggleSidebar?: () => void;
 }
