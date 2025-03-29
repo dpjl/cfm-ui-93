@@ -1,7 +1,6 @@
 
 import React, { memo } from 'react';
 import LazyMediaItem, { LazyMediaItemProps } from '@/components/LazyMediaItem';
-import { calculateGridCellStyle } from '@/utils/gallery-grid-utils';
 
 interface GalleryGridCellProps {
   columnIndex: number;
@@ -28,11 +27,13 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
   const id = data.mediaIds[index];
   const isSelected = data.selectedIds.includes(id);
   
-  // Check if this is the last column in the row
-  const isLastColumn = (columnIndex === data.columnsCount - 1);
-  
-  // Adjust style to account for gap, with special handling for last column
-  const adjustedStyle = calculateGridCellStyle(style, data.gap, isLastColumn);
+  // Adjust style to account for gap
+  const adjustedStyle = {
+    ...style,
+    width: `${parseFloat(style.width as string) - data.gap}px`,
+    height: `${parseFloat(style.height as string) - data.gap}px`,
+    padding: 0,
+  };
   
   return (
     <div style={adjustedStyle}>

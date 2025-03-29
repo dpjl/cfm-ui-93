@@ -6,7 +6,6 @@ import { DetailedMediaInfo } from '@/api/imageApi';
 import { useGalleryGrid } from '@/hooks/use-gallery-grid';
 import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 import GalleryGridCell from './GalleryGridCell';
-import { calculateItemWidth, calculateRowCount } from '@/utils/gallery-grid-utils';
 
 interface VirtualizedGalleryGridProps {
   mediaIds: string[];
@@ -42,7 +41,7 @@ const VirtualizedGalleryGrid = memo(({
   useGalleryMediaTracking(mediaIds, gridRef);
   
   // Calculer le nombre de lignes en fonction des médias et des colonnes
-  const rowCount = calculateRowCount(mediaIds.length, columnsCount);
+  const rowCount = Math.ceil(mediaIds.length / columnsCount);
   
   // Mémoriser le callback de sélection
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
@@ -65,11 +64,9 @@ const VirtualizedGalleryGrid = memo(({
     <div className="w-full h-full p-2 gallery-container">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // Définir le gap entre les éléments
+          // Calculer la taille des éléments en fonction de la largeur disponible
           const gap = 8;
-          
-          // Calculer la taille des éléments de manière optimisée pour remplir l'espace
-          const cellWidth = calculateItemWidth(width, columnsCount, gap);
+          const cellWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
           const cellHeight = cellWidth + (showDates ? 40 : 0);
           
           return (
