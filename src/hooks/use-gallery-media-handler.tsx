@@ -9,7 +9,7 @@ export const useGalleryMediaHandler = (
 ) => {
   const { toast } = useToast();
 
-  const handleDownloadSelected = useCallback(async (ids: string[] = selectedIds) => {
+  const handleDownloadSelected = useCallback((ids: string[] = selectedIds) => {
     if (ids.length === 0) return;
     
     // For a single file, trigger direct download

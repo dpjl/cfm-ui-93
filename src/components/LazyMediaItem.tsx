@@ -10,14 +10,13 @@ import { useTouchInteractions } from '@/hooks/use-touch-interactions';
 import { useKeyboardInteractions } from '@/hooks/use-keyboard-interactions';
 import { useCombinedRef } from '@/hooks/use-combined-ref';
 import MediaPlaceholder from './media/MediaPlaceholder';
-import { useGalleryContext } from '@/hooks/use-gallery-context';
 
 interface LazyMediaItemProps {
   id: string;
   selected: boolean;
   onSelect: (id: string, extendSelection: boolean) => void;
   index: number;
-  showDates?: boolean;
+  showDates?: boolean; // Added the missing prop
   updateMediaInfo?: (id: string, info: any) => void;
   position: 'source' | 'destination';
 }
@@ -27,7 +26,8 @@ const LazyMediaItem = memo(({
   selected,
   onSelect,
   index,
-  showDates = false,
+  showDates = false, // Added default value
+  updateMediaInfo,
   position
 }: LazyMediaItemProps) => {
   const [loaded, setLoaded] = useState(false);
@@ -38,9 +38,6 @@ const LazyMediaItem = memo(({
     threshold: 0.1, 
     freezeOnceVisible: true 
   });
-  
-  // Access the context
-  const { updateMediaInfo } = useGalleryContext();
   
   // Utiliser le cache pour les miniatures
   const { getCachedThumbnailUrl, setCachedThumbnailUrl } = useMediaCache();
