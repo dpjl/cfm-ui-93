@@ -65,7 +65,7 @@ const VirtualizedGalleryGrid = memo(({
     <div className="w-full h-full p-2 gallery-container">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // Use our new hook for dimension calculations
+          // Use our grid calculations hook for dimensions
           const gap = 8;
           const { itemWidth, itemHeight, calculateCellStyle } = useGridCalculations(width, columnsCount, gap, showDates);
           
