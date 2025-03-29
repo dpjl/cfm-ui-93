@@ -5,24 +5,26 @@ import { Button } from './ui/button';
 
 interface MediaPreviewProps {
   mediaId: string;
-  isVideo: boolean;
+  isVideo?: boolean;
   alt?: string;
   onClose: () => void;
   onNext?: () => void;
   onPrevious?: () => void;
   hasNext?: boolean;
   hasPrevious?: boolean;
+  position?: 'source' | 'destination';
 }
 
 const MediaPreview: React.FC<MediaPreviewProps> = ({
   mediaId,
-  isVideo,
+  isVideo = false,
   alt = 'Media preview',
   onClose,
   onNext,
   onPrevious,
   hasNext = false,
   hasPrevious = false,
+  position = 'source'
 }) => {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);

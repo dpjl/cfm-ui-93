@@ -114,6 +114,16 @@ const Gallery: React.FC<GalleryProps> = ({
       </div>
     );
   }
+
+  // Determine whether the current item is a video
+  const isVideoPreview = (id: string): boolean => {
+    const info = mediaInfoMap.get(id);
+    if (info) {
+      const fileName = info.alt?.toLowerCase() || '';
+      return fileName.endsWith('.mp4') || fileName.endsWith('.mov');
+    }
+    return false;
+  };
   
   return (
     <div className="flex flex-col h-full relative" ref={containerRef}>
@@ -172,9 +182,12 @@ const Gallery: React.FC<GalleryProps> = ({
       {preview.previewMediaId && (
         <MediaPreview 
           mediaId={preview.previewMediaId}
+          isVideo={isVideoPreview(preview.previewMediaId)}
           onClose={preview.handleClosePreview}
-          allMediaIds={mediaIds}
-          onNavigate={preview.handleNavigatePreview}
+          onNext={mediaIds.length > 1 ? () => preview.handleNavigatePreview('next') : undefined}
+          onPrevious={mediaIds.length > 1 ? () => preview.handleNavigatePreview('prev') : undefined}
+          hasNext={mediaIds.length > 1}
+          hasPrevious={mediaIds.length > 1}
           position={position}
         />
       )}
