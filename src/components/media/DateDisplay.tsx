@@ -10,7 +10,7 @@ interface DateDisplayProps {
   showDate?: boolean;
 }
 
-const DateDisplay: React.FC<DateDisplayProps> = ({ dateString, showDate = true }) => {
+const DateDisplay: React.FC<DateDisplayProps> = ({ dateString, showDate = false }) => {
   const isMobile = useIsMobile();
   
   if (!dateString || !showDate) return null;

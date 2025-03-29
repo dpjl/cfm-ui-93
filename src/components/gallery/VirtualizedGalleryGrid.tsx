@@ -1,5 +1,5 @@
 
-import React, { memo, useEffect, useCallback, forwardRef } from 'react';
+import React, { memo, useEffect, useCallback } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -13,19 +13,21 @@ interface VirtualizedGalleryGridProps {
   onSelectId: (id: string, extendSelection: boolean) => void;
   columnsCount: number;
   viewMode?: 'single' | 'split';
+  showDates?: boolean;
   updateMediaInfo?: (id: string, info: DetailedMediaInfo) => void;
   position: 'source' | 'destination';
 }
 
-const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
+const VirtualizedGalleryGrid = memo(({
   mediaIds,
   selectedIds,
   onSelectId,
   columnsCount = 5,
   viewMode = 'single',
+  showDates = false,
   updateMediaInfo,
   position = 'source'
-}, ref) => {
+}: VirtualizedGalleryGridProps) => {
   // Use our custom hooks for grid management
   const {
     gridRef,
@@ -34,12 +36,6 @@ const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
     handleResize,
     refreshGrid
   } = useGalleryGrid();
-  
-  // Expose ref for parent component
-  React.useImperativeHandle(ref, () => ({
-    ...gridRef.current,
-    refreshGrid
-  }));
   
   // Track media and selection changes
   useGalleryMediaTracking(mediaIds, selectedIds, gridRef);
@@ -53,11 +49,9 @@ const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
       }
     });
 
-    // Observer la galerie container
-    const galleryContainer = document.querySelector('.gallery-container');
-    if (galleryContainer) {
-      resizeObserver.observe(galleryContainer);
-    }
+    // Observe the gallery container
+    const galleryContainer = document.querySelector('.gallery-container') || document.body;
+    resizeObserver.observe(galleryContainer);
 
     return () => {
       resizeObserver.disconnect();
@@ -88,11 +82,12 @@ const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
     mediaIds,
     selectedIds,
     onSelectId: handleSelectItem,
+    showDates,
     updateMediaInfo,
     position,
     columnsCount,
     gap: 8
-  }), [mediaIds, selectedIds, handleSelectItem, updateMediaInfo, position, columnsCount]);
+  }), [mediaIds, selectedIds, handleSelectItem, showDates, updateMediaInfo, position, columnsCount]);
   
   return (
     <div className="w-full h-full p-2 gallery-container">
@@ -100,8 +95,9 @@ const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
         {({ height, width }) => {
           // Calculate item size based on available width
           const gap = 8;
+          // Use fixed cell width to ensure consistent gallery sizing
           const cellWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
-          const cellHeight = cellWidth; // Make cells square
+          const cellHeight = cellWidth + (showDates ? 40 : 0); // Add space for date display if needed
           
           return (
             <FixedSizeGrid
@@ -113,17 +109,20 @@ const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
               rowHeight={cellHeight}
               width={width}
               itemData={itemData}
+              // Increased overscan for smoother scrolling
               overscanRowCount={5}
               overscanColumnCount={2}
+              // Use stable item key for better rendering efficiency
               itemKey={({ columnIndex, rowIndex }) => {
                 const index = rowIndex * columnsCount + columnIndex;
                 return index < mediaIds.length ? mediaIds[index] : `empty-${rowIndex}-${columnIndex}`;
               }}
+              // Save scroll position during scroll events
               onScroll={({ scrollTop }) => {
                 scrollPositionRef.current = scrollTop;
               }}
+              // Initialize with saved scroll position
               initialScrollTop={scrollPositionRef.current}
-              className="gallery-grid"
             >
               {GalleryGridCell}
             </FixedSizeGrid>

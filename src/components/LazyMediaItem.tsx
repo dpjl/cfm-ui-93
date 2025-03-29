@@ -18,9 +18,9 @@ interface LazyMediaItemProps {
   selected: boolean;
   onSelect: (id: string, extendSelection: boolean) => void;
   index: number;
+  showDates?: boolean;
   updateMediaInfo?: (id: string, info: any) => void;
   position: 'source' | 'destination';
-  showDates?: boolean;
 }
 
 // Using memo to prevent unnecessary re-renders
@@ -29,9 +29,9 @@ const LazyMediaItem = memo(({
   selected,
   onSelect,
   index,
+  showDates = false,
   updateMediaInfo,
-  position,
-  showDates = true
+  position
 }: LazyMediaItemProps) => {
   const [loaded, setLoaded] = useState(false);
   const itemRef = useRef<HTMLDivElement>(null);

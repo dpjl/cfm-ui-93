@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckSquare, Square, PanelLeft, Settings, Users, UserPlus, ChevronRight } from 'lucide-react';
+import { CheckSquare, Square, Calendar, CalendarOff, PanelLeft, Settings, Users, UserPlus, ChevronRight } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -12,6 +12,8 @@ interface GalleryToolbarProps {
   mediaIds: string[];
   onSelectAll: () => void;
   onDeselectAll: () => void;
+  showDates: boolean;
+  onToggleDates: () => void;
   viewMode?: 'single' | 'split';
   position?: 'source' | 'destination';
   onToggleSidebar?: () => void;
@@ -24,6 +26,8 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
   mediaIds,
   onSelectAll,
   onDeselectAll,
+  showDates,
+  onToggleDates,
   viewMode = 'single',
   position = 'source',
   onToggleSidebar,
@@ -81,6 +85,15 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
         <Square className="h-3.5 w-3.5" />,
         false,
         t('deselect_all')
+      )}
+      
+      {/* Hide date toggle in mobile split view */}
+      {(!isMobileSplitView) && renderToolbarButton(
+        onToggleDates,
+        <CalendarOff className="h-3.5 w-3.5" />,
+        <Calendar className="h-3.5 w-3.5" />,
+        showDates,
+        showDates ? t('hide_dates') : t('show_dates')
       )}
       
       {renderToolbarButton(
