@@ -3,7 +3,7 @@ import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
-import { calculateGridParameters } from '@/utils/grid-calculations';
+import { calculateRowCount, calculateItemWidth, calculateItemHeight } from '@/utils/grid-utils';
 import LazyMediaItem from '@/components/LazyMediaItem';
 import { useGalleryContext } from '@/hooks/use-gallery-context';
 
@@ -26,6 +26,21 @@ const VirtualizedGalleryGrid: React.FC<VirtualizedGalleryGridProps> = ({
 }) => {
   // Use the context for updating media info
   const { updateMediaInfo } = useGalleryContext();
+  
+  // Calculate grid parameters
+  const calculateGridParameters = (itemCount: number, columnsCount: number, gap: number = 8) => {
+    const rowCount = calculateRowCount(itemCount, columnsCount);
+    const columnWidth = 200; // Default width, will be adjusted by AutoSizer
+    const rowHeight = 200; // Default height
+    
+    return {
+      rowHeight,
+      columnWidth,
+      totalWidth: columnWidth * columnsCount,
+      totalHeight: rowHeight * rowCount,
+      rowCount
+    };
+  };
   
   // Calculate grid parameters
   const { rowHeight, columnWidth, totalWidth, totalHeight, rowCount } = 

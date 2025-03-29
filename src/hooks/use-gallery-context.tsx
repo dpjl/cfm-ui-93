@@ -129,6 +129,14 @@ export const GalleryProvider: React.FC<GalleryProviderProps> = ({
     });
   }, []);
   
+  // Make handleDownloadSelected return a Promise
+  const handleDownloadSelectedAsync = React.useCallback(async (): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      mediaHandler.handleDownloadSelected();
+      resolve();
+    });
+  }, [mediaHandler]);
+  
   // Value provided by the context
   const value: GalleryContextProps = {
     // Selection state
@@ -147,7 +155,7 @@ export const GalleryProvider: React.FC<GalleryProviderProps> = ({
     
     // Media operations
     handleDeleteSelected: onDeleteSelected,
-    handleDownloadSelected: mediaHandler.handleDownloadSelected,
+    handleDownloadSelected: handleDownloadSelectedAsync,
     
     // Media data
     mediaIds,
