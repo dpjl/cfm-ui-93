@@ -1,3 +1,4 @@
+
 import React, { memo, useMemo } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -20,6 +21,8 @@ interface VirtualizedGalleryGridProps {
   showDates?: boolean;
   updateMediaInfo?: (id: string, info: DetailedMediaInfo) => void;
   position: 'source' | 'destination';
+  directory: string; // Ajout du directory pour la mémorisation
+  filter?: string; // Ajout du filtre pour la mémorisation
 }
 
 /**
@@ -34,14 +37,27 @@ const VirtualizedGalleryGrid = memo(({
   viewMode = 'single',
   showDates = false,
   updateMediaInfo,
-  position = 'source'
+  position = 'source',
+  directory = '',
+  filter = 'all'
 }: VirtualizedGalleryGridProps) => {
-  // Use custom hook for grid management
+  // Convertir la position source/destination en left/right pour la cohérence
+  const galleryId = position === 'source' ? 'left' : 'right';
+  
+  // Use custom hook for grid management with our extended options
   const {
     gridRef,
     gridKey,
-    scrollPositionRef
-  } = useGalleryGrid();
+    handleScroll,
+    handleResize
+  } = useGalleryGrid({
+    galleryId,
+    directoryId: directory,
+    filter,
+    columnsCount,
+    viewMode,
+    mediaIds
+  });
   
   // Use hook for tracking media changes to optimize rendering
   useGalleryMediaTracking(mediaIds, gridRef);
@@ -81,6 +97,9 @@ const VirtualizedGalleryGrid = memo(({
     <div className="w-full h-full p-2 gallery-container">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
+          // Handle resize events for our custom position tracking
+          handleResize(width, height);
+          
           // Use the enhanced calculation function for all grid parameters
           const { 
             itemWidth, 
@@ -110,10 +129,7 @@ const VirtualizedGalleryGrid = memo(({
                 const index = rowIndex * columnsCount + columnIndex;
                 return index < mediaIds.length ? mediaIds[index] : `empty-${rowIndex}-${columnIndex}`;
               }}
-              onScroll={({ scrollTop }) => {
-                scrollPositionRef.current = scrollTop;
-              }}
-              initialScrollTop={scrollPositionRef.current}
+              onScroll={handleScroll}
               className="scrollbar-vertical"
               style={{ 
                 overflowX: 'hidden',
