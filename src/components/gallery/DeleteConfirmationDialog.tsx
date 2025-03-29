@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useLanguage } from '@/hooks/use-language';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,50 +10,35 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
 interface DeleteConfirmationDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedIds: string[];
+  onClose: () => void;
   onConfirm: () => void;
-  onCancel: () => void;
-  isPending: boolean;
+  selectedCount: number;
 }
 
 const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   open,
-  onOpenChange,
-  selectedIds,
+  onClose,
   onConfirm,
-  onCancel,
-  isPending
+  selectedCount,
 }) => {
-  const { t } = useLanguage();
-  
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {t('delete_confirmation_title')}
+            Supprimer {selectedCount} élément{selectedCount > 1 ? 's' : ''}
           </AlertDialogTitle>
           <AlertDialogDescription>
             Cette action déplacera les éléments sélectionnés dans la corbeille située dans le cache de l'application CFM.
-            {selectedIds.length > 1 && ` (${selectedIds.length} items)`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel} disabled={isPending}>
-            {t('cancel')}
-          </AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={onConfirm}
-            disabled={isPending}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {isPending ? t('deleting') : t('delete')}
-          </AlertDialogAction>
+          <AlertDialogCancel>Annuler</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} className="bg-destructive hover:bg-destructive/90">Supprimer</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
