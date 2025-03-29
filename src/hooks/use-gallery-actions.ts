@@ -10,7 +10,8 @@ export function useGalleryActions(
   activeSide: 'left' | 'right',
   setDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>,
   setSelectedIdsLeft: React.Dispatch<React.SetStateAction<string[]>>,
-  setSelectedIdsRight: React.Dispatch<React.SetStateAction<string[]>>
+  setSelectedIdsRight: React.Dispatch<React.SetStateAction<string[]>>,
+  setActiveSide: React.Dispatch<React.SetStateAction<'left' | 'right'>>
 ) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -58,6 +59,8 @@ export function useGalleryActions(
   };
   
   const handleDeleteSelected = (side: 'left' | 'right') => {
+    // Mise à jour de activeSide pour s'assurer que la bonne galerie est ciblée
+    setActiveSide(side);
     setDeleteDialogOpen(true);
   };
   

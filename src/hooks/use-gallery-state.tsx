@@ -27,7 +27,8 @@ export function useGalleryState() {
     activeSide,
     uiState.setDeleteDialogOpen,
     setSelectedIdsLeft,
-    setSelectedIdsRight
+    setSelectedIdsRight,
+    setActiveSide  // Passage de setActiveSide pour permettre la mise à jour de la galerie active
   );
   
   // Convenience methods that use data from multiple hooks
