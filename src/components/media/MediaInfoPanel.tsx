@@ -16,7 +16,8 @@ import {
   Copy,
   Trash2,
   Download,
-  Eye
+  Eye,
+  X
 } from 'lucide-react';
 
 interface MediaInfoPanelProps {
@@ -27,6 +28,7 @@ interface MediaInfoPanelProps {
   mediaInfoMap?: Map<string, DetailedMediaInfo | null>;
   selectionMode: 'single' | 'multiple';
   position: 'source' | 'destination';
+  onClose: () => void;
 }
 
 const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
@@ -36,7 +38,8 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
   onDownloadSelected,
   mediaInfoMap = new Map(),
   selectionMode,
-  position
+  position,
+  onClose
 }) => {
   const isMobile = useIsMobile();
   const { t } = useLanguage();
@@ -61,14 +64,17 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
     >
       {/* Header with action buttons */}
       <div className="flex justify-between items-center mb-2">
-        {!isMobile && (
-          <h3 className="text-sm font-medium">
-            {selectedIds.length === 1 
-              ? "Media Information" 
-              : `${selectedIds.length} items selected`}
-          </h3>
-        )}
-        <div className={`flex space-x-1 ${isMobile ? "w-full justify-center" : ""}`}>
+        <div className="flex-1">
+          {!isMobile && (
+            <h3 className="text-sm font-medium">
+              {selectedIds.length === 1 
+                ? "Media Information" 
+                : `${selectedIds.length} items selected`}
+            </h3>
+          )}
+        </div>
+        
+        <div className={`flex space-x-1 ${isMobile ? "justify-center" : ""}`}>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -94,6 +100,17 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
             title="Delete"
           >
             <Trash2 className="h-4 w-4" />
+          </Button>
+          
+          {/* Bouton de fermeture */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            title="Close"
+            className="ml-2"
+          >
+            <X className="h-4 w-4" />
           </Button>
         </div>
       </div>

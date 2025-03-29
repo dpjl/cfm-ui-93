@@ -1,5 +1,5 @@
 
-import React, { memo, useEffect, useCallback } from 'react';
+import React, { memo, useEffect, useCallback, forwardRef } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -18,16 +18,16 @@ interface VirtualizedGalleryGridProps {
   position: 'source' | 'destination';
 }
 
-const VirtualizedGalleryGrid = memo(({
+const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
   mediaIds,
   selectedIds,
   onSelectId,
   columnsCount = 5,
   viewMode = 'single',
-  showDates = false,
+  showDates = true,
   updateMediaInfo,
   position = 'source'
-}: VirtualizedGalleryGridProps) => {
+}, ref) => {
   // Use our custom hooks for grid management
   const {
     gridRef,
@@ -36,6 +36,12 @@ const VirtualizedGalleryGrid = memo(({
     handleResize,
     refreshGrid
   } = useGalleryGrid();
+  
+  // Expose ref for parent component
+  React.useImperativeHandle(ref, () => ({
+    ...gridRef.current,
+    refreshGrid
+  }));
   
   // Track media and selection changes
   useGalleryMediaTracking(mediaIds, selectedIds, gridRef);
@@ -82,12 +88,11 @@ const VirtualizedGalleryGrid = memo(({
     mediaIds,
     selectedIds,
     onSelectId: handleSelectItem,
-    showDates,
     updateMediaInfo,
     position,
     columnsCount,
     gap: 8
-  }), [mediaIds, selectedIds, handleSelectItem, showDates, updateMediaInfo, position, columnsCount]);
+  }), [mediaIds, selectedIds, handleSelectItem, updateMediaInfo, position, columnsCount]);
   
   return (
     <div className="w-full h-full p-2 gallery-container">
@@ -97,7 +102,7 @@ const VirtualizedGalleryGrid = memo(({
           const gap = 8;
           // Use fixed cell width to ensure consistent gallery sizing
           const cellWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
-          const cellHeight = cellWidth + (showDates ? 40 : 0); // Add space for date display if needed
+          const cellHeight = cellWidth; // Make cells square
           
           return (
             <FixedSizeGrid

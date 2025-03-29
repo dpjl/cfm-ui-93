@@ -1,88 +1,102 @@
 
-/* Styles personnalisés pour les barres de défilement */
-.scrollbar-vertical {
-  position: relative;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: var(--primary-color-transparent) transparent;
-}
-
-.scrollbar-horizontal {
-  position: relative;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: var(--primary-color-transparent) transparent;
-}
-
-/* Poignée de défilement visible */
-.scrollbar-handle {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 8px;
-  border-radius: 4px;
-  background-color: rgba(128, 128, 128, 0.3);
-  z-index: 20;
-  transition: opacity 0.3s;
-}
-
-.scrollbar-handle:hover {
-  background-color: rgba(128, 128, 128, 0.5);
-}
-
-/* Indicateur de défilement mobile */
-.scrollbar-pull-tab {
-  position: absolute;
-  width: 36px;
-  height: 5px;
-  background-color: rgba(128, 128, 128, 0.25);
-  border-radius: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  transition: opacity 0.3s ease;
-}
-
-.scrollbar-pull-tab.top {
-  top: 4px;
-}
-
-.scrollbar-pull-tab.bottom {
-  bottom: 4px;
-}
-
-/* Afficher l'indicateur uniquement lors d'un défilement */
-.scrolling .scrollbar-pull-tab {
-  opacity: 1;
-}
-
-.scrollbar-pull-tab.faded {
-  opacity: 0;
-}
-
-/* Styles mobile */
-@media (max-width: 640px) {
-  .scrollbar-pull-tab {
-    width: 40px;
-    height: 6px;
-    background-color: var(--primary-color-transparent, rgba(128, 128, 128, 0.5));
+@layer components {
+  /* Styles personnalisés pour les barres de défilement */
+  .scrollbar-vertical {
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color-transparent) transparent;
   }
-  
-  .dark .scrollbar-pull-tab {
-    background-color: rgba(200, 200, 200, 0.3);
-  }
-}
 
-/* Gestion tactile améliorée */
-@media (hover: none) and (pointer: coarse) {
-  .scrollbar-vertical,
   .scrollbar-horizontal {
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color-transparent) transparent;
+  }
+
+  /* Poignée de défilement visible */
+  .scrollbar-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 8px;
+    border-radius: 4px;
+    background-color: rgba(128, 128, 128, 0.7);
+    z-index: 20;
+    transition: opacity 0.3s, background-color 0.2s;
+    cursor: grab;
+  }
+
+  .scrollbar-handle:hover {
+    background-color: rgba(128, 128, 128, 0.9);
   }
   
-  .scrollbar-handle {
-    width: 10px;
+  .scrollbar-handle:active {
+    cursor: grabbing;
+    background-color: var(--primary);
+  }
+
+  /* Indicateur de défilement mobile */
+  .scrollbar-pull-tab {
+    position: absolute;
+    width: 36px;
+    height: 5px;
+    background-color: rgba(128, 128, 128, 0.25);
+    border-radius: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: opacity 0.3s ease;
+    z-index: 20;
+  }
+
+  .scrollbar-pull-tab.top {
+    top: 4px;
+  }
+
+  .scrollbar-pull-tab.bottom {
+    bottom: 4px;
+  }
+
+  /* Afficher l'indicateur uniquement lors d'un défilement */
+  .scrolling .scrollbar-pull-tab {
+    opacity: 1;
+  }
+
+  .scrollbar-pull-tab.faded {
+    opacity: 0;
+  }
+
+  /* Styles mobile */
+  @media (max-width: 640px) {
+    .scrollbar-pull-tab {
+      width: 40px;
+      height: 6px;
+      background-color: var(--primary-color-transparent, rgba(128, 128, 128, 0.5));
+    }
+    
+    .dark .scrollbar-pull-tab {
+      background-color: rgba(200, 200, 200, 0.3);
+    }
+    
+    .scrollbar-handle {
+      width: 12px;
+      border-radius: 6px;
+    }
+  }
+
+  /* Gestion tactile améliorée */
+  @media (hover: none) and (pointer: coarse) {
+    .scrollbar-vertical,
+    .scrollbar-horizontal {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+    
+    .scrollbar-handle {
+      width: 12px;
+    }
   }
 }

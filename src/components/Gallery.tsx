@@ -12,6 +12,8 @@ import GalleryToolbar from './gallery/GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from './media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
+import { useScrollbarDateIndicator } from '@/hooks/use-scrollbar-date-indicator';
+import { ScrollAreaWithDateIndicator } from './ui/scroll-area-with-date-indicator';
 
 export interface ImageItem {
   id: string;
@@ -55,11 +57,11 @@ const Gallery: React.FC<GalleryProps> = ({
   filter = 'all',
   onToggleSidebar
 }) => {
-  const [showDates, setShowDates] = useState(false);
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<any>(null);
   
   // Initialiser les fonctionnalités de sélection de la galerie
   const selection = useGallerySelection({
@@ -80,6 +82,9 @@ const Gallery: React.FC<GalleryProps> = ({
     position
   );
 
+  // Initialiser le système d'indicateur de date sur la scrollbar
+  const { dateIndicator, handleScroll } = useScrollbarDateIndicator(mediaInfoMap, mediaIds);
+
   // Collecter les informations sur les médias à partir des composants enfants
   const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
     setMediaInfoMap(prev => {
@@ -89,9 +94,10 @@ const Gallery: React.FC<GalleryProps> = ({
     });
   }, []);
 
-  const toggleDates = useCallback(() => {
-    setShowDates(prev => !prev);
-  }, []);
+  // Déselectionner les éléments
+  const handleClearSelection = useCallback(() => {
+    selection.handleDeselectAll();
+  }, [selection]);
   
   // Déterminer si nous devons afficher le panneau d'information
   const shouldShowInfoPanel = selectedIds.length > 0;
@@ -121,8 +127,6 @@ const Gallery: React.FC<GalleryProps> = ({
         mediaIds={mediaIds}
         onSelectAll={selection.handleSelectAll}
         onDeselectAll={selection.handleDeselectAll}
-        showDates={showDates}
-        onToggleDates={toggleDates}
         viewMode={viewMode}
         position={position}
         onToggleSidebar={onToggleSidebar}
@@ -149,23 +153,33 @@ const Gallery: React.FC<GalleryProps> = ({
             mediaInfoMap={mediaInfoMap}
             selectionMode={selection.selectionMode}
             position={position}
+            onClose={handleClearSelection}
           />
         )}
         
-        {mediaIds.length === 0 ? (
-          <GalleryEmptyState />
-        ) : (
-          <VirtualizedGalleryGrid
-            mediaIds={mediaIds}
-            selectedIds={selectedIds}
-            onSelectId={selection.handleSelectItem}
-            columnsCount={columnsCount}
-            viewMode={viewMode}
-            showDates={showDates}
-            updateMediaInfo={updateMediaInfo}
-            position={position}
-          />
+        {dateIndicator.visible && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/70 text-white px-4 py-2 rounded-md z-50 pointer-events-none">
+            {dateIndicator.formattedDate}
+          </div>
         )}
+        
+        <ScrollAreaWithDateIndicator className="h-full" onScroll={handleScroll} mediaInfoMap={mediaInfoMap} mediaIds={mediaIds}>
+          {mediaIds.length === 0 ? (
+            <GalleryEmptyState />
+          ) : (
+            <VirtualizedGalleryGrid
+              mediaIds={mediaIds}
+              selectedIds={selectedIds}
+              onSelectId={selection.handleSelectItem}
+              columnsCount={columnsCount}
+              viewMode={viewMode}
+              showDates={true}
+              updateMediaInfo={updateMediaInfo}
+              position={position}
+              ref={gridRef}
+            />
+          )}
+        </ScrollAreaWithDateIndicator>
       </div>
       
       <MediaPreview 

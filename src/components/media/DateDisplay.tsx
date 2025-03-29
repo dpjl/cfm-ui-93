@@ -7,13 +7,12 @@ import { useIsMobile } from '@/hooks/use-breakpoint';
 
 interface DateDisplayProps {
   dateString: string | null;
-  showDate?: boolean;
 }
 
-const DateDisplay: React.FC<DateDisplayProps> = ({ dateString, showDate = false }) => {
+const DateDisplay: React.FC<DateDisplayProps> = ({ dateString }) => {
   const isMobile = useIsMobile();
   
-  if (!dateString || !showDate) return null;
+  if (!dateString) return null;
   
   // Format date based on device type
   const formattedDate = isMobile 

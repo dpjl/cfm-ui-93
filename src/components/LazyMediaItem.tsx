@@ -18,7 +18,6 @@ interface LazyMediaItemProps {
   selected: boolean;
   onSelect: (id: string, extendSelection: boolean) => void;
   index: number;
-  showDates?: boolean;
   updateMediaInfo?: (id: string, info: any) => void;
   position: 'source' | 'destination';
 }
@@ -29,7 +28,6 @@ const LazyMediaItem = memo(({
   selected,
   onSelect,
   index,
-  showDates = false,
   updateMediaInfo,
   position
 }: LazyMediaItemProps) => {
@@ -132,7 +130,7 @@ const LazyMediaItem = memo(({
             loaded={loaded}
           />
 
-          <DateDisplay dateString={mediaInfo?.createdAt} showDate={showDates} />
+          <DateDisplay dateString={mediaInfo?.createdAt} showDate={true} />
 
           <div className="image-overlay pointer-events-none" />
           <SelectionCheckbox

@@ -10,7 +10,6 @@ interface GalleryGridCellProps {
     mediaIds: string[];
     selectedIds: string[];
     onSelectId: (id: string, extendSelection: boolean) => void;
-    showDates?: boolean;
     updateMediaInfo?: (id: string, info: any) => void;
     position: 'source' | 'destination';
     columnsCount: number;
@@ -43,7 +42,6 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
         selected={isSelected}
         onSelect={data.onSelectId}
         index={index}
-        showDates={data.showDates}
         updateMediaInfo={data.updateMediaInfo}
         position={data.position}
       />
