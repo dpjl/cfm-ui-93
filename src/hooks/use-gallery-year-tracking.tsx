@@ -11,6 +11,7 @@ export function useGalleryYearTracking(
   columnsCount: number
 ) {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
+  const [uniqueYears, setUniqueYears] = useState<{year: number, index: number}[]>([]);
   
   // Calculate the year from date string
   const getYear = useCallback((dateString: string | null): number | null => {
@@ -41,13 +42,33 @@ export function useGalleryYearTracking(
     });
   }, [gridRef, columnsCount]);
   
+  // Extract unique years with their first occurrence index
+  useEffect(() => {
+    if (mediaIds.length === 0 || mediaInfoMap.size === 0) return;
+    
+    const years = new Map<number, number>();
+    
+    mediaIds.forEach((id, index) => {
+      const year = getYearFromMediaId(id);
+      if (year && !years.has(year)) {
+        years.set(year, index);
+      }
+    });
+    
+    const yearsArray = Array.from(years.entries())
+      .map(([year, index]) => ({ year, index }))
+      .sort((a, b) => a.year - b.year);
+    
+    setUniqueYears(yearsArray);
+  }, [mediaIds, mediaInfoMap, getYearFromMediaId]);
+  
   // Update current year based on visible items
   const updateCurrentYear = useCallback(() => {
     if (!gridRef.current || mediaIds.length === 0 || mediaInfoMap.size === 0) return;
     
     // Get current scroll position
     const grid = gridRef.current;
-    const { scrollTop, clientHeight } = grid.state;
+    const { scrollTop, clientHeight } = grid._outerRef;
     
     // Estimate the row index based on scroll position
     const rowHeight = grid.props.rowHeight as number;
@@ -88,6 +109,7 @@ export function useGalleryYearTracking(
   
   return {
     currentYear,
+    uniqueYears,
     scrollToIndex
   };
 }

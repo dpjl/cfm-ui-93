@@ -93,7 +93,7 @@ const Gallery: React.FC<GalleryProps> = ({
   }, []);
 
   // Year tracking for anchor navigation
-  const { currentYear, scrollToIndex } = useGalleryYearTracking(
+  const { currentYear, uniqueYears, scrollToIndex } = useGalleryYearTracking(
     mediaIds,
     mediaInfoMap,
     gridRef,
@@ -151,13 +151,14 @@ const Gallery: React.FC<GalleryProps> = ({
         onToggleSelectionMode={selection.toggleSelectionMode}
       />
       
-      <div className="flex-1 overflow-hidden relative gallery-scrollbar">
+      <div className="flex-1 overflow-hidden relative gallery-scrollbar scrollbar-vertical">
         <YearAnchors 
           mediaIds={mediaIds}
           mediaInfoMap={mediaInfoMap}
           containerRef={containerRef}
           onYearClick={handleYearClick}
           currentYear={currentYear}
+          uniqueYears={uniqueYears}
         />
         
         {shouldShowInfoPanel && (

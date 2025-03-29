@@ -16,22 +16,6 @@
   scrollbar-color: var(--primary-color-transparent) transparent;
 }
 
-/* Poignée de défilement visible */
-.scrollbar-handle {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 8px;
-  border-radius: 4px;
-  background-color: rgba(128, 128, 128, 0.3);
-  z-index: 20;
-  transition: opacity 0.3s;
-}
-
-.scrollbar-handle:hover {
-  background-color: rgba(128, 128, 128, 0.5);
-}
-
 /* Styles pour les ancres d'année */
 .year-anchors-container {
   position: absolute;
@@ -42,14 +26,11 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.year-anchors-container.visible {
-  opacity: 1;
-  pointer-events: auto;
+  padding: 8px 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  backdrop-filter: blur(4px);
+  transition: opacity 0.2s ease;
 }
 
 .year-anchor {
@@ -95,10 +76,6 @@
   .scrollbar-horizontal {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
-  }
-  
-  .scrollbar-handle {
-    width: 10px;
   }
   
   .year-anchor {
