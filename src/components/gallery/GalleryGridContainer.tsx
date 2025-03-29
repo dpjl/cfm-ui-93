@@ -23,14 +23,12 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
   // État pour forcer le rendu lors des changements de dimension
   const [resetKey, setResetKey] = useState(0);
   
-  // Forcer une réinitialisation lorsque la taille du conteneur parent change
-  // (par exemple, quand le panneau d'information s'ouvre ou se ferme)
+  // Observer les redimensionnements et forcer une réinitialisation
   useEffect(() => {
     const resizeObserver = new ResizeObserver(() => {
       setResetKey(prev => prev + 1);
     });
     
-    // Observer le conteneur parent de la galerie
     const galleryContainer = document.querySelector('.gallery-content') || document.body;
     resizeObserver.observe(galleryContainer);
     
@@ -39,7 +37,7 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
     };
   }, []);
 
-  // Show loading skeletons
+  // Afficher des squelettes pendant le chargement
   if (isLoading) {
     return (
       <div className="grid gap-4 p-4" style={{
@@ -52,7 +50,7 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
     );
   }
 
-  // Show empty state if no items
+  // Afficher un état vide si aucun élément
   if (items.length === 0) {
     return (
       <div className="flex items-center justify-center h-full p-8 text-center">
@@ -61,6 +59,7 @@ const GalleryGridContainer: React.FC<GalleryGridContainerProps> = ({
     );
   }
 
+  // Fonction de rendu pour chaque élément média
   const renderMediaItem = (item: MediaItem, style: React.CSSProperties) => {
     const thumbnailUrl = getThumbnailUrl(item.id, position);
     

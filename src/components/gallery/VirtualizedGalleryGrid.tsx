@@ -1,5 +1,5 @@
 
-import React, { memo, useEffect, useCallback } from 'react';
+import React, { memo, useCallback } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -28,7 +28,7 @@ const VirtualizedGalleryGrid = memo(({
   updateMediaInfo,
   position = 'source'
 }: VirtualizedGalleryGridProps) => {
-  // Use our custom hooks for grid management
+  // Utiliser notre hook personnalisé pour la gestion de la grille
   const {
     gridRef,
     gridKey,
@@ -37,47 +37,18 @@ const VirtualizedGalleryGrid = memo(({
     refreshGrid
   } = useGalleryGrid();
   
-  // Track media and selection changes
-  useGalleryMediaTracking(mediaIds, selectedIds, gridRef);
+  // Utiliser notre hook pour suivre les changements de médias
+  useGalleryMediaTracking(mediaIds, gridRef);
   
-  // Set up resize observer to detect container size changes
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver((entries) => {
-      if (entries[0]) {
-        const { width, height } = entries[0].contentRect;
-        handleResize(width, height);
-      }
-    });
-
-    // Observe the gallery container
-    const galleryContainer = document.querySelector('.gallery-container') || document.body;
-    resizeObserver.observe(galleryContainer);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [handleResize]);
-  
-  // Reset grid only when media IDs count changes significantly
-  useEffect(() => {
-    if (Math.abs(mediaIds.length - (gridRef.current as any)?._lastMediaLength || 0) > 5) {
-      refreshGrid();
-      // Store current length for future comparisons
-      if (gridRef.current) {
-        (gridRef.current as any)._lastMediaLength = mediaIds.length;
-      }
-    }
-  }, [mediaIds.length, refreshGrid, gridRef]);
-  
-  // Calculate row count based on media IDs and columns
+  // Calculer le nombre de lignes en fonction des médias et des colonnes
   const rowCount = Math.ceil(mediaIds.length / columnsCount);
   
-  // Memoize selection callback
+  // Mémoriser le callback de sélection
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
     onSelectId(id, extendSelection);
   }, [onSelectId]);
   
-  // Memoize item data to prevent unnecessary re-renders
+  // Mémoriser les données des éléments pour éviter les rendus inutiles
   const itemData = React.useMemo(() => ({
     mediaIds,
     selectedIds,
@@ -93,11 +64,10 @@ const VirtualizedGalleryGrid = memo(({
     <div className="w-full h-full p-2 gallery-container">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // Calculate item size based on available width
+          // Calculer la taille des éléments en fonction de la largeur disponible
           const gap = 8;
-          // Use fixed cell width to ensure consistent gallery sizing
           const cellWidth = Math.floor((width - (gap * (columnsCount - 1))) / columnsCount);
-          const cellHeight = cellWidth + (showDates ? 40 : 0); // Add space for date display if needed
+          const cellHeight = cellWidth + (showDates ? 40 : 0);
           
           return (
             <FixedSizeGrid
@@ -109,20 +79,17 @@ const VirtualizedGalleryGrid = memo(({
               rowHeight={cellHeight}
               width={width}
               itemData={itemData}
-              // Increased overscan for smoother scrolling
               overscanRowCount={5}
               overscanColumnCount={2}
-              // Use stable item key for better rendering efficiency
               itemKey={({ columnIndex, rowIndex }) => {
                 const index = rowIndex * columnsCount + columnIndex;
                 return index < mediaIds.length ? mediaIds[index] : `empty-${rowIndex}-${columnIndex}`;
               }}
-              // Save scroll position during scroll events
               onScroll={({ scrollTop }) => {
                 scrollPositionRef.current = scrollTop;
               }}
-              // Initialize with saved scroll position
               initialScrollTop={scrollPositionRef.current}
+              className="scrollbar-vertical"
             >
               {GalleryGridCell}
             </FixedSizeGrid>
@@ -133,7 +100,7 @@ const VirtualizedGalleryGrid = memo(({
   );
 });
 
-// Set component display name for debugging
+// Définir le nom d'affichage du composant pour le débogage
 VirtualizedGalleryGrid.displayName = 'VirtualizedGalleryGrid';
 
 export default VirtualizedGalleryGrid;

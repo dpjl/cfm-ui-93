@@ -1,8 +1,9 @@
 
 import React, { useCallback, useRef, useState, useEffect } from 'react';
-import { FixedSizeGrid as Grid } from 'react-window';
+import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import type { MediaItem } from '../../types/gallery';
+import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 
 interface VirtualizedGalleryGridWrapperProps {
   items: MediaItem[];
@@ -21,14 +22,17 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
   itemSize = 200,
   renderItem
 }) => {
-  const gridRef = useRef<Grid | null>(null);
+  const gridRef = useRef<FixedSizeGrid | null>(null);
   const [key, setKey] = useState(0);
-  const previousDimensionsRef = useRef<{width: number, height: number}>({width: 0, height: 0});
+  const itemIds = items.map(item => item.id);
   
-  // Calculate rows based on items and columns
+  // Utiliser notre hook de suivi des médias
+  useGalleryMediaTracking(itemIds, gridRef);
+  
+  // Calculer le nombre de lignes en fonction des éléments et des colonnes
   const rowCount = Math.ceil(items.length / columnCount);
   
-  // Force full re-render when items or columns change
+  // Forcer une réinitialisation complète lorsque les éléments ou les colonnes changent
   useEffect(() => {
     setKey(prevKey => prevKey + 1);
   }, [items.length, columnCount]);
@@ -36,13 +40,12 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
   const cellRenderer = useCallback(({ columnIndex, rowIndex, style }: any) => {
     const index = rowIndex * columnCount + columnIndex;
     
-    // Return empty cell if index is out of bounds
+    // Retourner une cellule vide si l'index est hors limites
     if (index >= items.length) {
       return <div style={style}></div>;
     }
     
-    // IMPORTANT: Ne pas manipuler les positions top/left contrôlées par react-window
-    // Ajuster uniquement width et height pour les gaps
+    // Ajuster le style uniquement pour la largeur et la hauteur (pour les espaces)
     const adjustedStyle = {
       ...style,
       width: `calc(${style.width}px - ${columnGap}px)`,
@@ -53,47 +56,27 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
     return renderItem(items[index], adjustedStyle);
   }, [items, columnCount, columnGap, rowGap, renderItem]);
 
-  // Calculate dimensions including gaps
-  const getItemWidth = (width: number) => {
+  // Calculer les dimensions en tenant compte des espaces
+  const getItemSize = (width: number) => {
     return Math.floor((width - (columnGap * (columnCount - 1))) / columnCount);
   };
-  
-  const getItemHeight = () => itemSize;
 
   return (
     <div className="w-full h-full">
       <AutoSizer key={`gallery-grid-${key}`}>
         {({ height, width }) => {
-          // Si les dimensions changent significativement, forcer la mise à jour du grid
-          const dimensionsChanged = 
-            Math.abs(previousDimensionsRef.current.width - width) > 5 || 
-            Math.abs(previousDimensionsRef.current.height - height) > 5;
-          
-          if (dimensionsChanged) {
-            previousDimensionsRef.current = { width, height };
-            // On ne change pas le key ici, car cela provoquerait une boucle infinie
-            // Mais on force la mise à jour du grid si nécessaire
-            if (gridRef.current) {
-              setTimeout(() => {
-                gridRef.current?.forceUpdate();
-              }, 0);
-            }
-          }
-          
-          // Calculer la largeur des éléments
-          const itemWidth = getItemWidth(width);
-          const itemHeight = getItemHeight();
+          const itemWidth = getItemSize(width);
           
           return (
-            <Grid
+            <FixedSizeGrid
               ref={gridRef}
               columnCount={columnCount}
               columnWidth={itemWidth}
               height={height}
               rowCount={rowCount}
-              rowHeight={itemHeight}
+              rowHeight={itemSize}
               width={width}
-              overscanRowCount={5} // Augmenter pour un meilleur défilement
+              overscanRowCount={5}
               overscanColumnCount={2}
               itemKey={({ columnIndex, rowIndex }) => {
                 const index = rowIndex * columnCount + columnIndex;
@@ -101,7 +84,7 @@ const VirtualizedGalleryGridWrapper: React.FC<VirtualizedGalleryGridWrapperProps
               }}
             >
               {cellRenderer}
-            </Grid>
+            </FixedSizeGrid>
           );
         }}
       </AutoSizer>

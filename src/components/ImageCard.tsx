@@ -10,7 +10,6 @@ interface ImageCardProps {
   selected: boolean;
   onSelect: (extendSelection: boolean) => void;
   onPreview: () => void;
-  aspectRatio?: "portrait" | "square" | "video";
   type?: "image" | "video";
   onInView?: () => void;
   createdAt?: string;
@@ -23,7 +22,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
   selected,
   onSelect,
   onPreview,
-  aspectRatio = "square",
   type = "image",
   onInView,
   createdAt,
@@ -32,16 +30,17 @@ const ImageCard: React.FC<ImageCardProps> = ({
   const [loaded, setLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
-  // Call onInView immediately when component mounts if it exists
+  // Appeler onInView immédiatement lorsque le composant est monté s'il existe
   React.useEffect(() => {
     if (onInView) {
       onInView();
     }
   }, [onInView]);
   
-  // Determine if it's a video based on file extension
+  // Déterminer s'il s'agit d'une vidéo en fonction de l'extension du fichier
   const isVideo = type === "video" || alt.match(/\.(mp4|webm|ogg|mov)$/i);
   
+  // Gérer le survol pour les vidéos
   const handleMouseOver = () => {
     if (isVideo && videoRef.current) {
       videoRef.current.play().catch(err => console.error('Error playing video:', err));
@@ -54,7 +53,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
     }
   };
   
-  // Direct handler for clicking on the card
+  // Gestionnaire direct pour le clic sur la carte
   const handleCardClick = (e: React.MouseEvent) => {
     onSelect(e.shiftKey);
   }
@@ -63,7 +62,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
     <div 
       className={cn(
         "image-card group relative", 
-        "aspect-square", // Always use square aspect
+        "aspect-square", 
         selected && "selected",
         !loaded && "animate-pulse bg-muted"
       )}
@@ -86,7 +85,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
             loop
             playsInline
           />
-          {/* Video icon overlay */}
+          {/* Icône vidéo en superposition */}
           <div className="absolute top-2 left-2 z-10 bg-black/70 p-1 rounded-md text-white">
             <Video className="h-4 w-4" />
           </div>
@@ -103,7 +102,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
         />
       )}
 
-      {/* Use the DateDisplay component */}
+      {/* Utiliser le composant DateDisplay */}
       <DateDisplay dateString={createdAt} showDate={showDates} />
 
       <div className="image-overlay" />

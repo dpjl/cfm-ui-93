@@ -1,5 +1,5 @@
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { FixedSizeGrid } from 'react-window';
 
 export function useGalleryGrid() {
@@ -9,12 +9,11 @@ export function useGalleryGrid() {
   const scrollPositionRef = useRef(0);
   const lastResetTimeRef = useRef(0);
 
-  // Increment grid key to force re-render
+  // Incrémenter la clé de la grille pour forcer le rendu
   const refreshGrid = useCallback(() => {
-    // Vérifiez si un reset a été fait récemment pour éviter les resets trop fréquents
+    // Éviter les resets trop fréquents (throttling)
     const now = Date.now();
     if (now - lastResetTimeRef.current < 500) {
-      // Éviter les resets trop fréquents
       return;
     }
     
@@ -22,37 +21,38 @@ export function useGalleryGrid() {
     lastResetTimeRef.current = now;
   }, []);
   
-  // Save current scroll position
+  // Sauvegarder la position de défilement actuelle
   const saveScrollPosition = useCallback(() => {
     if (gridRef.current) {
       scrollPositionRef.current = gridRef.current.state.scrollTop;
     }
   }, []);
   
-  // Restore saved scroll position
+  // Restaurer la position de défilement sauvegardée
   const restoreScrollPosition = useCallback(() => {
     if (gridRef.current && scrollPositionRef.current > 0) {
       gridRef.current.scrollTo({ scrollTop: scrollPositionRef.current });
     }
   }, []);
 
-  // Handle resize with debounce
+  // Gérer le redimensionnement avec debounce
   const handleResize = useCallback((width: number, height: number) => {
-    // Check if size change is significant
-    if (
+    // Vérifier si le changement de taille est significatif
+    const isSignificantChange = 
       Math.abs(previousSizeRef.current.width - width) > 5 || 
-      Math.abs(previousSizeRef.current.height - height) > 5
-    ) {
-      // Save position before update
+      Math.abs(previousSizeRef.current.height - height) > 5;
+      
+    if (isSignificantChange) {
+      // Sauvegarder la position avant la mise à jour
       saveScrollPosition();
       
-      // Update size reference
+      // Mettre à jour la référence de taille
       previousSizeRef.current = { width, height };
       
-      // Force grid refresh
+      // Forcer le rafraîchissement de la grille
       refreshGrid();
       
-      // Restore position after update
+      // Restaurer la position après la mise à jour
       setTimeout(restoreScrollPosition, 50);
     }
   }, [saveScrollPosition, restoreScrollPosition, refreshGrid]);
@@ -62,7 +62,6 @@ export function useGalleryGrid() {
     gridKey,
     scrollPositionRef,
     previousSizeRef,
-    setGridKey,
     refreshGrid,
     saveScrollPosition,
     restoreScrollPosition,

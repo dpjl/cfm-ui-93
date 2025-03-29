@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import VirtualizedGalleryGrid from './gallery/VirtualizedGalleryGrid';
 import GalleryEmptyState from './gallery/GalleryEmptyState';
@@ -59,9 +59,8 @@ const Gallery: React.FC<GalleryProps> = ({
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Hooks personnalisés pour la gestion des sélections et des aperçus
   const selection = useGallerySelection({
     mediaIds,
     selectedIds,
@@ -78,6 +77,7 @@ const Gallery: React.FC<GalleryProps> = ({
     position
   );
 
+  // Mettre à jour les informations sur les médias
   const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
     setMediaInfoMap(prev => {
       const newMap = new Map(prev);
@@ -86,42 +86,13 @@ const Gallery: React.FC<GalleryProps> = ({
     });
   }, []);
 
-  // Handle scroll events for the pull tabs
-  useEffect(() => {
-    const galleryElement = containerRef.current?.querySelector('.gallery-scrollbar');
-    
-    if (!galleryElement) return;
-    
-    const handleScroll = () => {
-      setIsScrolling(true);
-      
-      // Clear previous timeout if exists
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      
-      // Set timeout to hide pull tabs after scrolling stops
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsScrolling(false);
-      }, 1000);
-    };
-    
-    galleryElement.addEventListener('scroll', handleScroll);
-    
-    return () => {
-      galleryElement.removeEventListener('scroll', handleScroll);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const shouldShowInfoPanel = selectedIds.length > 0;
   
   const handleCloseInfoPanel = useCallback(() => {
     selectedIds.forEach(id => onSelectId(id));
   }, [selectedIds, onSelectId]);
   
+  // États de chargement et d'erreur
   if (isLoading) {
     return (
       <div className="flex flex-col h-full">
@@ -140,6 +111,7 @@ const Gallery: React.FC<GalleryProps> = ({
     );
   }
 
+  // Déterminer si un élément est une vidéo
   const isVideoPreview = (id: string): boolean => {
     const info = mediaInfoMap.get(id);
     if (info) {
@@ -163,14 +135,7 @@ const Gallery: React.FC<GalleryProps> = ({
         onToggleSelectionMode={selection.toggleSelectionMode}
       />
       
-      <div className={`flex-1 overflow-hidden relative gallery-scrollbar ${isScrolling ? 'scrolling' : ''}`}>
-        {isMobile && (
-          <>
-            <div className={`scrollbar-pull-tab top ${isScrolling ? '' : 'faded'}`} />
-            <div className={`scrollbar-pull-tab bottom ${isScrolling ? '' : 'faded'}`} />
-          </>
-        )}
-        
+      <div className="flex-1 overflow-hidden relative scrollbar-vertical">
         {shouldShowInfoPanel && (
           <div className="absolute top-2 left-0 right-0 z-10 flex justify-center">
             <MediaInfoPanel

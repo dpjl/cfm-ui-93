@@ -21,7 +21,6 @@ interface LazyMediaItemProps {
   position: 'source' | 'destination';
 }
 
-// Using memo to prevent unnecessary re-renders
 const LazyMediaItem = memo(({
   id,
   selected,
@@ -34,43 +33,42 @@ const LazyMediaItem = memo(({
   const [loaded, setLoaded] = useState(false);
   const itemRef = useRef<HTMLDivElement>(null);
   
+  // Observer l'intersection pour le chargement paresseux
   const { elementRef, isIntersecting } = useIntersectionObserver<HTMLDivElement>({ 
     threshold: 0.1, 
     freezeOnceVisible: true 
   });
   
+  // Utiliser le cache pour les miniatures
   const { getCachedThumbnailUrl, setCachedThumbnailUrl } = useMediaCache();
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   
-  // Touch interaction handlers
+  // Hooks pour les interactions tactiles et clavier
   const { handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchInteractions({
     id,
     onSelect,
   });
   
-  // Keyboard interaction handlers
   const { handleKeyDown } = useKeyboardInteractions({
     id,
     onSelect,
   });
   
-  // Combined ref handler
+  // Référence combinée pour l'élément
   const setCombinedRef = useCombinedRef<HTMLDivElement>(elementRef, itemRef);
   
-  // Only load media info when element is visible
+  // Charger les informations sur le média uniquement lorsque l'élément est visible
   const shouldLoadInfo = isIntersecting;
-  
-  // Load media info once element is visible
   const { mediaInfo, isLoading } = useMediaInfo(id, shouldLoadInfo, position);
   
-  // Handle item click
+  // Gérer le clic sur l'élément
   const handleItemClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onSelect(id, e.shiftKey || e.ctrlKey || e.metaKey);
   }, [id, onSelect]);
   
-  // Load thumbnail URL, using cache if available
+  // Charger l'URL de la miniature, en utilisant le cache si disponible
   useEffect(() => {
     if (isIntersecting) {
       const cachedUrl = getCachedThumbnailUrl(id, position);
@@ -85,17 +83,17 @@ const LazyMediaItem = memo(({
     }
   }, [id, isIntersecting, position, getCachedThumbnailUrl, setCachedThumbnailUrl]);
   
-  // Update parent component with media info - ONCE
+  // Mettre à jour le composant parent avec les informations sur le média - UNE FOIS
   useEffect(() => {
     if (mediaInfo && updateMediaInfo) {
       updateMediaInfo(id, mediaInfo);
     }
   }, [id, mediaInfo, updateMediaInfo]);
   
-  // Determine if it's a video based on file extension
+  // Déterminer s'il s'agit d'une vidéo en fonction de l'extension du fichier
   const isVideo = mediaInfo?.alt ? /\.(mp4|webm|ogg|mov)$/i.test(mediaInfo.alt) : false;
   
-  // Render only a placeholder when not in view
+  // Rendre uniquement un espace réservé lorsqu'il n'est pas visible
   if (!isIntersecting) {
     return <MediaPlaceholder ref={setCombinedRef} />;
   }
@@ -119,7 +117,7 @@ const LazyMediaItem = memo(({
       onKeyDown={handleKeyDown}
       data-media-id={id}
       data-selection-state={selected ? 'selected' : 'unselected'}
-      style={{ touchAction: 'pan-y' }} /* Ceci indique au navigateur de prioriser le défilement vertical */
+      style={{ touchAction: 'pan-y' }}
     >
       {thumbnailUrl && (
         <>
@@ -140,7 +138,7 @@ const LazyMediaItem = memo(({
   );
 });
 
-// Set display name for debugging
+// Définir le nom d'affichage pour le débogage
 LazyMediaItem.displayName = 'LazyMediaItem';
 
 export default LazyMediaItem;
