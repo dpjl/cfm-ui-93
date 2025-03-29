@@ -1,6 +1,10 @@
-import { useCallback } from 'react';
+
+import React, { useCallback } from 'react';
 import { useSelectionState, SelectionMode } from './use-selection-state';
 import { useSelectionHandlers } from './use-selection-handlers';
+
+// Export SelectionMode from this file as well
+export { SelectionMode };
 
 interface UseGallerySelectionProps {
   mediaIds: string[];
