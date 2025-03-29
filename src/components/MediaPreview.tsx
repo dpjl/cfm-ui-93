@@ -135,11 +135,6 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
                   <div>{mediaInfo.size}</div>
                 </div>}
               
-              {mediaInfo.dimensions && <div>
-                  <div className="font-medium">{t('dimensions')}</div>
-                  <div>{mediaInfo.dimensions}</div>
-                </div>}
-              
               {mediaInfo.cameraModel && <div>
                   <div className="font-medium">{t('camera')}</div>
                   <div>{mediaInfo.cameraModel}</div>

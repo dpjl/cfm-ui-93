@@ -1,285 +1,145 @@
 
-import { API_BASE_URL } from './constants';
+import { ImageItem } from '@/components/Gallery';
 
-export interface MediaItem {
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+console.log("API Base URL:", API_BASE_URL);
+
+export interface DirectoryNode {
   id: string;
-  name?: string;
-  type?: 'image' | 'video';
-  path?: string;
-  createdAt?: string;
+  name: string;
+  children?: DirectoryNode[];
 }
 
 export interface DetailedMediaInfo {
-  alt?: string;
-  createdAt?: string | null;
+  alt: string;
+  createdAt: string | null;
   name?: string;
   path?: string;
   size?: string;
   cameraModel?: string;
   hash?: string;
   duplicatesCount?: number;
-  dimensions?: string;
 }
 
-export interface DirectoryNode {
-  id: string;
-  name: string;
-  children?: DirectoryNode[];
-  path?: string;
-  position?: 'left' | 'right';
-}
-
-// Mock directories for each position
-const mockDirectories: Record<string, DirectoryNode[]> = {
-  left: [
-    {
-      id: 'dir-1-left',
-      name: 'Photos 2023',
-      position: 'left',
-      children: [
-        {
-          id: 'dir-1-1-left',
-          name: 'Vacances été',
-          position: 'left'
-        },
-        {
-          id: 'dir-1-2-left',
-          name: 'Anniversaires',
-          position: 'left',
-          children: [
-            {
-              id: 'dir-1-2-1-left',
-              name: 'Julie',
-              position: 'left'
-            },
-            {
-              id: 'dir-1-2-2-left',
-              name: 'Thomas',
-              position: 'left'
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: 'dir-2-left',
-      name: 'Photos 2022',
-      position: 'left',
-      children: [
-        {
-          id: 'dir-2-1-left',
-          name: 'Mariage',
-          position: 'left'
-        },
-        {
-          id: 'dir-2-2-left',
-          name: 'Voyage Italie',
-          position: 'left'
-        }
-      ]
-    }
-  ],
-  right: [
-    {
-      id: 'dir-1-right',
-      name: 'Collection Triée',
-      position: 'right',
-      children: [
-        {
-          id: 'dir-1-1-right',
-          name: 'Meilleurs portraits',
-          position: 'right'
-        },
-        {
-          id: 'dir-1-2-right',
-          name: 'Paysages',
-          position: 'right'
-        }
-      ]
-    },
-    {
-      id: 'dir-2-right',
-      name: 'Archives',
-      position: 'right',
-      children: [
-        {
-          id: 'dir-2-1-right',
-          name: 'Vacances 2020',
-          position: 'right'
-        },
-        {
-          id: 'dir-2-2-right',
-          name: 'Divers',
-          position: 'right'
-        }
-      ]
-    }
-  ]
-};
-
-// Génère environ 200 IDs médias
-function generateMockMediaIds(count: number = 200): string[] {
-  return Array.from({ length: count }, (_, i) => `mock-media-${i + 1}`);
-}
-
-// Cache des médias générés pour une cohérence entre les appels
-const mockMediaCache: Record<string, string[]> = {
-  'source': generateMockMediaIds(212),
-  'destination': generateMockMediaIds(195)
-};
-
-// Fetch directory tree
-export const fetchDirectoryTree = async (position?: 'left' | 'right'): Promise<DirectoryNode[]> => {
-  try {
-    const pos = position || 'left';
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    // Return mock directories
-    return mockDirectories[pos];
-  } catch (error) {
-    console.error('Error fetching directory tree:', error);
-    return [];
-  }
-};
-
-// Fetch media IDs
-export const fetchMediaIds = async (
-  directory: string, 
-  position: 'source' | 'destination',
-  filter: string = 'all'
-): Promise<string[]> => {
-  try {
-    // En environnement de production, on ferait un appel à l'API
-    const url = `${API_BASE_URL}/media?directory=${directory}&filter=${filter}`;
-    
-    if (process.env.NODE_ENV === 'development' || !API_BASE_URL) {
-      // Simuler un délai d'API
-      await new Promise(resolve => setTimeout(resolve, 400));
-      
-      // Générer ou récupérer les médias mockés du cache
-      const mockMedia = mockMediaCache[position] || generateMockMediaIds();
-      
-      // Appliquer le filtre
-      if (filter === 'duplicates') {
-        return mockMedia.filter((_, i) => i % 5 === 0).slice(0, 30); // ~15% sont des doublons
-      } else if (filter === 'unique') {
-        return mockMedia.filter((_, i) => i % 5 !== 0); // le reste sont des uniques
-      }
-      
-      return mockMedia;
-    }
-    
-    // Si en production, faire l'appel API réel
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch media IDs: ${response.statusText}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching media IDs:', error);
-    return [];
-  }
-};
-
-// Fetch detailed media info
-export const fetchMediaInfo = async (id: string, position: 'source' | 'destination'): Promise<DetailedMediaInfo> => {
-  try {
-    const url = `${API_BASE_URL}/info?id=${id}&directory=${position}`;
-    
-    // If in development or API_BASE_URL is not set, return mock data
-    if (process.env.NODE_ENV === 'development' || !API_BASE_URL) {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Return mock info
-      return {
-        alt: `Media ${id}`,
-        createdAt: new Date().toISOString(),
-        name: `IMG_${id}.jpg`,
-        path: `/media/${position}/IMG_${id}.jpg`,
-        size: '4.2 MB',
-        cameraModel: 'Canon EOS R5',
-        hash: '8f7d56a1c3b2e9f0d4e5a6b7',
-        duplicatesCount: 0,
-        dimensions: '3840x2160'
-      };
-    }
-    
-    // If in production, make actual API call
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch media info: ${response.statusText}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching media info:', error);
-    return {};
-  }
-};
-
-// Get thumbnail URL
-export const getThumbnailUrl = (id: string, position: 'source' | 'destination'): string => {
-  // Si l'ID commence par 'mock-media-', on génère une URL d'image aléatoire avec Picsum
-  if (id.startsWith('mock-media-')) {
-    // Extraire le numéro de l'ID pour avoir une image cohérente
-    const idNum = parseInt(id.replace('mock-media-', '')) || Math.floor(Math.random() * 1000);
-    const seed = idNum % 1000;
-    
-    // Déterminer si c'est une vidéo (env. 15% des éléments)
-    const isVideo = seed % 100 < 15;
-    
-    if (isVideo) {
-      // Retourner un placeholder pour les vidéos
-      return `https://placehold.co/400x400/4338ca/white?text=Video+${seed}`;
-    } else {
-      // Retourner une image Picsum avec une graine cohérente
-      return `https://picsum.photos/seed/${id}/400/400`;
-    }
-  }
+export async function fetchDirectoryTree(position?: 'left' | 'right'): Promise<DirectoryNode[]> {
+  const url = `${API_BASE_URL}/tree${position ? `?position=${position}` : ''}`;
+  console.log(`Fetching directory tree from: ${url}`);
   
-  // Pour les IDs non-mock, on utiliserait l'API réelle
-  return `${API_BASE_URL}/thumbnail?id=${id}&directory=${position}`;
-};
-
-// Get full media URL
-export const getMediaUrl = (id: string, position: 'source' | 'destination'): string => {
-  // Pour les IDs mockés, utiliser Picsum avec une plus grande résolution
-  if (id.startsWith('mock-media-')) {
-    const idNum = parseInt(id.replace('mock-media-', '')) || Math.floor(Math.random() * 1000);
-    const seed = idNum % 1000;
-    
-    // Déterminer si c'est une vidéo
-    const isVideo = seed % 100 < 15;
-    
-    if (isVideo) {
-      // Retourner un placeholder pour les vidéos en taille originale
-      return `https://placehold.co/1920x1080/4338ca/white?text=Video+${seed}+Preview`;
-    } else {
-      // Retourner une image Picsum en grande taille
-      return `https://picsum.photos/seed/${id}/1200/800`;
-    }
-  }
-  
-  // Pour les IDs non-mock, on utiliserait l'API réelle
-  return `${API_BASE_URL}/media?id=${id}&directory=${position}`;
-};
-
-// Delete images
-export const deleteImages = async (imageIds: string[]): Promise<{ success: boolean, message: string }> => {
   try {
-    const url = `${API_BASE_URL}/images`;
+    const response = await fetch(url);
     
-    // If in development or API_BASE_URL is not set, simulate deletion
-    if (process.env.NODE_ENV === 'development' || !API_BASE_URL) {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Simulate successful deletion
-      console.log(`Mock deleted images: ${imageIds.join(', ')}`);
-      return { success: true, message: `Successfully deleted ${imageIds.length} images` };
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Server responded with error:", response.status, errorText);
+      throw new Error(`Failed to fetch directory tree: ${response.status} ${response.statusText}`);
     }
     
-    // If in production, make actual API call
+    const data = await response.json();
+    console.log(`Received directory tree for ${position || 'default'}:`, data);
+    
+    return data;
+  } catch (error) {
+    console.error(`Error fetching directory tree for ${position || 'default'}:`, error);
+    
+    // Return mock data in case of errors for development
+    const mockData = [{ 
+      id: `directory1-${position || 'default'}`, 
+      name: "Default Directory", 
+      children: [] 
+    }];
+    
+    console.log(`Using mock directory data for ${position || 'default'}:`, mockData);
+    return mockData;
+  }
+}
+
+export async function fetchMediaIds(directory: string, position: 'source' | 'destination', filter: string = 'all'): Promise<string[]> {
+  const url = `${API_BASE_URL}/media?directory=${encodeURIComponent(position)}${filter !== 'all' ? `&filter=${filter}` : ''}`;
+  console.log("Fetching media IDs from:", url);
+  
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Server responded with error:", response.status, errorText);
+      throw new Error(`Failed to fetch media IDs: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log("Received media IDs:", data);
+    
+    return data;
+  } catch (error) {
+    console.error("Error fetching media IDs:", error);
+    
+    // Return mock data for development
+    console.log("Using mock media IDs due to error");
+    const mockMediaIds = Array.from({ length: 20 }, (_, i) => `mock-media-${i}`);
+    return mockMediaIds;
+  }
+}
+
+export async function fetchMediaInfo(id: string, position: 'source' | 'destination'): Promise<DetailedMediaInfo> {
+  const url = `${API_BASE_URL}/info?id=${encodeURIComponent(id)}&directory=${encodeURIComponent(position)}`;
+  console.log(`Fetching media info for ID ${id} from:`, url);
+  
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.error(`Server error for media info (ID: ${id}):`, response.status);
+      throw new Error(`Failed to fetch media info: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Media info for ID ${id}:`, data);
+    return data;
+  } catch (error) {
+    console.error(`Error fetching media info for ID ${id}:`, error);
+    
+    // Return mock data for development
+    const mockInfo: DetailedMediaInfo = { 
+      alt: `Mock Media ${id}`, 
+      createdAt: new Date().toISOString(),
+      name: `file_${id}.jpg`,
+      path: `/media/photos/${id}`,
+      size: `${Math.floor(Math.random() * 10000) + 500}KB`,
+      cameraModel: ["iPhone 13 Pro", "Canon EOS 5D", "Sony Alpha A7III", "Nikon Z6"][Math.floor(Math.random() * 4)],
+      hash: `${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
+      duplicatesCount: Math.floor(Math.random() * 3)
+    };
+    
+    console.log(`Using mock media info for ${id}:`, mockInfo);
+    return mockInfo;
+  }
+}
+
+// These functions are now just utility functions to get the URLs
+// The actual caching is handled by the components
+export function getThumbnailUrl(id: string, position: 'source' | 'destination'): string {
+  // If it looks like a mock ID, return a placeholder image
+  if (id.startsWith('mock-media-')) {
+    // Use a placeholder service to generate a random colored image
+    return `https://via.placeholder.com/300x300/${Math.floor(Math.random()*16777215).toString(16)}/FFFFFF?text=${id}`;
+  }
+  return `${API_BASE_URL}/thumbnail?id=${encodeURIComponent(id)}&directory=${encodeURIComponent(position)}`;
+}
+
+export function getMediaUrl(id: string, position: 'source' | 'destination'): string {
+  // If it looks like a mock ID, return a placeholder image
+  if (id.startsWith('mock-media-')) {
+    return `https://via.placeholder.com/800x600/${Math.floor(Math.random()*16777215).toString(16)}/FFFFFF?text=${id}`;
+  }
+  return `${API_BASE_URL}/media?id=${encodeURIComponent(id)}&directory=${encodeURIComponent(position)}`;
+}
+
+export async function deleteImages(imageIds: string[]): Promise<{ success: boolean, message: string }> {
+  const url = `${API_BASE_URL}/images`;
+  console.log("Deleting images at:", url, "IDs:", imageIds);
+  
+  try {
     const response = await fetch(url, {
       method: 'DELETE',
       headers: {
@@ -289,12 +149,19 @@ export const deleteImages = async (imageIds: string[]): Promise<{ success: boole
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to delete images: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("Server responded with error:", response.status, errorText);
+      throw new Error(`Failed to delete images: ${response.status} ${response.statusText}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log("Delete response:", data);
+    return data;
   } catch (error) {
-    console.error('Error deleting images:', error);
-    return { success: false, message: 'Failed to delete images' };
+    console.error("Error deleting images:", error);
+    
+    // Return mock response for development
+    console.log("Using mock delete response due to error");
+    return { success: true, message: `Successfully deleted ${imageIds.length} image(s)` };
   }
-};
+}

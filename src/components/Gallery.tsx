@@ -10,7 +10,7 @@ import { useGallerySelection } from '@/hooks/use-gallery-selection';
 import { useGalleryPreviewHandler } from '@/hooks/use-gallery-preview-handler';
 import GalleryToolbar from './gallery/GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
-import FloatingMediaInfoPanel from './media/FloatingMediaInfoPanel';
+import MediaInfoPanel from './media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 
 export interface ImageItem {
@@ -57,8 +57,7 @@ const Gallery: React.FC<GalleryProps> = ({
 }) => {
   const [showDates, setShowDates] = useState(false);
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [panelPosition, setPanelPosition] = useState<{x: number, y: number} | null>(null);
+  const [galleryKey, setGalleryKey] = useState(0); // Clé pour forcer le rendu complet
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -82,6 +81,16 @@ const Gallery: React.FC<GalleryProps> = ({
     position
   );
 
+  // Forcer le rendu complet lorsque le panneau d'information change d'état
+  useEffect(() => {
+    // Une légère temporisation pour laisser le temps au DOM de se mettre à jour
+    const timer = setTimeout(() => {
+      setGalleryKey(prev => prev + 1);
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, [selectedIds.length > 0]);
+
   // Collecter les informations sur les médias à partir des composants enfants
   const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
     setMediaInfoMap(prev => {
@@ -95,32 +104,8 @@ const Gallery: React.FC<GalleryProps> = ({
     setShowDates(prev => !prev);
   }, []);
   
-  // Gérer l'ouverture du panneau d'information
-  useEffect(() => {
-    if (selectedIds.length > 0) {
-      // Trouver l'élément sélectionné dans le DOM
-      setTimeout(() => {
-        const selectedElement = document.querySelector(`[data-media-id="${selectedIds[0]}"]`) as HTMLElement;
-        if (selectedElement) {
-          const rect = selectedElement.getBoundingClientRect();
-          setPanelPosition({
-            x: rect.left + (rect.width / 2),
-            y: rect.top + (rect.height / 2)
-          });
-          setIsPanelOpen(true);
-        } else {
-          setIsPanelOpen(true); // Fallback si l'élément n'est pas trouvé
-        }
-      }, 50);
-    } else {
-      setIsPanelOpen(false);
-    }
-  }, [selectedIds]);
-  
-  // Fermer le panneau
-  const handleClosePanel = useCallback(() => {
-    setIsPanelOpen(false);
-  }, []);
+  // Déterminer si nous devons afficher le panneau d'information
+  const shouldShowInfoPanel = selectedIds.length > 0;
   
   if (isLoading) {
     return (
@@ -141,7 +126,7 @@ const Gallery: React.FC<GalleryProps> = ({
   }
   
   return (
-    <div className="flex flex-col h-full relative" ref={containerRef}>
+    <div className="flex flex-col h-full relative" key={`gallery-container-${galleryKey}`} ref={containerRef}>
       <GalleryToolbar
         selectedIds={selectedIds}
         mediaIds={mediaIds}
@@ -155,6 +140,18 @@ const Gallery: React.FC<GalleryProps> = ({
         selectionMode={selection.selectionMode}
         onToggleSelectionMode={selection.toggleSelectionMode}
       />
+      
+      {/* Panneau d'information des médias */}
+      {shouldShowInfoPanel && (
+        <MediaInfoPanel
+          selectedIds={selectedIds}
+          onOpenPreview={preview.handleOpenPreview}
+          onDeleteSelected={onDeleteSelected}
+          onDownloadSelected={mediaHandler.handleDownloadSelected}
+          mediaInfoMap={mediaInfoMap}
+          selectionMode={selection.selectionMode}
+        />
+      )}
       
       {mediaIds.length === 0 ? (
         <GalleryEmptyState />
@@ -180,19 +177,6 @@ const Gallery: React.FC<GalleryProps> = ({
           />
         </div>
       )}
-      
-      {/* Panneau d'information flottant */}
-      <FloatingMediaInfoPanel
-        selectedIds={selectedIds}
-        isOpen={isPanelOpen && selectedIds.length > 0}
-        onClose={handleClosePanel}
-        onOpenPreview={preview.handleOpenPreview}
-        onDeleteSelected={onDeleteSelected}
-        onDownloadSelected={mediaHandler.handleDownloadSelected}
-        mediaInfoMap={mediaInfoMap}
-        selectionMode={selection.selectionMode}
-        position={panelPosition}
-      />
       
       <MediaPreview 
         mediaId={preview.previewMediaId}
