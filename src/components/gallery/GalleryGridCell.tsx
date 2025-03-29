@@ -1,6 +1,6 @@
 
 import React, { memo } from 'react';
-import LazyMediaItem, { LazyMediaItemProps } from '@/components/LazyMediaItem';
+import LazyMediaItem from '@/components/LazyMediaItem';
 
 interface GalleryGridCellProps {
   columnIndex: number;
@@ -19,16 +19,21 @@ interface GalleryGridCellProps {
   };
 }
 
+/**
+ * A cell component for the virtualized grid that renders a media item
+ */
 const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGridCellProps) => {
+  // Calculate the index in the flat array based on row and column
   const index = rowIndex * data.columnsCount + columnIndex;
   
-  // Return null for out of bounds indices
+  // Return null for out of bounds indices to avoid errors
   if (index >= data.mediaIds.length) return null;
   
+  // Get the media ID and check if it's selected
   const id = data.mediaIds[index];
   const isSelected = data.selectedIds.includes(id);
   
-  // Use the provided calculation function which is now guaranteed to exist
+  // Calculate the cell style with proper gap adjustments
   const adjustedStyle = data.calculateCellStyle(style);
   
   return (

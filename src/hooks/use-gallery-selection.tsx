@@ -1,7 +1,6 @@
-
-import { useState, useCallback, useRef } from 'react';
-
-export type SelectionMode = 'single' | 'multiple';
+import { useCallback } from 'react';
+import { useSelectionState, SelectionMode } from './use-selection-state';
+import { useSelectionHandlers } from './use-selection-handlers';
 
 interface UseGallerySelectionProps {
   mediaIds: string[];
@@ -10,199 +9,111 @@ interface UseGallerySelectionProps {
   initialSelectionMode?: SelectionMode;
 }
 
+/**
+ * Refactored hook to manage gallery selection with improved structure
+ */
 export function useGallerySelection({
   mediaIds,
   selectedIds,
   onSelectId,
   initialSelectionMode = 'single'
 }: UseGallerySelectionProps) {
-  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
-  const [selectionMode, setSelectionMode] = useState<SelectionMode>(initialSelectionMode);
-  const processingBatchRef = useRef(false);
-  
-  // Prevent grid resets during selection changes
-  const preventResetRef = useRef<boolean>(true);
+  // Create a selection handler that interfaces with the parent component
+  const handleSelectChange = useCallback((id: string) => {
+    onSelectId(id);
+  }, [onSelectId]);
 
-  // Gestionnaire de sélection optimisé avec useCallback pour maintenir la stabilité de référence
+  // Use selection state from refactored hook
+  const {
+    lastSelectedId,
+    setLastSelectedId,
+    selectionMode,
+    toggleSelectionMode
+  } = useSelectionState(initialSelectionMode);
+
+  // Use selection handlers from refactored hook
+  const {
+    handleSelectItem: baseHandleSelectItem,
+    handleSelectAll,
+    handleDeselectAll,
+    preventResetRef
+  } = useSelectionHandlers({
+    mediaIds,
+    selectedIds,
+    setSelectedIds: () => {}, // We don't manage the state here, but in the parent
+    lastSelectedId,
+    setLastSelectedId,
+    selectionMode
+  });
+
+  // Create a wrapped handler that calls onSelectId for each selection change
   const handleSelectItem = useCallback((id: string, extendSelection: boolean) => {
-    // Activer la protection contre les resets durant les changements de sélection
-    preventResetRef.current = true;
-    
-    // Si nous traitons déjà une sélection par lots, n'en commencez pas une autre
-    if (processingBatchRef.current && extendSelection) return;
-
-    // Pour le mode de sélection unique et sans extension forcée
-    if (selectionMode === 'single' && !extendSelection) {
-      // Si l'élément est déjà sélectionné, désélectionnez-le
-      if (selectedIds.includes(id)) {
-        onSelectId(id);
-      } 
-      // Sinon, désélectionnez tous les autres et sélectionnez cet élément
-      else {
-        // Créer un cache local des ID actuellement sélectionnés pour éviter les mises à jour d'état multiples
-        const currentSelected = [...selectedIds];
-        // Ne désélectionnez les autres que si nous avons plusieurs éléments sélectionnés
-        if (currentSelected.length > 0) {
-          processingBatchRef.current = true;
-          currentSelected.forEach(selectedId => {
-            if (selectedId !== id) {
-              onSelectId(selectedId);
-            }
-          });
-          processingBatchRef.current = false;
-        }
-        // Sélectionner le nouvel élément
-        onSelectId(id);
-      }
-    }
-    // Pour le mode de sélection multiple ou si l'extension est forcée
-    else {
-      // Si Shift est utilisé pour étendre la sélection
-      if (extendSelection && lastSelectedId) {
-        // Trouver les indices
-        const lastIndex = mediaIds.indexOf(lastSelectedId);
-        const currentIndex = mediaIds.indexOf(id);
+    if (extendSelection && lastSelectedId && selectionMode === 'multiple') {
+      // For range selection with shift key
+      const lastIndex = mediaIds.indexOf(lastSelectedId);
+      const currentIndex = mediaIds.indexOf(id);
+      
+      if (lastIndex !== -1 && currentIndex !== -1) {
+        const start = Math.min(lastIndex, currentIndex);
+        const end = Math.max(lastIndex, currentIndex);
+        const idsToSelect = mediaIds.slice(start, end + 1);
         
-        if (lastIndex !== -1 && currentIndex !== -1) {
-          // Définir la plage de sélection
-          const start = Math.min(lastIndex, currentIndex);
-          const end = Math.max(lastIndex, currentIndex);
-          
-          // Sélectionnez tous les éléments de la plage
-          const idsToSelect = mediaIds.slice(start, end + 1);
-          
-          // Créer un nouvel ensemble de sélection en conservant les éléments déjà sélectionnés
-          const newSelection = new Set([...selectedIds]);
-          
-          // Traiter en tant qu'opération par lots
-          processingBatchRef.current = true;
-          
-          // Ajouter tous les éléments de la plage
-          idsToSelect.forEach(mediaId => {
-            if (!newSelection.has(mediaId)) {
-              newSelection.add(mediaId);
-              onSelectId(mediaId); // Informer le parent de chaque élément nouvellement sélectionné
-            }
-          });
-          
-          processingBatchRef.current = false;
-        }
-      } 
-      // Basculer la sélection de cet élément en mode multiple
-      else {
-        onSelectId(id);
+        // Call onSelectId for each id in the range that needs its selection toggled
+        idsToSelect.forEach(mediaId => {
+          if (!selectedIds.includes(mediaId)) {
+            handleSelectChange(mediaId);
+          }
+        });
       }
+    } else if (selectionMode === 'single') {
+      // For single selection mode
+      if (selectedIds.includes(id)) {
+        // Deselect the item
+        handleSelectChange(id);
+      } else {
+        // Deselect all others first
+        selectedIds.forEach(selectedId => {
+          if (selectedId !== id) {
+            handleSelectChange(selectedId);
+          }
+        });
+        // Then select the new item
+        handleSelectChange(id);
+      }
+    } else {
+      // For multiple selection mode (toggle)
+      handleSelectChange(id);
     }
     
-    // Gardez une trace du dernier élément sélectionné pour la fonctionnalité Shift
+    // Keep track of last selected for shift functionality
     setLastSelectedId(id);
-    
-    // Réactiver les resets après un court délai
-    setTimeout(() => {
-      preventResetRef.current = false;
-    }, 100);
-  }, [mediaIds, selectedIds, onSelectId, selectionMode, lastSelectedId]);
+  }, [mediaIds, selectedIds, selectionMode, lastSelectedId, setLastSelectedId, handleSelectChange]);
 
-  // Gestionnaire de sélection tout optimisé
-  const handleSelectAll = useCallback(() => {
-    // Activer la protection contre les resets
-    preventResetRef.current = true;
-    
-    // Vérifier la limite de performance
+  // Wrap selectAll to call onSelectId for each new selection
+  const wrappedSelectAll = useCallback(() => {
     if (mediaIds.length > 100) {
-      console.warn("Trop d'éléments à sélectionner (>100)");
+      console.warn("Too many items to select (>100)");
       return;
     }
     
-    // Créer un ensemble d'ID actuellement sélectionnés pour une recherche plus rapide
-    const selectedIdSet = new Set(selectedIds);
-    
-    // Traiter en tant qu'opération par lots
-    processingBatchRef.current = true;
-    
-    // Sélectionner tous les médias non déjà sélectionnés
     mediaIds.forEach(id => {
-      if (!selectedIdSet.has(id)) {
-        onSelectId(id);
+      if (!selectedIds.includes(id)) {
+        handleSelectChange(id);
       }
     });
-    
-    processingBatchRef.current = false;
-    
-    // Réactiver les resets après un court délai
-    setTimeout(() => {
-      preventResetRef.current = false;
-    }, 100);
-  }, [mediaIds, selectedIds, onSelectId]);
+  }, [mediaIds, selectedIds, handleSelectChange]);
 
-  // Gestionnaire désélectionner tout optimisé
-  const handleDeselectAll = useCallback(() => {
-    // Activer la protection contre les resets
-    preventResetRef.current = true;
-    
-    // Traiter en tant qu'opération par lots
-    processingBatchRef.current = true;
-    
-    // Désélectionner tous les médias
-    selectedIds.forEach(id => onSelectId(id));
-    
-    processingBatchRef.current = false;
-    
-    // Réactiver les resets après un court délai
-    setTimeout(() => {
-      preventResetRef.current = false;
-    }, 100);
-  }, [selectedIds, onSelectId]);
-
-  // Bascule du mode de sélection optimisée
-  const toggleSelectionMode = useCallback(() => {
-    // Activer la protection contre les resets
-    preventResetRef.current = true;
-    
-    setSelectionMode(prev => {
-      const newMode = prev === 'single' ? 'multiple' : 'single';
-      
-      // Lors du passage de multiple à single, désélectionnez tous les éléments sauf le dernier
-      if (prev === 'multiple' && selectedIds.length > 1) {
-        const lastIndex = selectedIds.length - 1;
-        const keepId = selectedIds[lastIndex];
-        
-        // Traiter en tant qu'opération par lots
-        processingBatchRef.current = true;
-        
-        selectedIds.forEach((id, index) => {
-          if (index !== lastIndex) {
-            onSelectId(id);
-          }
-        });
-        
-        processingBatchRef.current = false;
-        
-        // Si aucun élément n'était sélectionné, ne faites rien
-        if (selectedIds.length === 0) {
-          return newMode;
-        }
-        // Si le dernier élément sélectionné n'était pas déjà sélectionné, sélectionnez-le
-        if (!selectedIds.includes(keepId)) {
-          onSelectId(keepId);
-        }
-      }
-      
-      return newMode;
-    });
-    
-    // Réactiver les resets après un court délai
-    setTimeout(() => {
-      preventResetRef.current = false;
-    }, 100);
-  }, [selectedIds, onSelectId]);
+  // Wrap deselectAll to call onSelectId for each deselection
+  const wrappedDeselectAll = useCallback(() => {
+    selectedIds.forEach(id => handleSelectChange(id));
+  }, [selectedIds, handleSelectChange]);
 
   return {
     selectionMode,
     handleSelectItem,
-    handleSelectAll,
-    handleDeselectAll,
+    handleSelectAll: wrappedSelectAll,
+    handleDeselectAll: wrappedDeselectAll,
     toggleSelectionMode,
-    preventResetRef // Exposer la référence pour permettre à d'autres composants de vérifier l'état
+    preventResetRef
   };
 }
