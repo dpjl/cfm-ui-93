@@ -8,7 +8,8 @@ import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 import GalleryGridCell from './GalleryGridCell';
 import { 
   calculateRowCount, 
-  calculateGridParameters
+  calculateGridParameters,
+  getScrollbarWidth
 } from '@/utils/grid-utils';
 
 interface VirtualizedGalleryGridProps {
@@ -52,6 +53,9 @@ const VirtualizedGalleryGrid = memo(({
   // Define gap consistently
   const gap = 8;
   
+  // Get the scrollbar width
+  const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
+  
   // Memoize the item data to prevent unnecessary renders
   const itemData = useMemo(() => ({
     mediaIds,
@@ -90,8 +94,8 @@ const VirtualizedGalleryGrid = memo(({
           // Calculate the actual column width including gap distribution
           const columnWidth = itemWidth + gap;
           
-          // Add tiny padding to the right to ensure no gap
-          const adjustedWidth = width + 1;
+          // Apply padding to ensure no overlap with scrollbar
+          const adjustedWidth = width - scrollbarWidth + 1;
           
           return (
             <FixedSizeGrid
@@ -101,7 +105,7 @@ const VirtualizedGalleryGrid = memo(({
               height={height}
               rowCount={rowCount}
               rowHeight={itemHeight + gap}
-              width={adjustedWidth}
+              width={width}
               itemData={itemData}
               overscanRowCount={5}
               overscanColumnCount={2}
@@ -114,7 +118,10 @@ const VirtualizedGalleryGrid = memo(({
               }}
               initialScrollTop={scrollPositionRef.current}
               className="scrollbar-vertical"
-              style={{ overflowX: 'hidden' }} // Prevent horizontal scrolling
+              style={{ 
+                overflowX: 'hidden',
+                scrollbarGutter: 'stable' as any // Reserve space for the scrollbar
+              }}
             >
               {GalleryGridCell}
             </FixedSizeGrid>

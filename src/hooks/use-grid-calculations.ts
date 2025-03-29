@@ -6,7 +6,8 @@ import {
   calculateRowCount, 
   calculateItemIndex, 
   itemExistsAtIndex,
-  calculateGridParameters
+  calculateGridParameters,
+  getScrollbarWidth
 } from '../utils/grid-utils';
 
 /**
@@ -19,6 +20,13 @@ export function useGridCalculations(
   gap: number = 8, 
   showDates: boolean = false
 ) {
+  /**
+   * Get the scrollbar width with memoization
+   */
+  const scrollbarWidth = useMemo(() => {
+    return getScrollbarWidth();
+  }, []);
+
   /**
    * Use the combined grid parameters calculation for better precision
    */
@@ -49,6 +57,7 @@ export function useGridCalculations(
   return {
     ...gridParams,
     calculateCellStyle,
+    scrollbarWidth,
   };
 }
 

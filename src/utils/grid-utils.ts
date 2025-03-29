@@ -1,17 +1,53 @@
-
 /**
  * Utility functions for gallery grid calculations
  */
+
+/**
+ * Calculate the scrollbar width for the current browser/OS
+ * This uses a more accurate approach than fixed values
+ */
+export function getScrollbarWidth(): number {
+  // Default to 15px as a safe estimate if calculation fails
+  let scrollbarWidth = 15;
+  
+  // Only run in browser environment
+  if (typeof document !== 'undefined') {
+    // Create a temporary div to measure scrollbar width
+    const outer = document.createElement('div');
+    outer.style.visibility = 'hidden';
+    outer.style.overflow = 'scroll';
+    document.body.appendChild(outer);
+    
+    // Create an inner div
+    const inner = document.createElement('div');
+    outer.appendChild(inner);
+    
+    // Calculate the difference in width
+    scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
+    
+    // Clean up
+    if (outer.parentNode) {
+      outer.parentNode.removeChild(outer);
+    }
+  }
+  
+  // Ensure we have at least a minimum width (for styled scrollbars)
+  return Math.max(scrollbarWidth, 12);
+}
 
 /**
  * Calculate item width based on container width, column count, and gap
  * Using a more precise calculation to avoid cumulative rounding errors
  */
 export function calculateItemWidth(containerWidth: number, columnsCount: number, gap: number = 8): number {
+  // Account for scrollbar width
+  const scrollbarWidth = getScrollbarWidth();
+  const availableWidth = Math.max(containerWidth - scrollbarWidth, 0);
+  
   // Calculate the total gap width
   const totalGapWidth = gap * (columnsCount - 1);
-  // Calculate item width with more precision (using Math.ceil to avoid empty space)
-  return Math.floor((containerWidth - totalGapWidth) / columnsCount);
+  // Calculate item width with more precision (using Math.floor to avoid overflow)
+  return Math.floor((availableWidth - totalGapWidth) / columnsCount);
 }
 
 /**
@@ -53,8 +89,11 @@ export function calculateGridParameters(
   gap: number = 8,
   showDates: boolean = false
 ) {
-  // Calculate total available width for items (account for right scrollbar)
-  const availableWidth = containerWidth - 2; // Subtract scrollbar width approximation
+  // Get accurate scrollbar width
+  const scrollbarWidth = getScrollbarWidth();
+  
+  // Calculate total available width for items (account for scrollbar)
+  const availableWidth = Math.max(containerWidth - scrollbarWidth, 0);
   
   // Calculate the total gap width
   const totalGapWidth = gap * (columnsCount - 1);
@@ -79,7 +118,8 @@ export function calculateGridParameters(
     leftoverSpace,
     effectiveGridWidth,
     containerWidth,
-    columnsCount
+    columnsCount,
+    scrollbarWidth
   };
 }
 
