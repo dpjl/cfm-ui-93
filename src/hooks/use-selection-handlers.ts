@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { SelectionMode } from './use-selection-state';
+import { SelectionMode } from './use-gallery-selection';
 
 interface UseSelectionHandlersProps {
   mediaIds: string[];
@@ -11,6 +11,7 @@ interface UseSelectionHandlersProps {
 }
 
 /**
+ * @deprecated Use the unified useGallerySelection hook instead
  * Hook to manage selection handlers
  */
 export function useSelectionHandlers({
@@ -21,6 +22,8 @@ export function useSelectionHandlers({
   setLastSelectedId,
   selectionMode
 }: UseSelectionHandlersProps) {
+  console.warn('useSelectionHandlers is deprecated. Please use useGallerySelection instead.');
+  
   const processingBatchRef = useRef(false);
   const preventResetRef = useRef<boolean>(true);
   

@@ -1,11 +1,18 @@
+
 import { useState } from 'react';
 
+/**
+ * @deprecated Use the unified useGallerySelection hook instead
+ */
 export type SelectionMode = 'single' | 'multiple';
 
 /**
+ * @deprecated Use the unified useGallerySelection hook instead
  * Hook to manage selection state
  */
 export function useSelectionState(initialSelectionMode: SelectionMode = 'single') {
+  console.warn('useSelectionState is deprecated. Please use useGallerySelection instead.');
+  
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState<SelectionMode>(initialSelectionMode);
