@@ -16,6 +16,7 @@ interface VirtualizedGalleryGridProps {
   showDates?: boolean;
   updateMediaInfo?: (id: string, info: DetailedMediaInfo) => void;
   position: 'source' | 'destination';
+  onGridRefChange?: (ref: FixedSizeGrid | null) => void;
 }
 
 const VirtualizedGalleryGrid = memo(({
@@ -26,7 +27,8 @@ const VirtualizedGalleryGrid = memo(({
   viewMode = 'single',
   showDates = false,
   updateMediaInfo,
-  position = 'source'
+  position = 'source',
+  onGridRefChange
 }: VirtualizedGalleryGridProps) => {
   // Use our custom hooks for grid management
   const {
@@ -39,6 +41,13 @@ const VirtualizedGalleryGrid = memo(({
   
   // Track media and selection changes
   useGalleryMediaTracking(mediaIds, selectedIds, gridRef);
+  
+  // Expose grid reference to parent component
+  useEffect(() => {
+    if (onGridRefChange && gridRef.current) {
+      onGridRefChange(gridRef.current);
+    }
+  }, [gridRef, onGridRefChange]);
   
   // Set up resize observer to detect container size changes
   useEffect(() => {
