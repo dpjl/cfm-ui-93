@@ -31,7 +31,8 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
-  const mediaUrl = `${apiBaseUrl}/media?id=${mediaId}`;
+  // Mise à jour pour inclure le paramètre "directory" dans l'URL
+  const mediaUrl = `${apiBaseUrl}/media?id=${mediaId}&directory=${position}`;
 
   useEffect(() => {
     setLoaded(false);
