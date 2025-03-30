@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import VirtualizedGalleryGrid from './VirtualizedGalleryGrid';
@@ -29,6 +28,7 @@ interface GalleryProps {
   position?: 'source' | 'destination';
   filter?: string;
   onToggleSidebar?: () => void;
+  gap?: number;
 }
 
 const Gallery: React.FC<GalleryProps> = ({
@@ -45,14 +45,14 @@ const Gallery: React.FC<GalleryProps> = ({
   onDeleteSelected,
   position = 'source',
   filter = 'all',
-  onToggleSidebar
+  onToggleSidebar,
+  gap = 8
 }) => {
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Hooks personnalisés pour la gestion des sélections et des aperçus
   const selection = useGallerySelection({
     mediaIds,
     selectedIds,
@@ -69,7 +69,6 @@ const Gallery: React.FC<GalleryProps> = ({
     position
   );
 
-  // Mettre à jour les informations sur les médias
   const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
     setMediaInfoMap(prev => {
       const newMap = new Map(prev);
@@ -84,7 +83,6 @@ const Gallery: React.FC<GalleryProps> = ({
     selectedIds.forEach(id => onSelectId(id));
   }, [selectedIds, onSelectId]);
   
-  // États de chargement et d'erreur
   if (isLoading) {
     return (
       <div className="flex flex-col h-full">
@@ -103,7 +101,6 @@ const Gallery: React.FC<GalleryProps> = ({
     );
   }
 
-  // Déterminer si un élément est une vidéo
   const isVideoPreview = (id: string): boolean => {
     const info = mediaInfoMap.get(id);
     if (info) {
@@ -154,6 +151,7 @@ const Gallery: React.FC<GalleryProps> = ({
             viewMode={viewMode}
             updateMediaInfo={updateMediaInfo}
             position={position}
+            gap={gap}
           />
         )}
       </div>

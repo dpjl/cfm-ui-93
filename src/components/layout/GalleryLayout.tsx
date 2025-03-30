@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import SidePanel from '@/components/layout/SidePanel';
@@ -95,6 +94,23 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
     onRightColumnsChange(viewMode, count);
   };
   
+  // Nouveau gestionnaire pour le changement de colonnes via zoom
+  const handleColumnsChange = (side: 'left' | 'right', count: number) => {
+    // Détermination du type de vue actuel
+    const currentViewModeType = side === 'left' 
+      ? columnsState.getViewModeType('left', viewMode, isMobile)
+      : columnsState.getViewModeType('right', viewMode, isMobile);
+      
+    console.log(`Column zoom change: ${side} ${currentViewModeType} => ${count}`);
+    
+    // Mise à jour des colonnes en fonction du côté
+    if (side === 'left') {
+      handleLeftColumnsChange(currentViewModeType, count);
+    } else {
+      handleRightColumnsChange(currentViewModeType, count);
+    }
+  };
+  
   return (
     <div className="flex h-full overflow-hidden mt-2 relative">
       <SidePanel 
@@ -136,6 +152,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           rightFilter={rightFilter}
           onToggleLeftPanel={toggleLeftPanel}
           onToggleRightPanel={toggleRightPanel}
+          onColumnsChange={handleColumnsChange}
         />
       </div>
 

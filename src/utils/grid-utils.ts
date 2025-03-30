@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for gallery grid calculations
  */

@@ -1,3 +1,4 @@
+
 import React, { memo, useMemo } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -20,6 +21,7 @@ interface VirtualizedGalleryGridProps {
   showDates?: boolean;
   updateMediaInfo?: (id: string, info: DetailedMediaInfo) => void;
   position: 'source' | 'destination';
+  gap?: number; // Ajout du paramètre gap
 }
 
 /**
@@ -34,7 +36,8 @@ const VirtualizedGalleryGrid = memo(({
   viewMode = 'single',
   showDates = false,
   updateMediaInfo,
-  position = 'source'
+  position = 'source',
+  gap = 8 // Valeur par défaut
 }: VirtualizedGalleryGridProps) => {
   // Use custom hook for grid management
   const {
@@ -48,9 +51,6 @@ const VirtualizedGalleryGrid = memo(({
   
   // Calculate the number of rows based on media and columns
   const rowCount = calculateRowCount(mediaIds.length, columnsCount);
-  
-  // Define gap consistently
-  const gap = 8;
   
   // Get the scrollbar width
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
@@ -75,7 +75,7 @@ const VirtualizedGalleryGrid = memo(({
         paddingBottom: gap,
       };
     }
-  }), [mediaIds, selectedIds, onSelectId, showDates, updateMediaInfo, position, columnsCount]);
+  }), [mediaIds, selectedIds, onSelectId, showDates, updateMediaInfo, position, columnsCount, gap]);
   
   return (
     <div className="w-full h-full p-2 gallery-container">
