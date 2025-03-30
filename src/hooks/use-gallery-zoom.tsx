@@ -5,7 +5,7 @@ import { useIsMobile } from '@/hooks/use-breakpoint';
 interface ZoomOptions {
   minColumns: number;
   maxColumns: number;
-  initialColumns: number;
+  currentColumns: number;
   onColumnsChange: (columns: number) => void;
 }
 
@@ -16,7 +16,7 @@ export function useGalleryZoom(
   containerRef: RefObject<HTMLElement>,
   options: ZoomOptions
 ) {
-  const { minColumns, maxColumns, initialColumns, onColumnsChange } = options;
+  const { minColumns, maxColumns, currentColumns, onColumnsChange } = options;
   const isMobile = useIsMobile();
   
   // Gestionnaire pour la molette de la souris (desktop)
@@ -31,13 +31,13 @@ export function useGalleryZoom(
       // Sur desktop, + de colonnes = vignettes plus petites
       if (delta > 0) {
         // Zoom out = ajouter une colonne (réduire les vignettes)
-        onColumnsChange(Math.min(maxColumns, initialColumns + 1));
+        onColumnsChange(Math.min(maxColumns, currentColumns + 1));
       } else {
         // Zoom in = enlever une colonne (agrandir les vignettes)
-        onColumnsChange(Math.max(minColumns, initialColumns - 1));
+        onColumnsChange(Math.max(minColumns, currentColumns - 1));
       }
     }
-  }, [initialColumns, minColumns, maxColumns, onColumnsChange]);
+  }, [currentColumns, minColumns, maxColumns, onColumnsChange]);
   
   // Gestionnaire pour le pincement (mobile)
   const handlePinchGesture = useCallback(() => {
@@ -54,7 +54,7 @@ export function useGalleryZoom(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY
         );
-        initialColumns = options.initialColumns;
+        initialColumns = currentColumns;
         lastUpdate = Date.now();
       }
     };
@@ -101,7 +101,7 @@ export function useGalleryZoom(
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchmove', handleTouchMove);
     };
-  }, [isMobile, options.initialColumns, minColumns, maxColumns, onColumnsChange]);
+  }, [isMobile, currentColumns, minColumns, maxColumns, onColumnsChange]);
   
   // Attacher les gestionnaires d'événements
   useEffect(() => {

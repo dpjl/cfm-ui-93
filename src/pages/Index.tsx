@@ -40,14 +40,10 @@ const Index = () => {
           setSelectedDirectoryIdLeft={galleryState.setSelectedDirectoryIdLeft}
           selectedDirectoryIdRight={galleryState.selectedDirectoryIdRight}
           setSelectedDirectoryIdRight={galleryState.setSelectedDirectoryIdRight}
-          columnsCountLeft={galleryState.getCurrentColumnsLeft(isMobile)}
-          columnsCountRight={galleryState.getCurrentColumnsRight(isMobile)}
-          onLeftColumnsChange={(viewType, count) => {
-            galleryState.updateColumnCount('left', count);
-          }}
-          onRightColumnsChange={(viewType, count) => {
-            galleryState.updateColumnCount('right', count);
-          }}
+          columnsCountLeft={galleryState.getCurrentColumnsLeft()}
+          columnsCountRight={galleryState.getCurrentColumnsRight()}
+          onLeftColumnsChange={(count) => galleryState.updateColumnCount('left', count)}
+          onRightColumnsChange={(count) => galleryState.updateColumnCount('right', count)}
           selectedIdsLeft={galleryState.selectedIdsLeft}
           setSelectedIdsLeft={galleryState.setSelectedIdsLeft}
           selectedIdsRight={galleryState.selectedIdsRight}

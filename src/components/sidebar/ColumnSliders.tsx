@@ -1,79 +1,47 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import ColumnSlider from '@/components/sidebar/ColumnSlider';
 import { useLanguage } from '@/hooks/use-language';
 import { MobileViewMode } from '@/types/gallery';
 
 interface ColumnSlidersProps {
   position: 'left' | 'right';
-  columnSettings: {
-    desktopColumns: number;
-    desktopSingleColumns: number;
-    mobileSplitColumns: number;
-    mobileSingleColumns: number;
-    updateDesktopColumns: (value: number) => void;
-    updateDesktopSingleColumns: (value: number) => void;
-    updateMobileSplitColumns: (value: number) => void;
-    updateMobileSingleColumns: (value: number) => void;
-    getColumnCount: (viewMode: string) => number;
-    updateColumnCount: (viewMode: string, value: number) => void;
-  };
-  mobileViewMode: MobileViewMode;
-  onColumnsChange?: (viewMode: string, count: number) => void;
-  columnsState?: {
+  columnValues: {
     [key: string]: number;
   };
+  mobileViewMode: MobileViewMode;
+  onColumnsChange?: (count: number) => void;
+  currentViewMode?: string;
 }
 
 const ColumnSliders: React.FC<ColumnSlidersProps> = ({
   position,
-  columnSettings,
+  columnValues,
   mobileViewMode,
   onColumnsChange,
-  columnsState = {}
+  currentViewMode
 }) => {
   const { t } = useLanguage();
-
-  // Handle changes to columns and immediately update parent
-  const handleColumnsChange = (viewMode: string, count: number) => {
-    // Mettre à jour localement
-    columnSettings.updateColumnCount(viewMode, count);
-    
-    // Propager le changement au parent si nécessaire
+  
+  // Les valeurs sont maintenant entièrement contrôlées par le parent
+  const handleChange = (count: number) => {
     if (onColumnsChange) {
-      console.log(`Column change: ${position} ${viewMode} to ${count}`);
-      onColumnsChange(viewMode, count);
+      onColumnsChange(count);
     }
   };
 
-  // Effet pour synchroniser les valeurs externes avec les curseurs locaux
-  useEffect(() => {
-    if (!columnsState || Object.keys(columnsState).length === 0) return;
-    
-    // Pour chaque mode de vue, vérifier si nous avons une valeur externe
-    const modes = ['desktop', 'desktop-single', 'mobile-split', 'mobile-single'];
-    modes.forEach(mode => {
-      if (columnsState[mode] !== undefined) {
-        const externalValue = columnsState[mode];
-        const currentValue = columnSettings.getColumnCount(mode);
-        
-        // Si les valeurs sont différentes, mettre à jour localement
-        if (externalValue !== currentValue) {
-          console.log(`Syncing slider for ${position} ${mode} from ${currentValue} to ${externalValue}`);
-          columnSettings.updateColumnCount(mode, externalValue);
-        }
-      }
-    });
-  }, [columnsState, position, columnSettings]);
+  // Récupérer les valeurs de colonne directement depuis les props
+  const desktopColumns = columnValues['desktop'] || 5;
+  const desktopSingleColumns = columnValues['desktop-single'] || 6;
+  const mobileSplitColumns = columnValues['mobile-split'] || 2;
+  const mobileSingleColumns = columnValues['mobile-single'] || 4;
 
   return (
     <div className="space-y-2">
       <ColumnSlider 
         position={position}
-        value={columnSettings.desktopColumns}
-        onChange={(value) => {
-          handleColumnsChange('desktop', value);
-        }}
+        value={desktopColumns}
+        onChange={handleChange}
         min={2}
         max={10}
         label={t('desktop_columns')}
@@ -83,10 +51,8 @@ const ColumnSliders: React.FC<ColumnSlidersProps> = ({
       
       <ColumnSlider 
         position={position}
-        value={columnSettings.desktopSingleColumns}
-        onChange={(value) => {
-          handleColumnsChange('desktop-single', value);
-        }}
+        value={desktopSingleColumns}
+        onChange={handleChange}
         min={2}
         max={10}
         label={t('desktop_single_columns')}
@@ -96,10 +62,8 @@ const ColumnSliders: React.FC<ColumnSlidersProps> = ({
       
       <ColumnSlider 
         position={position}
-        value={columnSettings.mobileSplitColumns}
-        onChange={(value) => {
-          handleColumnsChange('mobile-split', value);
-        }}
+        value={mobileSplitColumns}
+        onChange={handleChange}
         min={1}
         max={4}
         label={t('split_columns')}
@@ -109,10 +73,8 @@ const ColumnSliders: React.FC<ColumnSlidersProps> = ({
       
       <ColumnSlider 
         position={position}
-        value={columnSettings.mobileSingleColumns}
-        onChange={(value) => {
-          handleColumnsChange('mobile-single', value);
-        }}
+        value={mobileSingleColumns}
+        onChange={handleChange}
         min={2}
         max={6}
         label={t('single_columns')}

@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import SidePanel from '@/components/layout/SidePanel';
 import GalleriesContainer from '@/components/layout/GalleriesContainer';
@@ -18,8 +18,8 @@ interface GalleryLayoutProps {
   // Column management
   columnsCountLeft: number;
   columnsCountRight: number;
-  onLeftColumnsChange: (viewType: string, count: number) => void;
-  onRightColumnsChange: (viewType: string, count: number) => void;
+  onLeftColumnsChange: (count: number) => void;
+  onRightColumnsChange: (count: number) => void;
   
   // Selection state
   selectedIdsLeft: string[];
@@ -81,52 +81,14 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   setRightFilter
 }) => {
   const isMobile = useIsMobile();
-  const columnsStateHook = useColumnsState();
+  const { getColumnValuesForSide, getViewModeType } = useColumnsState();
   
-  // Référence aux états actuels des colonnes pour la synchronisation bidirectionnelle
-  const columnsStateRef = useRef({
-    left: {},
-    right: {}
-  });
+  // Récupérer le type de vue actuel
+  const currentViewMode = getViewModeType(isMobile, viewMode);
   
-  console.log(`GalleryLayout rendering with columns: left=${columnsCountLeft}, right=${columnsCountRight}`);
-  
-  // Function to handle column changes for the left panel
-  const handleLeftColumnsChange = (viewType: string, count: number) => {
-    console.log(`Left panel column change: ${viewType} => ${count}`);
-    
-    // Mettre à jour la référence pour permettre la synchronisation bidirectionnelle
-    columnsStateRef.current.left[viewType] = count;
-    
-    onLeftColumnsChange(viewType, count);
-  };
-  
-  // Function to handle column changes for the right panel
-  const handleRightColumnsChange = (viewType: string, count: number) => {
-    console.log(`Right panel column change: ${viewType} => ${count}`);
-    
-    // Mettre à jour la référence pour permettre la synchronisation bidirectionnelle
-    columnsStateRef.current.right[viewType] = count;
-    
-    onRightColumnsChange(viewType, count);
-  };
-  
-  // Gestionnaire pour le changement de colonnes via zoom
-  const handleColumnsChange = (side: 'left' | 'right', count: number) => {
-    // Détermination du type de vue actuel
-    const currentViewModeType = columnsStateHook.getViewModeType(side, viewMode, isMobile);
-    
-    console.log(`Column zoom change: ${side} ${currentViewModeType} => ${count}`);
-    
-    // Mise à jour de la référence pour synchronisation bidirectionnelle
-    if (side === 'left') {
-      columnsStateRef.current.left[currentViewModeType] = count;
-      handleLeftColumnsChange(currentViewModeType, count);
-    } else {
-      columnsStateRef.current.right[currentViewModeType] = count;
-      handleRightColumnsChange(currentViewModeType, count);
-    }
-  };
+  // Récupérer toutes les valeurs de colonnes
+  const leftColumnValues = getColumnValuesForSide('left');
+  const rightColumnValues = getColumnValuesForSide('right');
   
   return (
     <div className="flex h-full overflow-hidden mt-2 relative">
@@ -144,8 +106,9 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           selectedFilter={leftFilter}
           onFilterChange={setLeftFilter}
           mobileViewMode={viewMode}
-          onColumnsChange={handleLeftColumnsChange}
-          columnsState={columnsStateRef.current.left}
+          onColumnsChange={onLeftColumnsChange}
+          columnValues={leftColumnValues}
+          currentViewMode={currentViewMode}
         />
       </SidePanel>
 
@@ -170,7 +133,13 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           rightFilter={rightFilter}
           onToggleLeftPanel={toggleLeftPanel}
           onToggleRightPanel={toggleRightPanel}
-          onColumnsChange={handleColumnsChange}
+          onColumnsChange={(side, count) => {
+            if (side === 'left') {
+              onLeftColumnsChange(count);
+            } else {
+              onRightColumnsChange(count);
+            }
+          }}
         />
       </div>
 
@@ -188,8 +157,9 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           selectedFilter={rightFilter}
           onFilterChange={setRightFilter}
           mobileViewMode={viewMode}
-          onColumnsChange={handleRightColumnsChange}
-          columnsState={columnsStateRef.current.right}
+          onColumnsChange={onRightColumnsChange}
+          columnValues={rightColumnValues}
+          currentViewMode={currentViewMode}
         />
       </SidePanel>
     </div>
