@@ -1,317 +1,196 @@
 
 import React from 'react';
-import { Button } from '../ui/button';
-import { SelectionMode } from '../../hooks/use-gallery-selection';
-import { useMediaQuery } from '../../hooks/use-media-query';
-import { CheckSquare, Square, ChevronLeft, ChevronRight, Settings, Maximize, Minimize } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { useLanguage } from '@/hooks/use-language';
 import { useIsMobile } from '@/hooks/use-breakpoint';
+import { SelectionMode } from '@/hooks/use-gallery-selection';
 import { MobileViewMode } from '@/types/gallery';
+import { 
+  ChevronLeft, 
+  ChevronRight,
+  CheckSquare,
+  Square,
+  Columns,
+  Maximize2,
+  Minimize2,
+  SlidersHorizontal
+} from 'lucide-react';
 
 interface GalleryToolbarProps {
-  directory?: string;
-  showSidePanel?: () => void;
   mediaIds: string[];
   selectedIds: string[];
   onSelectAll: () => void;
   onDeselectAll: () => void;
-  viewMode?: 'single' | 'split';
-  position?: 'source' | 'destination';
+  viewMode: 'single' | 'split';
+  position: 'source' | 'destination';
   onToggleSidebar?: () => void;
   selectionMode: SelectionMode;
   onToggleSelectionMode: () => void;
-  // Nouvelles props pour le toggle de vue
   mobileViewMode?: MobileViewMode;
   onToggleFullView?: () => void;
+  onColumnsChange?: (count: number) => void;
+  columnsCount?: number;
 }
 
-const GalleryToolbar: React.FC<GalleryToolbarProps> = ({ 
+const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
   mediaIds,
   selectedIds,
   onSelectAll,
   onDeselectAll,
-  viewMode = 'single',
-  position = 'source',
+  viewMode,
+  position,
   onToggleSidebar,
   selectionMode,
   onToggleSelectionMode,
-  mobileViewMode = 'both',
-  onToggleFullView
+  mobileViewMode,
+  onToggleFullView,
+  onColumnsChange,
+  columnsCount = 4
 }) => {
+  const { t } = useLanguage();
   const isMobile = useIsMobile();
+  const hasSelection = selectedIds.length > 0;
+  const allSelected = mediaIds.length > 0 && selectedIds.length === mediaIds.length;
   
-  // Définir l'icône du bouton sidebar selon la position (gauche/droite)
-  const SidebarIcon = position === 'source' ? ChevronLeft : ChevronRight;
-  const SidebarLabel = position === 'source' ? 'Options Left' : 'Options Right';
+  // Rendus conditionnels pour l'optimisation des performances
+  const renderSidebarToggle = () => {
+    if (!onToggleSidebar) return null;
+    
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onToggleSidebar}
+        className="text-muted-foreground hover:text-foreground"
+      >
+        {position === 'source' ? (
+          <ChevronLeft className="h-4 w-4" />
+        ) : (
+          <ChevronRight className="h-4 w-4" />
+        )}
+      </Button>
+    );
+  };
 
-  // Détermine si on est en vue plein écran pour cette galerie
-  const isFullView = (position === 'source' && mobileViewMode === 'left') || 
-                     (position === 'destination' && mobileViewMode === 'right');
+  const renderSelectionControls = () => {
+    if (mediaIds.length === 0) return null;
+    
+    return (
+      <>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={allSelected ? onDeselectAll : onSelectAll}
+          className="text-muted-foreground hover:text-foreground"
+          disabled={mediaIds.length === 0}
+        >
+          {allSelected ? (
+            <CheckSquare className="h-4 w-4" />
+          ) : (
+            <Square className="h-4 w-4" />
+          )}
+        </Button>
+        
+        <Button
+          variant={selectionMode === 'multiple' ? 'secondary' : 'ghost'}
+          size="icon"
+          onClick={onToggleSelectionMode}
+          className="text-muted-foreground hover:text-foreground"
+          title={selectionMode === 'multiple' ? 'Switch to single selection' : 'Switch to multiple selection'}
+        >
+          <Columns className="h-4 w-4" />
+        </Button>
+      </>
+    );
+  };
 
-  // Pour la galerie de gauche (source), ordre: sidebar, select all, clear, mode, view toggle
-  const leftGalleryToolbar = (
-    <>
-      {onToggleSidebar && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onToggleSidebar}
-                className="h-8 w-8"
-              >
-                {position === 'source' ? (
-                  <div className="flex items-center justify-center">
-                    <ChevronLeft size={isMobile ? 16 : 18} className="text-muted-foreground" />
-                    <Settings size={isMobile ? 14 : 16} className="ml-[-4px]" />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center">
-                    <Settings size={isMobile ? 14 : 16} className="mr-[-4px]" />
-                    <ChevronRight size={isMobile ? 16 : 18} className="text-muted-foreground" />
-                  </div>
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>{SidebarLabel}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
+  // Nouveau: contrôle des colonnes directement dans la barre d'outils
+  const renderColumnsControl = () => {
+    if (!onColumnsChange) return null;
+    
+    return (
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onColumnsChange(columnsCount - 1)}
+          disabled={columnsCount <= 2}
+          className="text-muted-foreground hover:text-foreground h-7 w-7"
+          title="Decrease columns"
+        >
+          <span>-</span>
+        </Button>
+        
+        <div className="text-xs text-muted-foreground w-6 text-center">
+          {columnsCount}
+        </div>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onColumnsChange(columnsCount + 1)}
+          disabled={columnsCount >= 12}
+          className="text-muted-foreground hover:text-foreground h-7 w-7"
+          title="Increase columns"
+        >
+          <span>+</span>
+        </Button>
+      </div>
+    );
+  };
 
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={onSelectAll}
-              disabled={mediaIds.length === 0}
-              className="h-8 w-8"
-            >
-              <CheckSquare size={isMobile ? 18 : 20} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>Select All</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      
-      {selectedIds.length > 0 && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onDeselectAll}
-                className="h-8 w-8"
-              >
-                <Square size={isMobile ? 18 : 20} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Clear Selection</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-      
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={onToggleSelectionMode}
-              className="h-8 w-8"
-            >
-              {selectionMode === 'single' ? (
-                <div className="relative">
-                  <CheckSquare size={isMobile ? 18 : 20} />
-                  <span className="absolute -top-1 -right-1 text-[10px] bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center">1</span>
-                </div>
-              ) : (
-                <div className="relative">
-                  <CheckSquare size={isMobile ? 18 : 20} />
-                  <span className="absolute -top-1 -right-1 text-[10px] bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center">+</span>
-                </div>
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{selectionMode === 'single' ? 'Single Select' : 'Multi Select'}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+  // Nouveau: Bouton pour basculer la vue pleine/partagée
+  const renderViewToggle = () => {
+    if (!onToggleFullView) return null;
 
-      {/* Bouton Agrandir/Réduire pour la vue */}
-      {onToggleFullView && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onToggleFullView}
-                className="h-8 w-8"
-              >
-                {isFullView ? (
-                  <Minimize size={isMobile ? 18 : 20} />
-                ) : (
-                  <Maximize size={isMobile ? 18 : 20} />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>{isFullView ? 'Split View' : 'Expand'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-    </>
-  );
+    // Déterminer si ce composant est en mode plein écran
+    const isFullScreen = position === 'source' 
+      ? mobileViewMode === 'left'
+      : mobileViewMode === 'right';
 
-  // Pour la galerie de droite (destination), ordre: view toggle, mode, clear, select all, sidebar
-  const rightGalleryToolbar = (
-    <>
-      {/* Bouton Agrandir/Réduire pour la vue */}
-      {onToggleFullView && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onToggleFullView}
-                className="h-8 w-8"
-              >
-                {isFullView ? (
-                  <Minimize size={isMobile ? 18 : 20} />
-                ) : (
-                  <Maximize size={isMobile ? 18 : 20} />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>{isFullView ? 'Split View' : 'Expand'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={onToggleSelectionMode}
-              className="h-8 w-8"
-            >
-              {selectionMode === 'single' ? (
-                <div className="relative">
-                  <CheckSquare size={isMobile ? 18 : 20} />
-                  <span className="absolute -top-1 -right-1 text-[10px] bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center">1</span>
-                </div>
-              ) : (
-                <div className="relative">
-                  <CheckSquare size={isMobile ? 18 : 20} />
-                  <span className="absolute -top-1 -right-1 text-[10px] bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center">+</span>
-                </div>
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{selectionMode === 'single' ? 'Single Select' : 'Multi Select'}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      
-      {selectedIds.length > 0 && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onDeselectAll}
-                className="h-8 w-8"
-              >
-                <Square size={isMobile ? 18 : 20} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Clear Selection</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={onSelectAll}
-              disabled={mediaIds.length === 0}
-              className="h-8 w-8"
-            >
-              <CheckSquare size={isMobile ? 18 : 20} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>Select All</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      
-      {onToggleSidebar && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onToggleSidebar}
-                className="h-8 w-8"
-              >
-                {position === 'source' ? (
-                  <div className="flex items-center justify-center">
-                    <ChevronLeft size={isMobile ? 16 : 18} className="text-muted-foreground" />
-                    <Settings size={isMobile ? 14 : 16} className="ml-[-4px]" />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center">
-                    <Settings size={isMobile ? 14 : 16} className="mr-[-4px]" />
-                    <ChevronRight size={isMobile ? 16 : 18} className="text-muted-foreground" />
-                  </div>
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>{SidebarLabel}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-    </>
-  );
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onToggleFullView}
+        className="text-muted-foreground hover:text-foreground"
+        title={isFullScreen ? "Switch to split view" : "Maximize this gallery"}
+      >
+        {isFullScreen ? (
+          <Minimize2 className="h-4 w-4" />
+        ) : (
+          <Maximize2 className="h-4 w-4" />
+        )}
+      </Button>
+    );
+  };
 
   return (
-    <div className="flex items-center justify-between space-x-2 py-2">
-      {/* Galerie gauche: aligné à gauche */}
-      <div className="flex items-center space-x-1">
-        {position === 'source' && leftGalleryToolbar}
+    <div className={`
+      flex items-center justify-between px-2 py-1 
+      bg-background/80 backdrop-blur-sm border-b border-border/30
+      ${isMobile ? 'gallery-toolbar-mobile' : ''}
+    `}>
+      <div className="flex items-center gap-1">
+        {renderSidebarToggle()}
+        {renderSelectionControls()}
       </div>
       
-      {/* Galerie droite: aligné à droite */}
-      <div className="flex items-center space-x-1 ml-auto">
-        {position === 'destination' && rightGalleryToolbar}
+      <div className="text-sm font-medium truncate px-2">
+        {selectedIds.length > 0 ? (
+          <span>{selectedIds.length} selected</span>
+        ) : position === 'source' ? (
+          <span>Source Gallery</span>
+        ) : (
+          <span>Destination Gallery</span>
+        )}
+      </div>
+      
+      <div className="flex items-center gap-1">
+        {renderColumnsControl()}
+        <Separator orientation="vertical" className="h-6 mx-1" />
+        {renderViewToggle()}
       </div>
     </div>
   );
