@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { useDirectoryState } from '@/hooks/use-directory-state';
 import { useColumnsState } from '@/hooks/use-columns-state';
@@ -44,11 +44,6 @@ export function useGalleryState() {
     columnsState.updateColumnsCount(side, isMobile, uiState.viewMode, count);
   };
   
-  // Handler pour basculer entre les vues maximisées
-  const handleToggleMaximize = useCallback((position: 'source' | 'destination') => {
-    uiState.toggleMaximize(position);
-  }, [uiState]);
-  
   return {
     // Directory state
     ...directoryState,
@@ -71,9 +66,6 @@ export function useGalleryState() {
     
     // Actions
     ...galleryActions,
-    
-    // View toggle handler
-    handleToggleMaximize,
     
     // Utilities
     getViewModeType: (side: 'left' | 'right') => columnsState.getViewModeType(isMobile, uiState.viewMode)

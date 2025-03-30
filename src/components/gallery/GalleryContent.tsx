@@ -2,8 +2,6 @@
 import React, { useRef } from 'react';
 import Gallery from '@/components/gallery/Gallery';
 import { useGalleryZoom } from '@/hooks/use-gallery-zoom';
-import { MobileViewMode } from '@/types/gallery';
-import { useIsMobile } from '@/hooks/use-breakpoint';
 
 interface GalleryContentProps {
   mediaIds: string[];
@@ -21,8 +19,6 @@ interface GalleryContentProps {
   position?: 'source' | 'destination';
   onToggleSidebar?: () => void;
   onColumnsChange?: (count: number) => void;
-  mobileViewMode?: MobileViewMode;
-  onToggleMaximize?: () => void;
 }
 
 const GalleryContent: React.FC<GalleryContentProps> = ({
@@ -40,12 +36,9 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
   filter = 'all',
   position = 'source',
   onToggleSidebar,
-  onColumnsChange,
-  mobileViewMode,
-  onToggleMaximize
+  onColumnsChange
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
   
   // Déterminer les limites de colonnes en fonction du mode vue
   const getColumnLimits = () => {
@@ -72,22 +65,6 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
       onColumnsChange
     });
   }
-
-  // Déterminer si la galerie est actuellement maximisée sur mobile
-  const isMaximized = isMobile && (
-    (position === 'source' && mobileViewMode === 'left') ||
-    (position === 'destination' && mobileViewMode === 'right')
-  );
-
-  // Déterminer si la galerie est visible sur mobile
-  const isVisible = !isMobile || 
-    mobileViewMode === 'both' || 
-    (mobileViewMode === 'left' && position === 'source') || 
-    (mobileViewMode === 'right' && position === 'destination');
-  
-  if (!isVisible) {
-    return null;
-  }
   
   return (
     <div ref={containerRef} className="h-full w-full">
@@ -99,17 +76,15 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
         isLoading={isLoading}
         columnsCount={columnsCount}
         onPreviewMedia={onPreviewItem}
-        viewMode={isMobile ? (mobileViewMode === 'both' ? 'split' : 'single') : viewMode}
+        viewMode={viewMode}
         onDeleteSelected={onDeleteSelected}
         position={position}
         isError={isError}
         error={error}
         filter={filter}
         onToggleSidebar={onToggleSidebar}
-        mobileViewMode={mobileViewMode}
-        onToggleMaximize={onToggleMaximize}
-        gap={4}
-        isMaximized={isMaximized}
+        // Réduire l'espace entre les vignettes en passant une valeur inférieure
+        gap={4} // Valeur réduite de 8 à 4
       />
     </div>
   );

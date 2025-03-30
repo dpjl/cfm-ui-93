@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Maximize2, Minimize2, SplitSquareHorizontal } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-breakpoint';
 import { MobileViewMode } from '@/types/gallery';
+import { ArrowLeft, ArrowRight, Columns } from 'lucide-react';
 
 interface MobileViewSwitcherProps {
   viewMode: MobileViewMode;
@@ -10,45 +11,44 @@ interface MobileViewSwitcherProps {
   className?: string;
 }
 
-const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({ 
-  viewMode, 
+const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({
+  viewMode,
   setViewMode,
-  className = ""
+  className = ''
 }) => {
+  const isMobile = useIsMobile();
+  
+  if (!isMobile) {
+    return null;
+  }
+  
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div className={`mobile-view-switcher ${className}`}>
       <Button
-        variant="ghost"
+        variant={viewMode === 'left' ? 'default' : 'outline'}
         size="icon"
         onClick={() => setViewMode('left')}
-        className={viewMode === 'left' ? 'bg-muted' : ''}
-        title="Source uniquement"
+        className="h-9 w-9"
       >
-        <div className="flex items-center justify-center w-full h-full">
-          <div className="w-4 h-4 border-r border-muted-foreground"></div>
-        </div>
+        <ArrowLeft className="h-4 w-4" />
       </Button>
-
+      
       <Button
-        variant="ghost"
+        variant={viewMode === 'both' ? 'default' : 'outline'}
         size="icon"
         onClick={() => setViewMode('both')}
-        className={viewMode === 'both' ? 'bg-muted' : ''}
-        title="Les deux galeries"
+        className="h-9 w-9"
       >
-        <SplitSquareHorizontal className="h-4 w-4" />
+        <Columns className="h-4 w-4" />
       </Button>
-
+      
       <Button
-        variant="ghost"
+        variant={viewMode === 'right' ? 'default' : 'outline'}
         size="icon"
         onClick={() => setViewMode('right')}
-        className={viewMode === 'right' ? 'bg-muted' : ''}
-        title="Destination uniquement"
+        className="h-9 w-9"
       >
-        <div className="flex items-center justify-center w-full h-full">
-          <div className="w-4 h-4 border-l border-muted-foreground"></div>
-        </div>
+        <ArrowRight className="h-4 w-4" />
       </Button>
     </div>
   );

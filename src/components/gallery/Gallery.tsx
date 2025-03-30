@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import VirtualizedGalleryGrid from './VirtualizedGalleryGrid';
@@ -12,7 +11,7 @@ import GalleryToolbar from './GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from '../media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { MobileViewMode } from '@/types/gallery';
+import { MediaItem } from '@/types/gallery';
 
 interface GalleryProps {
   title: string;
@@ -30,8 +29,6 @@ interface GalleryProps {
   filter?: string;
   onToggleSidebar?: () => void;
   gap?: number;
-  mobileViewMode?: MobileViewMode;
-  onToggleMaximize?: () => void;
 }
 
 const Gallery: React.FC<GalleryProps> = ({
@@ -49,9 +46,7 @@ const Gallery: React.FC<GalleryProps> = ({
   position = 'source',
   filter = 'all',
   onToggleSidebar,
-  gap = 8,
-  mobileViewMode,
-  onToggleMaximize
+  gap = 8
 }) => {
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
   const { t } = useLanguage();
@@ -127,8 +122,6 @@ const Gallery: React.FC<GalleryProps> = ({
         onToggleSidebar={onToggleSidebar}
         selectionMode={selection.selectionMode}
         onToggleSelectionMode={selection.toggleSelectionMode}
-        mobileViewMode={mobileViewMode}
-        onToggleMaximize={onToggleMaximize}
       />
       
       <div className="flex-1 overflow-hidden relative scrollbar-vertical">
