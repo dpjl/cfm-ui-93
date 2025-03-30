@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -11,7 +10,6 @@ import DesktopGalleriesView from './DesktopGalleriesView';
 import MobileGalleriesView from './MobileGalleriesView';
 import MobileViewSwitcher from './MobileViewSwitcher';
 
-// Define the props interfaces that were missing
 interface BaseGalleryProps {
   columnsCountLeft: number;
   columnsCountRight: number;
@@ -35,7 +33,6 @@ interface SidebarToggleProps {
   onToggleRightPanel: () => void;
 }
 
-// Define the GalleriesContainerProps interface
 interface GalleriesContainerProps extends BaseGalleryProps, SidebarToggleProps {
   mobileViewMode: MobileViewMode;
   setMobileViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
@@ -66,7 +63,6 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
-  // Fetch media IDs for left and right columns
   const { data: leftMediaIds = [], isLoading: isLoadingLeftMediaIds, error: errorLeftMediaIds } = useQuery({
     queryKey: ['leftMediaIds', selectedDirectoryIdLeft, leftFilter],
     queryFn: () => fetchMediaIds(selectedDirectoryIdLeft, 'source', leftFilter as string)
@@ -77,14 +73,12 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
     queryFn: () => fetchMediaIds(selectedDirectoryIdRight, 'destination', rightFilter as string)
   });
 
-  // Handlers for selecting and previewing items
   const handleSelectIdLeft = (id: string) => setSelectedIdsLeft((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
   const handleSelectIdRight = (id: string) => setSelectedIdsRight((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
   const handlePreviewItemLeft = (id: string) => console.log(`Previewing item ${id} in source`);
   const handlePreviewItemRight = (id: string) => console.log(`Previewing item ${id} in destination`);
   const handleConfirmDelete = (side: 'left' | 'right') => () => handleDeleteSelected(side);
 
-  // Add handlers for changing columns
   const handleLeftColumnsChange = (count: number) => {
     if (onColumnsChange) {
       console.log('Left columns changed to:', count);
@@ -99,15 +93,26 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
     }
   };
 
+  const handleToggleLeftFullView = () => {
+    if (mobileViewMode === 'left') {
+      setMobileViewMode('both');
+    } else {
+      setMobileViewMode('left');
+    }
+  };
+
+  const handleToggleRightFullView = () => {
+    if (mobileViewMode === 'right') {
+      setMobileViewMode('both');
+    } else {
+      setMobileViewMode('right');
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {isMobile ? (
         <div className="flex flex-col h-full overflow-hidden">
-          <MobileViewSwitcher
-            viewMode={mobileViewMode}
-            setViewMode={setMobileViewMode}
-            className=""
-          />
           <MobileGalleriesView
             mobileViewMode={mobileViewMode}
             leftContent={
@@ -127,6 +132,8 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
                 filter={leftFilter}
                 onToggleSidebar={onToggleLeftPanel}
                 onColumnsChange={handleLeftColumnsChange}
+                mobileViewMode={mobileViewMode}
+                onToggleFullView={handleToggleLeftFullView}
               />
             }
             rightContent={
@@ -146,6 +153,8 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
                 filter={rightFilter}
                 onToggleSidebar={onToggleRightPanel}
                 onColumnsChange={handleRightColumnsChange}
+                mobileViewMode={mobileViewMode}
+                onToggleFullView={handleToggleRightFullView}
               />
             }
           />
@@ -187,6 +196,8 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
               filter={leftFilter}
               onToggleSidebar={onToggleLeftPanel}
               onColumnsChange={handleLeftColumnsChange}
+              mobileViewMode={mobileViewMode}
+              onToggleFullView={handleToggleLeftFullView}
             />
           }
           rightContent={
@@ -205,6 +216,8 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
               filter={rightFilter}
               onToggleSidebar={onToggleRightPanel}
               onColumnsChange={handleRightColumnsChange}
+              mobileViewMode={mobileViewMode}
+              onToggleFullView={handleToggleRightFullView}
             />
           }
         />

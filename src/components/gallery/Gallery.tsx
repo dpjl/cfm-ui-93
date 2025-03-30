@@ -29,6 +29,8 @@ interface GalleryProps {
   filter?: string;
   onToggleSidebar?: () => void;
   gap?: number;
+  mobileViewMode?: MobileViewMode;
+  onToggleFullView?: () => void;
 }
 
 const Gallery: React.FC<GalleryProps> = ({
@@ -46,7 +48,9 @@ const Gallery: React.FC<GalleryProps> = ({
   position = 'source',
   filter = 'all',
   onToggleSidebar,
-  gap = 8
+  gap = 8,
+  mobileViewMode,
+  onToggleFullView
 }) => {
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
   const { t } = useLanguage();
@@ -122,6 +126,8 @@ const Gallery: React.FC<GalleryProps> = ({
         onToggleSidebar={onToggleSidebar}
         selectionMode={selection.selectionMode}
         onToggleSelectionMode={selection.toggleSelectionMode}
+        mobileViewMode={mobileViewMode}
+        onToggleFullView={onToggleFullView}
       />
       
       <div className="flex-1 overflow-hidden relative scrollbar-vertical">

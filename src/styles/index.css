@@ -18,3 +18,8 @@
 
 /* App-specific styles */
 @import './app.css';
+
+/* Transition pour les vues mobiles */
+.mobile-view-transition {
+  transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}

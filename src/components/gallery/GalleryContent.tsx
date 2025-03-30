@@ -2,6 +2,7 @@
 import React, { useRef } from 'react';
 import Gallery from '@/components/gallery/Gallery';
 import { useGalleryZoom } from '@/hooks/use-gallery-zoom';
+import { MobileViewMode } from '@/types/gallery';
 
 interface GalleryContentProps {
   mediaIds: string[];
@@ -19,6 +20,9 @@ interface GalleryContentProps {
   position?: 'source' | 'destination';
   onToggleSidebar?: () => void;
   onColumnsChange?: (count: number) => void;
+  // Nouvelles props pour le toggle de vue
+  mobileViewMode?: MobileViewMode;
+  onToggleFullView?: () => void;
 }
 
 const GalleryContent: React.FC<GalleryContentProps> = ({
@@ -36,7 +40,9 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
   filter = 'all',
   position = 'source',
   onToggleSidebar,
-  onColumnsChange
+  onColumnsChange,
+  mobileViewMode,
+  onToggleFullView
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -83,8 +89,9 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
         error={error}
         filter={filter}
         onToggleSidebar={onToggleSidebar}
-        // Réduire l'espace entre les vignettes en passant une valeur inférieure
-        gap={4} // Valeur réduite de 8 à 4
+        gap={4}
+        mobileViewMode={mobileViewMode}
+        onToggleFullView={onToggleFullView}
       />
     </div>
   );

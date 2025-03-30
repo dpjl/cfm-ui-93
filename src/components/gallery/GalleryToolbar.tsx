@@ -3,9 +3,10 @@ import React from 'react';
 import { Button } from '../ui/button';
 import { SelectionMode } from '../../hooks/use-gallery-selection';
 import { useMediaQuery } from '../../hooks/use-media-query';
-import { CheckSquare, Square, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { CheckSquare, Square, ChevronLeft, ChevronRight, Settings, Maximize, Minimize } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-breakpoint';
+import { MobileViewMode } from '@/types/gallery';
 
 interface GalleryToolbarProps {
   directory?: string;
@@ -19,6 +20,9 @@ interface GalleryToolbarProps {
   onToggleSidebar?: () => void;
   selectionMode: SelectionMode;
   onToggleSelectionMode: () => void;
+  // Nouvelles props pour le toggle de vue
+  mobileViewMode?: MobileViewMode;
+  onToggleFullView?: () => void;
 }
 
 const GalleryToolbar: React.FC<GalleryToolbarProps> = ({ 
@@ -30,7 +34,9 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
   position = 'source',
   onToggleSidebar,
   selectionMode,
-  onToggleSelectionMode
+  onToggleSelectionMode,
+  mobileViewMode = 'both',
+  onToggleFullView
 }) => {
   const isMobile = useIsMobile();
   
@@ -38,7 +44,11 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
   const SidebarIcon = position === 'source' ? ChevronLeft : ChevronRight;
   const SidebarLabel = position === 'source' ? 'Options Left' : 'Options Right';
 
-  // Pour la galerie de gauche (source), ordre: sidebar, select all, clear, mode
+  // Détermine si on est en vue plein écran pour cette galerie
+  const isFullView = (position === 'source' && mobileViewMode === 'left') || 
+                     (position === 'destination' && mobileViewMode === 'right');
+
+  // Pour la galerie de gauche (source), ordre: sidebar, select all, clear, mode, view toggle
   const leftGalleryToolbar = (
     <>
       {onToggleSidebar && (
@@ -137,12 +147,62 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+
+      {/* Bouton Agrandir/Réduire pour la vue */}
+      {onToggleFullView && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={onToggleFullView}
+                className="h-8 w-8"
+              >
+                {isFullView ? (
+                  <Minimize size={isMobile ? 18 : 20} />
+                ) : (
+                  <Maximize size={isMobile ? 18 : 20} />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>{isFullView ? 'Split View' : 'Expand'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
     </>
   );
 
-  // Pour la galerie de droite (destination), ordre: mode, clear, select all, sidebar
+  // Pour la galerie de droite (destination), ordre: view toggle, mode, clear, select all, sidebar
   const rightGalleryToolbar = (
     <>
+      {/* Bouton Agrandir/Réduire pour la vue */}
+      {onToggleFullView && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={onToggleFullView}
+                className="h-8 w-8"
+              >
+                {isFullView ? (
+                  <Minimize size={isMobile ? 18 : 20} />
+                ) : (
+                  <Maximize size={isMobile ? 18 : 20} />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>{isFullView ? 'Split View' : 'Expand'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>

@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { MobileViewMode } from '@/types/gallery';
-import MobileViewSwitcher from './MobileViewSwitcher';
 
 interface MobileGalleriesViewProps {
   // Propriétés de vue
@@ -20,22 +19,20 @@ const MobileGalleriesView: React.FC<MobileGalleriesViewProps> = ({
   return (
     <div className="flex-1 overflow-hidden">
       {/* Left Gallery (Source) */}
-      {(mobileViewMode === 'left' || mobileViewMode === 'both') && (
-        <div className={`transition-all duration-300 h-full ${
-          mobileViewMode === 'both' ? 'w-1/2 float-left' : 'w-full'
-        }`}>
-          {leftContent}
-        </div>
-      )}
+      <div className={`transition-all duration-300 h-full ${
+        mobileViewMode === 'both' ? 'w-1/2 float-left' : 
+        mobileViewMode === 'left' ? 'w-full' : 'hidden'
+      }`}>
+        {leftContent}
+      </div>
       
       {/* Right Gallery (Destination) */}
-      {(mobileViewMode === 'right' || mobileViewMode === 'both') && (
-        <div className={`transition-all duration-300 h-full ${
-          mobileViewMode === 'both' ? 'w-1/2 float-right' : 'w-full'
-        }`}>
-          {rightContent}
-        </div>
-      )}
+      <div className={`transition-all duration-300 h-full ${
+        mobileViewMode === 'both' ? 'w-1/2 float-right' : 
+        mobileViewMode === 'right' ? 'w-full' : 'hidden'
+      }`}>
+        {rightContent}
+      </div>
     </div>
   );
 };
