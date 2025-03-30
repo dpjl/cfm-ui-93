@@ -9,7 +9,6 @@ import GalleryContent from '@/components/gallery/GalleryContent';
 import DeleteConfirmationDialog from '@/components/gallery/DeleteConfirmationDialog';
 import DesktopGalleriesView from './DesktopGalleriesView';
 import MobileGalleriesView from './MobileGalleriesView';
-import MobileViewSwitcher from './MobileViewSwitcher';
 
 // Define the props interfaces that were missing
 interface BaseGalleryProps {
@@ -99,56 +98,66 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
     }
   };
 
+  // Handlers for toggling maximize/minimize
+  const handleToggleLeftMaximize = () => {
+    setMobileViewMode(mobileViewMode === 'left' ? 'both' : 'left');
+  };
+
+  const handleToggleRightMaximize = () => {
+    setMobileViewMode(mobileViewMode === 'right' ? 'both' : 'right');
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {isMobile ? (
         <div className="flex flex-col h-full overflow-hidden">
-          <MobileViewSwitcher
-            viewMode={mobileViewMode}
-            setViewMode={setMobileViewMode}
-            className=""
-          />
-          <MobileGalleriesView
-            mobileViewMode={mobileViewMode}
-            leftContent={
-              <GalleryContent
-                title="Source"
-                mediaIds={leftMediaIds || []}
-                selectedIds={selectedIdsLeft}
-                onSelectId={handleSelectIdLeft}
-                isLoading={isLoadingLeftMediaIds}
-                isError={!!errorLeftMediaIds}
-                error={errorLeftMediaIds}
-                columnsCount={columnsCountLeft}
-                viewMode={mobileViewMode === 'both' ? 'split' : 'single'}
-                onPreviewItem={handlePreviewItemLeft}
-                onDeleteSelected={handleConfirmDelete('left')}
-                position="source"
-                filter={leftFilter}
-                onToggleSidebar={onToggleLeftPanel}
-                onColumnsChange={handleLeftColumnsChange}
-              />
-            }
-            rightContent={
-              <GalleryContent
-                title="Destination"
-                mediaIds={rightMediaIds || []}
-                selectedIds={selectedIdsRight}
-                onSelectId={handleSelectIdRight}
-                isLoading={isLoadingRightMediaIds}
-                isError={!!errorRightMediaIds}
-                error={errorRightMediaIds}
-                columnsCount={columnsCountRight}
-                viewMode={mobileViewMode === 'both' ? 'split' : 'single'}
-                onPreviewItem={handlePreviewItemRight}
-                onDeleteSelected={handleConfirmDelete('right')}
-                position="destination"
-                filter={rightFilter}
-                onToggleSidebar={onToggleRightPanel}
-                onColumnsChange={handleRightColumnsChange}
-              />
-            }
-          />
+          <div className="flex-grow h-full overflow-hidden">
+            <MobileGalleriesView
+              mobileViewMode={mobileViewMode}
+              leftContent={
+                <GalleryContent
+                  title="Source"
+                  mediaIds={leftMediaIds || []}
+                  selectedIds={selectedIdsLeft}
+                  onSelectId={handleSelectIdLeft}
+                  isLoading={isLoadingLeftMediaIds}
+                  isError={!!errorLeftMediaIds}
+                  error={errorLeftMediaIds}
+                  columnsCount={columnsCountLeft}
+                  viewMode={mobileViewMode === 'both' ? 'split' : 'single'}
+                  onPreviewItem={handlePreviewItemLeft}
+                  onDeleteSelected={handleConfirmDelete('left')}
+                  position="source"
+                  filter={leftFilter}
+                  onToggleSidebar={onToggleLeftPanel}
+                  onColumnsChange={handleLeftColumnsChange}
+                  mobileViewMode={mobileViewMode}
+                  onToggleMaximize={handleToggleLeftMaximize}
+                />
+              }
+              rightContent={
+                <GalleryContent
+                  title="Destination"
+                  mediaIds={rightMediaIds || []}
+                  selectedIds={selectedIdsRight}
+                  onSelectId={handleSelectIdRight}
+                  isLoading={isLoadingRightMediaIds}
+                  isError={!!errorRightMediaIds}
+                  error={errorRightMediaIds}
+                  columnsCount={columnsCountRight}
+                  viewMode={mobileViewMode === 'both' ? 'split' : 'single'}
+                  onPreviewItem={handlePreviewItemRight}
+                  onDeleteSelected={handleConfirmDelete('right')}
+                  position="destination"
+                  filter={rightFilter}
+                  onToggleSidebar={onToggleRightPanel}
+                  onColumnsChange={handleRightColumnsChange}
+                  mobileViewMode={mobileViewMode}
+                  onToggleMaximize={handleToggleRightMaximize}
+                />
+              }
+            />
+          </div>
         </div>
       ) : (
         <DesktopGalleriesView
@@ -187,6 +196,8 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
               filter={leftFilter}
               onToggleSidebar={onToggleLeftPanel}
               onColumnsChange={handleLeftColumnsChange}
+              mobileViewMode={mobileViewMode}
+              onToggleMaximize={handleToggleLeftMaximize}
             />
           }
           rightContent={
@@ -205,6 +216,8 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
               filter={rightFilter}
               onToggleSidebar={onToggleRightPanel}
               onColumnsChange={handleRightColumnsChange}
+              mobileViewMode={mobileViewMode}
+              onToggleMaximize={handleToggleRightMaximize}
             />
           }
         />

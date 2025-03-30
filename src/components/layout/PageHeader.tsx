@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Server, PanelLeft, PanelsLeftRight, PanelRight, Settings } from 'lucide-react';
+import { Server, Settings } from 'lucide-react';
 import { MobileViewMode } from '@/types/gallery';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -39,41 +39,6 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             className="h-8 md:h-10"
           />
         </div>
-        
-        {/* Desktop view mode switcher */}
-        {!isMobile && (
-          <div className="ml-4 flex gap-2 bg-background/90 shadow-sm border border-border/30 rounded-full p-1">
-            <Button
-              variant={mobileViewMode === 'left' ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setMobileViewMode('left')}
-              className="h-7 w-7 rounded-full"
-              title="Source Gallery Only"
-            >
-              <PanelLeft className="h-3.5 w-3.5" />
-            </Button>
-            
-            <Button
-              variant={mobileViewMode === 'both' ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setMobileViewMode('both')}
-              className="h-7 w-7 rounded-full"
-              title="Split View"
-            >
-              <PanelsLeftRight className="h-3.5 w-3.5" />
-            </Button>
-            
-            <Button
-              variant={mobileViewMode === 'right' ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setMobileViewMode('right')}
-              className="h-7 w-7 rounded-full"
-              title="Destination Gallery Only"
-            >
-              <PanelRight className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        )}
       </div>
       
       <div className="flex items-center gap-2">

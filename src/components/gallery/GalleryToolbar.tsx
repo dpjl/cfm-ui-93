@@ -3,9 +3,10 @@ import React from 'react';
 import { Button } from '../ui/button';
 import { SelectionMode } from '../../hooks/use-gallery-selection';
 import { useMediaQuery } from '../../hooks/use-media-query';
-import { CheckSquare, Square, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { CheckSquare, Square, ChevronLeft, ChevronRight, Settings, Maximize2, Minimize2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-breakpoint';
+import { MobileViewMode } from '@/types/gallery';
 
 interface GalleryToolbarProps {
   directory?: string;
@@ -19,6 +20,8 @@ interface GalleryToolbarProps {
   onToggleSidebar?: () => void;
   selectionMode: SelectionMode;
   onToggleSelectionMode: () => void;
+  mobileViewMode?: MobileViewMode;
+  onToggleMaximize?: () => void;
 }
 
 const GalleryToolbar: React.FC<GalleryToolbarProps> = ({ 
@@ -30,15 +33,47 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
   position = 'source',
   onToggleSidebar,
   selectionMode,
-  onToggleSelectionMode
+  onToggleSelectionMode,
+  mobileViewMode = 'both',
+  onToggleMaximize
 }) => {
   const isMobile = useIsMobile();
   
   // Définir l'icône du bouton sidebar selon la position (gauche/droite)
   const SidebarIcon = position === 'source' ? ChevronLeft : ChevronRight;
   const SidebarLabel = position === 'source' ? 'Options Left' : 'Options Right';
+  
+  // Déterminer si ce panneau est actuellement maximisé (vue unique)
+  const isCurrentGalleryMaximized = 
+    (mobileViewMode === 'left' && position === 'source') || 
+    (mobileViewMode === 'right' && position === 'destination');
+  
+  // Créer le bouton de maximisation/minimisation
+  const maximizeButton = onToggleMaximize && (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onToggleMaximize}
+            className="h-8 w-8"
+          >
+            {isCurrentGalleryMaximized ? (
+              <Minimize2 size={isMobile ? 18 : 20} />
+            ) : (
+              <Maximize2 size={isMobile ? 18 : 20} />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>{isCurrentGalleryMaximized ? 'Show both galleries' : `Maximize ${position} gallery`}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 
-  // Pour la galerie de gauche (source), ordre: sidebar, select all, clear, mode
+  // Pour la galerie de gauche (source), ordre: sidebar, select all, clear, mode, maximize
   const leftGalleryToolbar = (
     <>
       {onToggleSidebar && (
@@ -137,12 +172,16 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+      
+      {maximizeButton}
     </>
   );
 
-  // Pour la galerie de droite (destination), ordre: mode, clear, select all, sidebar
+  // Pour la galerie de droite (destination), ordre: maximize, mode, clear, select all, sidebar
   const rightGalleryToolbar = (
     <>
+      {maximizeButton}
+    
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
