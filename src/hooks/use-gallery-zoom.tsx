@@ -5,7 +5,7 @@ import { useIsMobile } from '@/hooks/use-breakpoint';
 interface ZoomOptions {
   minColumns: number;
   maxColumns: number;
-  currentColumns: number;
+  initialColumns?: number;  // Added as optional property
   onColumnsChange: (columns: number) => void;
 }
 
@@ -16,7 +16,8 @@ export function useGalleryZoom(
   containerRef: RefObject<HTMLElement>,
   options: ZoomOptions
 ) {
-  const { minColumns, maxColumns, currentColumns, onColumnsChange } = options;
+  const { minColumns, maxColumns, onColumnsChange } = options;
+  const currentColumns = options.initialColumns || (minColumns + maxColumns) / 2;
   const isMobile = useIsMobile();
   
   // Gestionnaire pour la molette de la souris (desktop)
@@ -44,7 +45,7 @@ export function useGalleryZoom(
     if (!isMobile) return;
     
     let initialDistance = 0;
-    let initialColumns = 0;
+    let initialColumns = currentColumns;
     let lastUpdate = 0; // Timestamp de la dernière mise à jour
     
     // Début du pincement
