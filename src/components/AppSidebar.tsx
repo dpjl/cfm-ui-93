@@ -38,6 +38,10 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
 }) => {
   const { t } = useLanguage();
 
+  // Pour forcer un re-rendu quand les valeurs changent 
+  const sliderKey = React.useMemo(() => 
+    Object.values(columnValues).join('-'), [columnValues]);
+
   return (
     <div className="flex flex-col h-full bg-card/90 backdrop-blur-sm w-full overflow-hidden">
       {/* Filters and Column Sliders section */}
@@ -51,6 +55,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
         {/* Column count sliders */}
         <div className="mt-3">
           <ColumnSliders
+            key={sliderKey}
             position={position}
             columnValues={columnValues}
             mobileViewMode={mobileViewMode}

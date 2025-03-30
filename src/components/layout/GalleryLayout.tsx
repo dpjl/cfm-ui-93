@@ -81,12 +81,22 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   setRightFilter
 }) => {
   const isMobile = useIsMobile();
-  const { getColumnValuesForSide, getViewModeType } = useColumnsState();
+  const { getColumnValuesForSide, getViewModeType, updateColumnsCount } = useColumnsState();
   
   // Récupérer le type de vue actuel
   const currentViewMode = getViewModeType(isMobile, viewMode);
   
-  // Récupérer toutes les valeurs de colonnes
+  // Force refresh du composant quand columnsCountLeft ou columnsCountRight changent
+  // en mettant à jour d'abord l'état central
+  React.useEffect(() => {
+    updateColumnsCount('left', isMobile, viewMode, columnsCountLeft);
+  }, [columnsCountLeft, isMobile, viewMode, updateColumnsCount]);
+  
+  React.useEffect(() => {
+    updateColumnsCount('right', isMobile, viewMode, columnsCountRight);
+  }, [columnsCountRight, isMobile, viewMode, updateColumnsCount]);
+  
+  // Récupérer les valeurs de colonnes à chaque rendu - maintenant réactif aux changements
   const leftColumnValues = getColumnValuesForSide('left');
   const rightColumnValues = getColumnValuesForSide('right');
   
