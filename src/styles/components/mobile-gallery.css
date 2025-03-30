@@ -1,0 +1,49 @@
+
+/* Styles for mobile gallery view */
+.mobile-gallery-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.mobile-gallery {
+  position: relative;
+  height: 100%;
+  transition: width 0.3s ease, opacity 0.3s ease;
+  overflow: hidden;
+}
+
+.mobile-gallery-left {
+  z-index: 10;
+}
+
+.mobile-gallery-right {
+  z-index: 20;
+}
+
+/* View modes */
+.mobile-view-both .mobile-gallery {
+  width: 50%;
+  opacity: 1;
+}
+
+.mobile-view-left .mobile-gallery-left {
+  width: 100%;
+  opacity: 1;
+}
+
+.mobile-view-left .mobile-gallery-right {
+  width: 0;
+  opacity: 0;
+}
+
+.mobile-view-right .mobile-gallery-right {
+  width: 100%;
+  opacity: 1;
+}
+
+.mobile-view-right .mobile-gallery-left {
+  width: 0;
+  opacity: 0;
+}

@@ -45,12 +45,12 @@
     }
     
     /* Fix for mobile dual gallery layout */
-    .mobile-gallery-dual {
-      @apply flex flex-row overflow-hidden !important;
+    .mobile-gallery-container {
+      @apply flex overflow-hidden !important;
       height: calc(100% - 48px);
     }
     
-    .mobile-gallery-dual > div {
+    .mobile-gallery {
       @apply h-full overflow-hidden !important;
     }
     
@@ -61,8 +61,8 @@
     }
     
     /* Ensure correct sizing for galleries in mobile mode */
-    .mobile-gallery-single, .mobile-gallery-dual {
-      height: calc(100vh - 48px);
+    .mobile-gallery-container {
+      height: calc(100vh - 110px);
     }
   }
   

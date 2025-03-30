@@ -16,25 +16,19 @@ const MobileGalleriesView: React.FC<MobileGalleriesViewProps> = ({
   leftContent,
   rightContent
 }) => {
+  // Déterminer la classe CSS en fonction du mode de vue
+  const containerClassName = `mobile-gallery-container mobile-view-${mobileViewMode}`;
+  
   return (
-    <div className="flex-1 overflow-hidden">
-      {/* Left Gallery (Source) */}
-      {(mobileViewMode === 'left' || mobileViewMode === 'both') && (
-        <div className={`transition-all duration-300 h-full ${
-          mobileViewMode === 'both' ? 'w-1/2 float-left' : 'w-full'
-        }`}>
-          {leftContent}
-        </div>
-      )}
+    <div className={containerClassName}>
+      {/* Les deux galeries sont toujours rendues, mais leur visibilité est contrôlée par CSS */}
+      <div className="mobile-gallery mobile-gallery-left">
+        {leftContent}
+      </div>
       
-      {/* Right Gallery (Destination) */}
-      {(mobileViewMode === 'right' || mobileViewMode === 'both') && (
-        <div className={`transition-all duration-300 h-full ${
-          mobileViewMode === 'both' ? 'w-1/2 float-right' : 'w-full'
-        }`}>
-          {rightContent}
-        </div>
-      )}
+      <div className="mobile-gallery mobile-gallery-right">
+        {rightContent}
+      </div>
     </div>
   );
 };

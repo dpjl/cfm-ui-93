@@ -28,27 +28,16 @@ export function useUIState() {
     setRightPanelOpen(false);
   };
   
-  // Gestion améliorée du changement de vue mobile
+  // Gestion simplifiée du changement de vue mobile
   const toggleMaximize = useCallback((position: 'source' | 'destination') => {
     setViewMode(current => {
+      // Si on est sur la source (gauche)
       if (position === 'source') {
-        // Si on est sur la source (gauche)
-        if (current === 'left') {
-          // Si déjà maximisé, retourner à 'both'
-          return 'both';
-        } else {
-          // Sinon maximiser la source
-          return 'left';
-        }
-      } else {
-        // Si on est sur la destination (droite)
-        if (current === 'right') {
-          // Si déjà maximisé, retourner à 'both'
-          return 'both';
-        } else {
-          // Sinon maximiser la destination
-          return 'right';
-        }
+        return current === 'left' ? 'both' : 'left';
+      } 
+      // Si on est sur la destination (droite)
+      else {
+        return current === 'right' ? 'both' : 'right';
       }
     });
   }, []);
