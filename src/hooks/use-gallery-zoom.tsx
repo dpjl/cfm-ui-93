@@ -5,7 +5,7 @@ import { useIsMobile } from '@/hooks/use-breakpoint';
 interface ZoomOptions {
   minColumns: number;
   maxColumns: number;
-  initialColumns?: number;  // Added as optional property
+  initialColumns?: number;
   onColumnsChange: (columns: number) => void;
 }
 
@@ -42,7 +42,7 @@ export function useGalleryZoom(
   
   // Gestionnaire pour le pincement (mobile)
   const handlePinchGesture = useCallback(() => {
-    if (!isMobile) return;
+    if (!isMobile) return () => {};
     
     let initialDistance = 0;
     let initialColumns = currentColumns;
@@ -115,7 +115,7 @@ export function useGalleryZoom(
     }
     
     // Activer le gestionnaire de pincement sur mobile
-    const cleanupPinch = isMobile ? handlePinchGesture() : undefined;
+    const cleanupPinch = handlePinchGesture();
     
     return () => {
       if (!isMobile && element) {

@@ -22,6 +22,7 @@ interface ResponsiveGalleryProps {
   position?: 'source' | 'destination';
   mobileViewMode: MobileViewMode;
   isActive?: boolean;
+  onToggleMaximize?: () => void;
 }
 
 const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
@@ -38,7 +39,8 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
   filter = 'all',
   position = 'source',
   mobileViewMode,
-  isActive = true
+  isActive = true,
+  onToggleMaximize
 }) => {
   const isMobile = useIsMobile();
   
@@ -89,6 +91,10 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
           viewMode={viewMode}
           onDeleteSelected={onDeleteSelected}
           position={position}
+          filter={filter}
+          mobileViewMode={mobileViewMode}
+          onToggleMaximize={onToggleMaximize}
+          gap={4}
         />
       </div>
     </div>

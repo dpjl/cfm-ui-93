@@ -1,7 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { MobileViewMode } from '@/types/gallery';
 import { MediaFilter } from '@/components/AppSidebar';
+import { toast } from 'sonner';
 
 export function useUIState() {
   // UI state
@@ -27,6 +28,31 @@ export function useUIState() {
     setRightPanelOpen(false);
   };
   
+  // Gestion améliorée du changement de vue mobile
+  const toggleMaximize = useCallback((position: 'source' | 'destination') => {
+    setViewMode(current => {
+      if (position === 'source') {
+        // Si on est sur la source (gauche)
+        if (current === 'left') {
+          // Si déjà maximisé, retourner à 'both'
+          return 'both';
+        } else {
+          // Sinon maximiser la source
+          return 'left';
+        }
+      } else {
+        // Si on est sur la destination (droite)
+        if (current === 'right') {
+          // Si déjà maximisé, retourner à 'both'
+          return 'both';
+        } else {
+          // Sinon maximiser la destination
+          return 'right';
+        }
+      }
+    });
+  }, []);
+  
   return {
     deleteDialogOpen,
     setDeleteDialogOpen,
@@ -34,6 +60,7 @@ export function useUIState() {
     rightPanelOpen,
     viewMode,
     setViewMode,
+    toggleMaximize,
     leftFilter,
     setLeftFilter,
     rightFilter,

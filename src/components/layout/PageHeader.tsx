@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Server, Settings } from 'lucide-react';
+import { Server } from 'lucide-react';
 import { MobileViewMode } from '@/types/gallery';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -24,8 +24,6 @@ interface PageHeaderProps {
 const PageHeader: React.FC<PageHeaderProps> = ({
   onToggleServerPanel,
   isServerPanelOpen,
-  mobileViewMode,
-  setMobileViewMode,
 }) => {
   const isMobile = useIsMobile();
   

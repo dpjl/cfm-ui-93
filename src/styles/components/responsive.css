@@ -46,17 +46,23 @@
     
     /* Fix for mobile dual gallery layout */
     .mobile-gallery-dual {
-      @apply flex flex-row !important;
+      @apply flex flex-row overflow-hidden !important;
+      height: calc(100% - 48px);
     }
     
     .mobile-gallery-dual > div {
-      @apply w-1/2 !important;
+      @apply h-full overflow-hidden !important;
     }
     
     /* Make slider thumb bigger on mobile for easier touch */
     [data-sidebar="group-content"] [data-radix-slider-thumb] {
       @apply h-6 w-6;
       touch-action: manipulation;
+    }
+    
+    /* Ensure correct sizing for galleries in mobile mode */
+    .mobile-gallery-single, .mobile-gallery-dual {
+      height: calc(100vh - 48px);
     }
   }
   

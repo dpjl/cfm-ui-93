@@ -90,8 +90,7 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
         onToggleSidebar={onToggleSidebar}
         mobileViewMode={mobileViewMode}
         onToggleMaximize={onToggleMaximize}
-        // Réduire l'espace entre les vignettes en passant une valeur inférieure
-        gap={4} // Valeur réduite de 8 à 4
+        gap={4}
       />
     </div>
   );

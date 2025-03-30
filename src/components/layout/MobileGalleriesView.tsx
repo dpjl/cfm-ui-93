@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { MobileViewMode } from '@/types/gallery';
-import MobileViewSwitcher from './MobileViewSwitcher';
 
 interface MobileGalleriesViewProps {
   // Propriétés de vue

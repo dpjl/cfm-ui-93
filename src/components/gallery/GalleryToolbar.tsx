@@ -2,7 +2,6 @@
 import React from 'react';
 import { Button } from '../ui/button';
 import { SelectionMode } from '../../hooks/use-gallery-selection';
-import { useMediaQuery } from '../../hooks/use-media-query';
 import { CheckSquare, Square, ChevronLeft, ChevronRight, Settings, Maximize2, Minimize2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -283,12 +282,10 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
 
   return (
     <div className="flex items-center justify-between space-x-2 py-2">
-      {/* Galerie gauche: aligné à gauche */}
       <div className="flex items-center space-x-1">
         {position === 'source' && leftGalleryToolbar}
       </div>
       
-      {/* Galerie droite: aligné à droite */}
       <div className="flex items-center space-x-1 ml-auto">
         {position === 'destination' && rightGalleryToolbar}
       </div>

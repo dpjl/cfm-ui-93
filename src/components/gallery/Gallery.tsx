@@ -12,7 +12,6 @@ import GalleryToolbar from './GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from '../media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { MediaItem } from '@/types/gallery';
 import { MobileViewMode } from '@/types/gallery';
 
 interface GalleryProps {
