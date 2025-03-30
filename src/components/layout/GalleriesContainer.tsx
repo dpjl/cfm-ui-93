@@ -11,42 +11,34 @@ import DesktopGalleriesView from './DesktopGalleriesView';
 import MobileGalleriesView from './MobileGalleriesView';
 import MobileViewSwitcher from './MobileViewSwitcher';
 
-// Définir l'interface pour les props du composant
-interface GalleriesContainerProps {
-  // Propriétés des colonnes
+// Define the props interfaces that were missing
+interface BaseGalleryProps {
   columnsCountLeft: number;
   columnsCountRight: number;
-  
-  // Propriétés de sélection
+  selectedDirectoryIdLeft: string;
+  selectedDirectoryIdRight: string;
   selectedIdsLeft: string[];
   setSelectedIdsLeft: React.Dispatch<React.SetStateAction<string[]>>;
   selectedIdsRight: string[];
   setSelectedIdsRight: React.Dispatch<React.SetStateAction<string[]>>;
-  
-  // Propriétés des répertoires
-  selectedDirectoryIdLeft: string;
-  selectedDirectoryIdRight: string;
-  
-  // Propriétés de dialogue et de suppression
   deleteDialogOpen: boolean;
   setDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   activeSide: 'left' | 'right';
   deleteMutation: any;
   handleDeleteSelected: (side: 'left' | 'right') => void;
-  
-  // Propriétés de vue mobile
-  mobileViewMode: MobileViewMode;
-  setMobileViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
-  
-  // Propriétés de filtre
   leftFilter?: MediaFilter;
   rightFilter?: MediaFilter;
-  
-  // Propriétés de panneau latéral
+}
+
+interface SidebarToggleProps {
   onToggleLeftPanel: () => void;
   onToggleRightPanel: () => void;
-  
-  // Gestionnaire de changement de colonnes
+}
+
+// Define the GalleriesContainerProps interface
+interface GalleriesContainerProps extends BaseGalleryProps, SidebarToggleProps {
+  mobileViewMode: MobileViewMode;
+  setMobileViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
   onColumnsChange?: (side: 'left' | 'right', count: number) => void;
 }
 
@@ -76,13 +68,13 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
 
   // Fetch media IDs for left and right columns
   const { data: leftMediaIds = [], isLoading: isLoadingLeftMediaIds, error: errorLeftMediaIds } = useQuery({
-    queryKey: ['leftMediaIds', selectedDirectoryIdLeft, columnsCountLeft],
-    queryFn: () => fetchMediaIds(selectedDirectoryIdLeft, columnsCountLeft)
+    queryKey: ['leftMediaIds', selectedDirectoryIdLeft, leftFilter],
+    queryFn: () => fetchMediaIds(selectedDirectoryIdLeft, 'source', leftFilter as string)
   });
   
   const { data: rightMediaIds = [], isLoading: isLoadingRightMediaIds, error: errorRightMediaIds } = useQuery({
-    queryKey: ['rightMediaIds', selectedDirectoryIdRight, columnsCountRight],
-    queryFn: () => fetchMediaIds(selectedDirectoryIdRight, columnsCountRight)
+    queryKey: ['rightMediaIds', selectedDirectoryIdRight, rightFilter],
+    queryFn: () => fetchMediaIds(selectedDirectoryIdRight, 'destination', rightFilter as string)
   });
 
   // Handlers for selecting and previewing items
@@ -114,6 +106,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
           <MobileViewSwitcher
             viewMode={mobileViewMode}
             setViewMode={setMobileViewMode}
+            className=""
           />
           <MobileGalleriesView
             mobileViewMode={mobileViewMode}
@@ -161,12 +154,12 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
         <DesktopGalleriesView
           columnsCountLeft={columnsCountLeft}
           columnsCountRight={columnsCountRight}
-          selectedDirectoryIdLeft={selectedDirectoryIdLeft}
-          selectedDirectoryIdRight={selectedDirectoryIdRight}
           selectedIdsLeft={selectedIdsLeft}
           setSelectedIdsLeft={setSelectedIdsLeft}
           selectedIdsRight={selectedIdsRight}
           setSelectedIdsRight={setSelectedIdsRight}
+          selectedDirectoryIdLeft={selectedDirectoryIdLeft}
+          selectedDirectoryIdRight={selectedDirectoryIdRight}
           handleDeleteSelected={handleDeleteSelected}
           deleteDialogOpen={deleteDialogOpen}
           activeSide={activeSide}

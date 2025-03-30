@@ -6,7 +6,7 @@ import GalleriesContainer from '@/components/layout/GalleriesContainer';
 import AppSidebar from '@/components/AppSidebar';
 import { MobileViewMode } from '@/types/gallery';
 import { MediaFilter } from '@/components/AppSidebar';
-import { useColumnsState } from '@/hooks/use-columns-state'; // Ajout de l'import manquant
+import { useColumnsState } from '@/hooks/use-columns-state';
 
 interface GalleryLayoutProps {
   // Directory selection
@@ -81,23 +81,23 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   setRightFilter
 }) => {
   const isMobile = useIsMobile();
-  const columnsStateHook = useColumnsState(); // Utilisation du hook
+  const columnsStateHook = useColumnsState(); // Use the hook properly
   
   console.log(`GalleryLayout rendering with columns: left=${columnsCountLeft}, right=${columnsCountRight}`);
   
   // Function to handle column changes for the left panel
-  const handleLeftColumnsChange = (viewMode: string, count: number) => {
-    console.log(`Left panel column change: ${viewMode} => ${count}`);
-    onLeftColumnsChange(viewMode, count);
+  const handleLeftColumnsChange = (viewType: string, count: number) => {
+    console.log(`Left panel column change: ${viewType} => ${count}`);
+    onLeftColumnsChange(viewType, count);
   };
   
   // Function to handle column changes for the right panel
-  const handleRightColumnsChange = (viewMode: string, count: number) => {
-    console.log(`Right panel column change: ${viewMode} => ${count}`);
-    onRightColumnsChange(viewMode, count);
+  const handleRightColumnsChange = (viewType: string, count: number) => {
+    console.log(`Right panel column change: ${viewType} => ${count}`);
+    onRightColumnsChange(viewType, count);
   };
   
-  // Nouveau gestionnaire pour le changement de colonnes via zoom
+  // Gestionnaire pour le changement de colonnes via zoom
   const handleColumnsChange = (side: 'left' | 'right', count: number) => {
     // Détermination du type de vue actuel
     const currentViewModeType = side === 'left' 

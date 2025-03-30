@@ -9,9 +9,6 @@ interface MobileViewSwitcherProps {
   viewMode: MobileViewMode;
   setViewMode: (mode: MobileViewMode) => void;
   className?: string;
-  // Ces deux props sont supprimées car elles font double emploi avec viewMode et setViewMode
-  // mobileViewMode?: MobileViewMode;
-  // setMobileViewMode?: React.Dispatch<React.SetStateAction<MobileViewMode>>;
 }
 
 const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({
