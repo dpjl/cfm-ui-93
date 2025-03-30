@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -10,10 +11,43 @@ import DesktopGalleriesView from './DesktopGalleriesView';
 import MobileGalleriesView from './MobileGalleriesView';
 import MobileViewSwitcher from './MobileViewSwitcher';
 
-// Combined props for GalleriesContainer
-interface GalleriesContainerProps extends BaseGalleryProps, SidebarToggleProps {
+// Définir l'interface pour les props du composant
+interface GalleriesContainerProps {
+  // Propriétés des colonnes
+  columnsCountLeft: number;
+  columnsCountRight: number;
+  
+  // Propriétés de sélection
+  selectedIdsLeft: string[];
+  setSelectedIdsLeft: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedIdsRight: string[];
+  setSelectedIdsRight: React.Dispatch<React.SetStateAction<string[]>>;
+  
+  // Propriétés des répertoires
+  selectedDirectoryIdLeft: string;
+  selectedDirectoryIdRight: string;
+  
+  // Propriétés de dialogue et de suppression
+  deleteDialogOpen: boolean;
+  setDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  activeSide: 'left' | 'right';
+  deleteMutation: any;
+  handleDeleteSelected: (side: 'left' | 'right') => void;
+  
+  // Propriétés de vue mobile
   mobileViewMode: MobileViewMode;
   setMobileViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
+  
+  // Propriétés de filtre
+  leftFilter?: MediaFilter;
+  rightFilter?: MediaFilter;
+  
+  // Propriétés de panneau latéral
+  onToggleLeftPanel: () => void;
+  onToggleRightPanel: () => void;
+  
+  // Gestionnaire de changement de colonnes
+  onColumnsChange?: (side: 'left' | 'right', count: number) => void;
 }
 
 const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
@@ -41,8 +75,15 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   const isMobile = useIsMobile();
 
   // Fetch media IDs for left and right columns
-  const { data: leftMediaIds, isLoading: isLoadingLeftMediaIds, error: errorLeftMediaIds } = useQuery(['leftMediaIds'], () => fetchMediaIds(selectedDirectoryIdLeft, columnsCountLeft));
-  const { data: rightMediaIds, isLoading: isLoadingRightMediaIds, error: errorRightMediaIds } = useQuery(['rightMediaIds'], () => fetchMediaIds(selectedDirectoryIdRight, columnsCountRight));
+  const { data: leftMediaIds = [], isLoading: isLoadingLeftMediaIds, error: errorLeftMediaIds } = useQuery({
+    queryKey: ['leftMediaIds', selectedDirectoryIdLeft, columnsCountLeft],
+    queryFn: () => fetchMediaIds(selectedDirectoryIdLeft, columnsCountLeft)
+  });
+  
+  const { data: rightMediaIds = [], isLoading: isLoadingRightMediaIds, error: errorRightMediaIds } = useQuery({
+    queryKey: ['rightMediaIds', selectedDirectoryIdRight, columnsCountRight],
+    queryFn: () => fetchMediaIds(selectedDirectoryIdRight, columnsCountRight)
+  });
 
   // Handlers for selecting and previewing items
   const handleSelectIdLeft = (id: string) => setSelectedIdsLeft((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
@@ -55,7 +96,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   const handleLeftColumnsChange = (count: number) => {
     if (onColumnsChange) {
       console.log('Left columns changed to:', count);
-      onColumnsChange(activeSide === 'left' ? 'left' : 'right', count);
+      onColumnsChange('left', count);
     }
   };
 
@@ -72,16 +113,16 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
         <div className="flex flex-col h-full overflow-hidden">
           <MobileViewSwitcher
             viewMode={mobileViewMode}
-            onViewModeChange={setMobileViewMode}
+            setViewMode={setMobileViewMode}
           />
           <MobileGalleriesView
-            viewMode={mobileViewMode}
+            mobileViewMode={mobileViewMode}
             leftContent={
               <GalleryContent
                 title="Source"
-                mediaIds={leftMediaIds}
+                mediaIds={leftMediaIds || []}
                 selectedIds={selectedIdsLeft}
-                onSelectId={(id) => handleSelectIdLeft(id)}
+                onSelectId={handleSelectIdLeft}
                 isLoading={isLoadingLeftMediaIds}
                 isError={!!errorLeftMediaIds}
                 error={errorLeftMediaIds}
@@ -98,9 +139,9 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
             rightContent={
               <GalleryContent
                 title="Destination"
-                mediaIds={rightMediaIds}
+                mediaIds={rightMediaIds || []}
                 selectedIds={selectedIdsRight}
-                onSelectId={(id) => handleSelectIdRight(id)}
+                onSelectId={handleSelectIdRight}
                 isLoading={isLoadingRightMediaIds}
                 isError={!!errorRightMediaIds}
                 error={errorRightMediaIds}
@@ -118,12 +159,31 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
         </div>
       ) : (
         <DesktopGalleriesView
+          columnsCountLeft={columnsCountLeft}
+          columnsCountRight={columnsCountRight}
+          selectedDirectoryIdLeft={selectedDirectoryIdLeft}
+          selectedDirectoryIdRight={selectedDirectoryIdRight}
+          selectedIdsLeft={selectedIdsLeft}
+          setSelectedIdsLeft={setSelectedIdsLeft}
+          selectedIdsRight={selectedIdsRight}
+          setSelectedIdsRight={setSelectedIdsRight}
+          handleDeleteSelected={handleDeleteSelected}
+          deleteDialogOpen={deleteDialogOpen}
+          activeSide={activeSide}
+          setDeleteDialogOpen={setDeleteDialogOpen}
+          deleteMutation={deleteMutation}
+          leftFilter={leftFilter}
+          rightFilter={rightFilter}
+          viewMode={mobileViewMode}
+          mobileViewMode={mobileViewMode}
+          onToggleLeftPanel={onToggleLeftPanel}
+          onToggleRightPanel={onToggleRightPanel}
           leftContent={
             <GalleryContent
               title="Source"
-              mediaIds={leftMediaIds}
+              mediaIds={leftMediaIds || []}
               selectedIds={selectedIdsLeft}
-              onSelectId={(id) => handleSelectIdLeft(id)}
+              onSelectId={handleSelectIdLeft}
               isLoading={isLoadingLeftMediaIds}
               isError={!!errorLeftMediaIds}
               error={errorLeftMediaIds}
@@ -139,9 +199,9 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
           rightContent={
             <GalleryContent
               title="Destination"
-              mediaIds={rightMediaIds}
+              mediaIds={rightMediaIds || []}
               selectedIds={selectedIdsRight}
-              onSelectId={(id) => handleSelectIdRight(id)}
+              onSelectId={handleSelectIdRight}
               isLoading={isLoadingRightMediaIds}
               isError={!!errorRightMediaIds}
               error={errorRightMediaIds}
@@ -158,10 +218,11 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
       )}
 
       <DeleteConfirmationDialog
-        isOpen={deleteDialogOpen}
+        open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={() => handleDeleteSelected(activeSide)}
-        count={activeSide === 'left' ? selectedIdsLeft.length : selectedIdsRight.length}
+        selectedIds={activeSide === 'left' ? selectedIdsLeft : selectedIdsRight}
+        onCancel={() => setDeleteDialogOpen(false)}
         isPending={deleteMutation.isPending}
       />
     </div>

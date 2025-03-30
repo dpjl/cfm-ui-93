@@ -9,27 +9,17 @@ interface MobileViewSwitcherProps {
   viewMode: MobileViewMode;
   setViewMode: (mode: MobileViewMode) => void;
   className?: string;
-  mobileViewMode?: MobileViewMode;  // Added to match usage in MobileGalleriesView
-  setMobileViewMode?: React.Dispatch<React.SetStateAction<MobileViewMode>>; // Added to match usage
+  // Ces deux props sont supprimées car elles font double emploi avec viewMode et setViewMode
+  // mobileViewMode?: MobileViewMode;
+  // setMobileViewMode?: React.Dispatch<React.SetStateAction<MobileViewMode>>;
 }
 
 const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({
   viewMode,
   setViewMode,
-  className = '',
-  // Use these new props if provided, otherwise fall back to the original props
-  mobileViewMode,
-  setMobileViewMode
+  className = ''
 }) => {
   const isMobile = useIsMobile();
-  const currentViewMode = mobileViewMode || viewMode;
-  const changeViewMode = (mode: MobileViewMode) => {
-    if (setMobileViewMode) {
-      setMobileViewMode(mode);
-    } else {
-      setViewMode(mode);
-    }
-  };
   
   if (!isMobile) {
     return null;
@@ -38,27 +28,27 @@ const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({
   return (
     <div className={`mobile-view-switcher ${className}`}>
       <Button
-        variant={currentViewMode === 'left' ? 'default' : 'outline'}
+        variant={viewMode === 'left' ? 'default' : 'outline'}
         size="icon"
-        onClick={() => changeViewMode('left')}
+        onClick={() => setViewMode('left')}
         className="h-9 w-9"
       >
         <ArrowLeft className="h-4 w-4" />
       </Button>
       
       <Button
-        variant={currentViewMode === 'both' ? 'default' : 'outline'}
+        variant={viewMode === 'both' ? 'default' : 'outline'}
         size="icon"
-        onClick={() => changeViewMode('both')}
+        onClick={() => setViewMode('both')}
         className="h-9 w-9"
       >
         <Columns className="h-4 w-4" />
       </Button>
       
       <Button
-        variant={currentViewMode === 'right' ? 'default' : 'outline'}
+        variant={viewMode === 'right' ? 'default' : 'outline'}
         size="icon"
-        onClick={() => changeViewMode('right')}
+        onClick={() => setViewMode('right')}
         className="h-9 w-9"
       >
         <ArrowRight className="h-4 w-4" />

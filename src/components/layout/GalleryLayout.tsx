@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import SidePanel from '@/components/layout/SidePanel';
@@ -5,6 +6,7 @@ import GalleriesContainer from '@/components/layout/GalleriesContainer';
 import AppSidebar from '@/components/AppSidebar';
 import { MobileViewMode } from '@/types/gallery';
 import { MediaFilter } from '@/components/AppSidebar';
+import { useColumnsState } from '@/hooks/use-columns-state'; // Ajout de l'import manquant
 
 interface GalleryLayoutProps {
   // Directory selection
@@ -79,6 +81,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   setRightFilter
 }) => {
   const isMobile = useIsMobile();
+  const columnsStateHook = useColumnsState(); // Utilisation du hook
   
   console.log(`GalleryLayout rendering with columns: left=${columnsCountLeft}, right=${columnsCountRight}`);
   
@@ -98,8 +101,8 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   const handleColumnsChange = (side: 'left' | 'right', count: number) => {
     // Détermination du type de vue actuel
     const currentViewModeType = side === 'left' 
-      ? columnsState.getViewModeType('left', viewMode, isMobile)
-      : columnsState.getViewModeType('right', viewMode, isMobile);
+      ? columnsStateHook.getViewModeType('left', viewMode, isMobile)
+      : columnsStateHook.getViewModeType('right', viewMode, isMobile);
       
     console.log(`Column zoom change: ${side} ${currentViewModeType} => ${count}`);
     

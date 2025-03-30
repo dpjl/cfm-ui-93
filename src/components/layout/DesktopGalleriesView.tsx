@@ -3,8 +3,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import GalleryContainer from '@/components/GalleryContainer';
 import { Separator } from '@/components/ui/separator';
-import { BaseGalleryProps, SidebarToggleProps, ViewModeProps } from '@/types/gallery-props';
 import { MobileViewMode } from '@/types/gallery';
+import { MediaFilter } from '@/components/AppSidebar';
 
 // Define container animation variants
 const containerVariants = {
@@ -19,8 +19,45 @@ const containerVariants = {
   }
 };
 
-// Combined props for DesktopGalleriesView
-interface DesktopGalleriesViewProps extends BaseGalleryProps, ViewModeProps, SidebarToggleProps {}
+// Définir les props du composant
+interface DesktopGalleriesViewProps {
+  // Propriétés des colonnes
+  columnsCountLeft: number;
+  columnsCountRight: number;
+  
+  // Propriétés des répertoires
+  selectedDirectoryIdLeft: string;
+  selectedDirectoryIdRight: string;
+  
+  // Propriétés de sélection
+  selectedIdsLeft: string[];
+  setSelectedIdsLeft: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedIdsRight: string[];
+  setSelectedIdsRight: React.Dispatch<React.SetStateAction<string[]>>;
+  
+  // Propriétés de suppression
+  handleDeleteSelected: (side: 'left' | 'right') => void;
+  deleteDialogOpen: boolean;
+  activeSide: 'left' | 'right';
+  setDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  deleteMutation: any;
+  
+  // Propriétés de filtre
+  leftFilter?: MediaFilter;
+  rightFilter?: MediaFilter;
+  
+  // Propriétés de vue
+  viewMode?: MobileViewMode;
+  mobileViewMode?: MobileViewMode;
+  
+  // Propriétés de panneau latéral
+  onToggleLeftPanel?: () => void;
+  onToggleRightPanel?: () => void;
+
+  // Contenu des galeries
+  leftContent: React.ReactNode;
+  rightContent: React.ReactNode;
+}
 
 const DesktopGalleriesView: React.FC<DesktopGalleriesViewProps> = ({
   columnsCountLeft,
@@ -41,44 +78,12 @@ const DesktopGalleriesView: React.FC<DesktopGalleriesViewProps> = ({
   viewMode = 'both',
   mobileViewMode,
   onToggleLeftPanel,
-  onToggleRightPanel
+  onToggleRightPanel,
+  leftContent,
+  rightContent
 }) => {
   // Use mobileViewMode if provided, otherwise fall back to viewMode
   const activeViewMode: MobileViewMode = mobileViewMode || viewMode;
-
-  // Extract common props for left gallery
-  const leftGalleryProps = {
-    title: "Left Gallery",
-    directory: selectedDirectoryIdLeft,
-    position: 'left' as const,
-    columnsCount: columnsCountLeft,
-    selectedIds: selectedIdsLeft,
-    setSelectedIds: setSelectedIdsLeft,
-    onDeleteSelected: () => handleDeleteSelected('left'),
-    deleteDialogOpen: deleteDialogOpen && activeSide === 'left',
-    setDeleteDialogOpen,
-    deleteMutation,
-    hideHeader: true,
-    filter: leftFilter,
-    onToggleSidebar: onToggleLeftPanel
-  };
-  
-  // Extract common props for right gallery
-  const rightGalleryProps = {
-    title: "Right Gallery",
-    directory: selectedDirectoryIdRight,
-    position: 'right' as const,
-    columnsCount: columnsCountRight,
-    selectedIds: selectedIdsRight,
-    setSelectedIds: setSelectedIdsRight,
-    onDeleteSelected: () => handleDeleteSelected('right'),
-    deleteDialogOpen: deleteDialogOpen && activeSide === 'right',
-    setDeleteDialogOpen,
-    deleteMutation,
-    hideHeader: true,
-    filter: rightFilter,
-    onToggleSidebar: onToggleRightPanel
-  };
 
   return (
     <div className="flex-1 overflow-hidden bg-background/50 backdrop-blur-sm rounded-lg border-2 border-border/40 shadow-sm relative">
@@ -95,10 +100,7 @@ const DesktopGalleriesView: React.FC<DesktopGalleriesViewProps> = ({
               animate="visible"
               className="h-full"
             >
-              <GalleryContainer 
-                {...leftGalleryProps}
-                viewMode={activeViewMode === 'both' ? 'split' : 'single'}
-              />
+              {leftContent}
             </motion.div>
           )}
         </div>
@@ -120,10 +122,7 @@ const DesktopGalleriesView: React.FC<DesktopGalleriesViewProps> = ({
               animate="visible"
               className="h-full"
             >
-              <GalleryContainer 
-                {...rightGalleryProps}
-                viewMode={activeViewMode === 'both' ? 'split' : 'single'}
-              />
+              {rightContent}
             </motion.div>
           )}
         </div>

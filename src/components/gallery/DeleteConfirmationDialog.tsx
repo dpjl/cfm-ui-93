@@ -19,6 +19,7 @@ interface DeleteConfirmationDialogProps {
   onConfirm: () => void;
   onCancel: () => void;
   isPending: boolean;
+  count?: number; // Ajout d'une prop optionnelle count pour compatibilité
 }
 
 const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
@@ -27,9 +28,12 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   selectedIds,
   onConfirm,
   onCancel,
-  isPending
+  isPending,
+  count
 }) => {
   const { t } = useLanguage();
+  // Utiliser count si fourni, sinon utiliser la longueur de selectedIds
+  const itemCount = count !== undefined ? count : selectedIds.length;
   
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -40,7 +44,7 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
           </AlertDialogTitle>
           <AlertDialogDescription>
             Cette action déplacera les éléments sélectionnés dans la corbeille située dans le cache de l'application CFM.
-            {selectedIds.length > 1 && ` (${selectedIds.length} items)`}
+            {itemCount > 1 && ` (${itemCount} items)`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
