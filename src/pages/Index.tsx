@@ -43,10 +43,10 @@ const Index = () => {
           columnsCountLeft={galleryState.getCurrentColumnsLeft(isMobile)}
           columnsCountRight={galleryState.getCurrentColumnsRight(isMobile)}
           onLeftColumnsChange={(viewType, count) => {
-            galleryState.handleLeftColumnsChange(isMobile, count);
+            galleryState.updateColumnCount('left', count);
           }}
           onRightColumnsChange={(viewType, count) => {
-            galleryState.handleRightColumnsChange(isMobile, count);
+            galleryState.updateColumnCount('right', count);
           }}
           selectedIdsLeft={galleryState.selectedIdsLeft}
           setSelectedIdsLeft={galleryState.setSelectedIdsLeft}

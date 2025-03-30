@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import SidePanel from '@/components/layout/SidePanel';
 import GalleriesContainer from '@/components/layout/GalleriesContainer';
@@ -81,35 +81,49 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   setRightFilter
 }) => {
   const isMobile = useIsMobile();
-  const columnsStateHook = useColumnsState(); // Use the hook properly
+  const columnsStateHook = useColumnsState();
+  
+  // Référence aux états actuels des colonnes pour la synchronisation bidirectionnelle
+  const columnsStateRef = useRef({
+    left: {},
+    right: {}
+  });
   
   console.log(`GalleryLayout rendering with columns: left=${columnsCountLeft}, right=${columnsCountRight}`);
   
   // Function to handle column changes for the left panel
   const handleLeftColumnsChange = (viewType: string, count: number) => {
     console.log(`Left panel column change: ${viewType} => ${count}`);
+    
+    // Mettre à jour la référence pour permettre la synchronisation bidirectionnelle
+    columnsStateRef.current.left[viewType] = count;
+    
     onLeftColumnsChange(viewType, count);
   };
   
   // Function to handle column changes for the right panel
   const handleRightColumnsChange = (viewType: string, count: number) => {
     console.log(`Right panel column change: ${viewType} => ${count}`);
+    
+    // Mettre à jour la référence pour permettre la synchronisation bidirectionnelle
+    columnsStateRef.current.right[viewType] = count;
+    
     onRightColumnsChange(viewType, count);
   };
   
   // Gestionnaire pour le changement de colonnes via zoom
   const handleColumnsChange = (side: 'left' | 'right', count: number) => {
     // Détermination du type de vue actuel
-    const currentViewModeType = side === 'left' 
-      ? columnsStateHook.getViewModeType('left', viewMode, isMobile)
-      : columnsStateHook.getViewModeType('right', viewMode, isMobile);
-      
+    const currentViewModeType = columnsStateHook.getViewModeType(side, viewMode, isMobile);
+    
     console.log(`Column zoom change: ${side} ${currentViewModeType} => ${count}`);
     
-    // Mise à jour des colonnes en fonction du côté
+    // Mise à jour de la référence pour synchronisation bidirectionnelle
     if (side === 'left') {
+      columnsStateRef.current.left[currentViewModeType] = count;
       handleLeftColumnsChange(currentViewModeType, count);
     } else {
+      columnsStateRef.current.right[currentViewModeType] = count;
       handleRightColumnsChange(currentViewModeType, count);
     }
   };
@@ -131,6 +145,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           onFilterChange={setLeftFilter}
           mobileViewMode={viewMode}
           onColumnsChange={handleLeftColumnsChange}
+          columnsState={columnsStateRef.current.left}
         />
       </SidePanel>
 
@@ -174,6 +189,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           onFilterChange={setRightFilter}
           mobileViewMode={viewMode}
           onColumnsChange={handleRightColumnsChange}
+          columnsState={columnsStateRef.current.right}
         />
       </SidePanel>
     </div>

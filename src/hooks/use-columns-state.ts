@@ -28,6 +28,32 @@ export function useColumnsState() {
     return viewMode === 'both' ? desktopColumnsRight : desktopSingleColumnsRight;
   };
   
+  // Gestionnaire amélioré pour obtenir le nombre actuel de colonnes en fonction de la position et du mode d'affichage
+  const getColumnsForSide = (side: 'left' | 'right', isMobile: boolean, viewMode: MobileViewMode): number => {
+    if (side === 'left') {
+      return getCurrentColumnsLeft(isMobile, viewMode);
+    } else {
+      return getCurrentColumnsRight(isMobile, viewMode);
+    }
+  };
+  
+  // Fonction pour obtenir directement le setter approprié en fonction du mode et de la position
+  const getColumnsSetter = (side: 'left' | 'right', isMobile: boolean, viewMode: MobileViewMode) => {
+    if (side === 'left') {
+      if (isMobile) {
+        return viewMode === 'both' ? setMobileSplitColumnsLeft : setMobileSingleColumnsLeft;
+      } else {
+        return viewMode === 'both' ? setDesktopColumnsLeft : setDesktopSingleColumnsLeft;
+      }
+    } else {
+      if (isMobile) {
+        return viewMode === 'both' ? setMobileSplitColumnsRight : setMobileSingleColumnsRight;
+      } else {
+        return viewMode === 'both' ? setDesktopColumnsRight : setDesktopSingleColumnsRight;
+      }
+    }
+  };
+  
   const handleLeftColumnsChange = (isMobile: boolean, viewMode: MobileViewMode, count: number) => {
     if (isMobile) {
       if (viewMode === 'both') {
@@ -60,6 +86,14 @@ export function useColumnsState() {
     }
   };
   
+  // Nouvelle fonction unifiée pour mettre à jour le nombre de colonnes
+  const updateColumnsCount = (side: 'left' | 'right', isMobile: boolean, viewMode: MobileViewMode, count: number) => {
+    const setter = getColumnsSetter(side, isMobile, viewMode);
+    setter(count);
+    
+    console.log(`Updated columns for ${side} in ${isMobile ? 'mobile' : 'desktop'} ${viewMode} mode to ${count}`);
+  };
+  
   // Map view mode to column configuration type
   const getViewModeType = (position: 'left' | 'right', currentViewMode: MobileViewMode, isMobile: boolean): string => {
     if (isMobile) {
@@ -74,6 +108,9 @@ export function useColumnsState() {
     getCurrentColumnsRight,
     handleLeftColumnsChange,
     handleRightColumnsChange,
-    getViewModeType
+    getViewModeType,
+    // Nouvelles fonctions pour une gestion unifiée
+    getColumnsForSide,
+    updateColumnsCount
   };
 }

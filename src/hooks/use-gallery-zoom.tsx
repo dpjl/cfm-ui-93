@@ -45,6 +45,7 @@ export function useGalleryZoom(
     
     let initialDistance = 0;
     let initialColumns = 0;
+    let lastUpdate = 0; // Timestamp de la dernière mise à jour
     
     // Début du pincement
     const handleTouchStart = (e: TouchEvent) => {
@@ -54,6 +55,7 @@ export function useGalleryZoom(
           e.touches[0].clientY - e.touches[1].clientY
         );
         initialColumns = options.initialColumns;
+        lastUpdate = Date.now();
       }
     };
     
@@ -61,6 +63,10 @@ export function useGalleryZoom(
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length === 2) {
         e.preventDefault();
+        
+        // Limiter la fréquence des mises à jour (100ms minimum entre chaque)
+        const now = Date.now();
+        if (now - lastUpdate < 100) return;
         
         const currentDistance = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
@@ -79,6 +85,7 @@ export function useGalleryZoom(
           
           if (newColumns !== initialColumns) {
             onColumnsChange(newColumns);
+            lastUpdate = now;
             initialDistance = currentDistance;
             initialColumns = newColumns;
           }

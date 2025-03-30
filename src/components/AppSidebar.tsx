@@ -20,6 +20,9 @@ interface AppSidebarProps {
   onFilterChange?: (filter: MediaFilter) => void;
   mobileViewMode?: MobileViewMode;
   onColumnsChange?: (viewMode: string, count: number) => void;
+  columnsState?: {
+    [key: string]: number;
+  };
 }
 
 const AppSidebar: React.FC<AppSidebarProps> = ({ 
@@ -29,7 +32,8 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
   selectedFilter = 'all',
   onFilterChange = () => {},
   mobileViewMode = 'both',
-  onColumnsChange
+  onColumnsChange,
+  columnsState = {}
 }) => {
   const { t } = useLanguage();
   const isMobile = useIsMobile();
@@ -61,6 +65,26 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
     isMobile
   ]);
 
+  // Synchroniser les valeurs externes avec l'état local des curseurs
+  useEffect(() => {
+    // Vérifier si nous avons des colonnes externes à synchroniser
+    if (Object.keys(columnsState).length > 0) {
+      const viewModeType = getViewModeType();
+      
+      // Si nous avons une valeur pour ce mode de vue, synchronisons-la
+      if (columnsState[viewModeType] !== undefined) {
+        const externalCount = columnsState[viewModeType];
+        const currentCount = columnSettings.getColumnCount(viewModeType);
+        
+        // Ne mettre à jour que si les valeurs sont différentes
+        if (externalCount !== currentCount) {
+          console.log(`Syncing ${position} column slider for ${viewModeType}: ${externalCount}`);
+          columnSettings.updateColumnCount(viewModeType, externalCount);
+        }
+      }
+    }
+  }, [columnsState, position, isMobile, mobileViewMode]);
+
   // Determine the current view mode type based on device and layout
   const getViewModeType = (): string => {
     if (isMobile) {
@@ -87,6 +111,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
             columnSettings={columnSettings}
             mobileViewMode={mobileViewMode}
             onColumnsChange={onColumnsChange}
+            columnsState={columnsState}
           />
         </div>
       </div>

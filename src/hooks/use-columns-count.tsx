@@ -1,5 +1,6 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { ViewModeType } from '@/types/gallery';
 
 // Define types for different view modes
@@ -30,25 +31,25 @@ export function useColumnsCount(position: SidePosition) {
   );
 
   // Update localStorage when values change
-  const updateDesktopColumns = (value: number) => {
+  const updateDesktopColumns = useCallback((value: number) => {
     setDesktopColumns(value);
     localStorage.setItem(`columns-desktop-${position}`, value.toString());
-  };
+  }, [position]);
 
-  const updateDesktopSingleColumns = (value: number) => {
+  const updateDesktopSingleColumns = useCallback((value: number) => {
     setDesktopSingleColumns(value);
     localStorage.setItem(`columns-desktop-single-${position}`, value.toString());
-  };
+  }, [position]);
 
-  const updateMobileSplitColumns = (value: number) => {
+  const updateMobileSplitColumns = useCallback((value: number) => {
     setMobileSplitColumns(value);
     localStorage.setItem(`columns-mobile-split-${position}`, value.toString());
-  };
+  }, [position]);
 
-  const updateMobileSingleColumns = (value: number) => {
+  const updateMobileSingleColumns = useCallback((value: number) => {
     setMobileSingleColumns(value);
     localStorage.setItem(`columns-mobile-single-${position}`, value.toString());
-  };
+  }, [position]);
 
   // Get the column count based on the view mode string
   const getColumnCount = (viewMode: ViewModeType | string): number => {
@@ -67,6 +68,26 @@ export function useColumnsCount(position: SidePosition) {
     }
   };
 
+  // Function to update the appropriate column count based on view mode
+  const updateColumnCount = useCallback((viewMode: ViewModeType | string, value: number) => {
+    switch (viewMode) {
+      case 'desktop':
+        updateDesktopColumns(value);
+        break;
+      case 'desktop-single':
+        updateDesktopSingleColumns(value);
+        break;
+      case 'mobile-split':
+        updateMobileSplitColumns(value);
+        break;
+      case 'mobile-single':
+        updateMobileSingleColumns(value);
+        break;
+      default:
+        console.warn(`Unknown view mode for update: ${viewMode}`);
+    }
+  }, [updateDesktopColumns, updateDesktopSingleColumns, updateMobileSplitColumns, updateMobileSingleColumns]);
+
   return {
     desktopColumns,
     desktopSingleColumns,
@@ -77,5 +98,6 @@ export function useColumnsCount(position: SidePosition) {
     updateMobileSplitColumns,
     updateMobileSingleColumns,
     getColumnCount,
+    updateColumnCount
   };
 }

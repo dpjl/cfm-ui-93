@@ -28,24 +28,30 @@ export function useGalleryState() {
     uiState.setDeleteDialogOpen,
     setSelectedIdsLeft,
     setSelectedIdsRight,
-    setActiveSide  // Passage de setActiveSide pour permettre la mise à jour de la galerie active
+    setActiveSide
   );
   
   // Convenience methods that use data from multiple hooks
   const getCurrentColumnsLeft = (isMobile: boolean): number => {
-    return columnsState.getCurrentColumnsLeft(isMobile, uiState.viewMode);
+    return columnsState.getColumnsForSide('left', isMobile, uiState.viewMode);
   };
   
   const getCurrentColumnsRight = (isMobile: boolean): number => {
-    return columnsState.getCurrentColumnsRight(isMobile, uiState.viewMode);
+    return columnsState.getColumnsForSide('right', isMobile, uiState.viewMode);
   };
   
+  // Méthode unifiée pour mettre à jour le nombre de colonnes
+  const updateColumnCount = (side: 'left' | 'right', count: number) => {
+    columnsState.updateColumnsCount(side, isMobile, uiState.viewMode, count);
+  };
+  
+  // Pour la compatibilité avec le code existant
   const handleLeftColumnsChange = (isMobile: boolean, count: number) => {
-    columnsState.handleLeftColumnsChange(isMobile, uiState.viewMode, count);
+    updateColumnCount('left', count);
   };
   
   const handleRightColumnsChange = (isMobile: boolean, count: number) => {
-    columnsState.handleRightColumnsChange(isMobile, uiState.viewMode, count);
+    updateColumnCount('right', count);
   };
   
   // Return all the state and methods from our hooks
@@ -58,6 +64,7 @@ export function useGalleryState() {
     getCurrentColumnsRight,
     handleLeftColumnsChange,
     handleRightColumnsChange,
+    updateColumnCount,
     
     // Selection state
     selectedIdsLeft,
