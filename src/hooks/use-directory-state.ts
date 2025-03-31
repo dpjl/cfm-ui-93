@@ -1,10 +1,16 @@
 
-import { useState } from 'react';
+import { useGalleryContext } from '@/contexts/GalleryContext';
 
+/**
+ * Hook pour accéder à l'état des répertoires
+ */
 export function useDirectoryState() {
-  // Directory selection state
-  const [selectedDirectoryIdLeft, setSelectedDirectoryIdLeft] = useState<string>("directory1");
-  const [selectedDirectoryIdRight, setSelectedDirectoryIdRight] = useState<string>("directory1");
+  const {
+    selectedDirectoryIdLeft,
+    setSelectedDirectoryIdLeft,
+    selectedDirectoryIdRight,
+    setSelectedDirectoryIdRight
+  } = useGalleryContext();
   
   return {
     selectedDirectoryIdLeft,

@@ -1,11 +1,14 @@
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext } from 'react';
 import { GalleryViewMode, ViewModeType } from '@/types/gallery';
 import { MediaFilter } from '@/components/AppSidebar';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { useDirectoryState } from '@/hooks/use-directory-state';
-import { useColumnsState } from '@/hooks/use-columns-state';
-import { useGalleryActions } from '@/hooks/use-gallery-actions';
+import { useDirectoryState } from '@/hooks/core/use-directory-state';
+import { useColumnsLayout } from '@/hooks/core/use-columns-layout';
+import { useSelectionState } from '@/hooks/core/use-selection-state';
+import { useUIPanelState } from '@/hooks/core/use-ui-panel-state';
+import { useFilterState } from '@/hooks/core/use-filter-state';
+import { useMediaOperations } from '@/hooks/core/use-media-operations';
 import { useMutation } from '@tanstack/react-query';
 
 // Interface du contexte
@@ -79,78 +82,41 @@ export function useGalleryContext() {
 export const GalleryProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const isMobile = useIsMobile();
   
-  // Utiliser tous les hooks spécialisés
+  // Utiliser les hooks de base
   const directoryState = useDirectoryState();
-  const columnsState = useColumnsState();
+  const selectionState = useSelectionState();
+  const uiState = useUIPanelState();
+  const filterState = useFilterState();
+  const columnsLayout = useColumnsLayout();
   
-  // État UI
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [leftPanelOpen, setLeftPanelOpen] = useState(false);
-  const [rightPanelOpen, setRightPanelOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<GalleryViewMode>('both');
-  const [leftFilter, setLeftFilter] = useState<MediaFilter>('all');
-  const [rightFilter, setRightFilter] = useState<MediaFilter>('all');
-  const [serverPanelOpen, setServerPanelOpen] = useState(false);
+  // Extraire les états des hooks
+  const { selectedIdsLeft, selectedIdsRight, activeSide, setActiveSide, setSelectedIdsLeft, setSelectedIdsRight } = selectionState;
+  const { viewMode, setViewMode, leftPanelOpen, rightPanelOpen, toggleLeftPanel, toggleRightPanel, closeBothSidebars, toggleFullView, deleteDialogOpen, setDeleteDialogOpen, serverPanelOpen, setServerPanelOpen } = uiState;
+  const { leftFilter, setLeftFilter, rightFilter, setRightFilter } = filterState;
   
-  // État de sélection
-  const [selectedIdsLeft, setSelectedIdsLeft] = useState<string[]>([]);
-  const [selectedIdsRight, setSelectedIdsRight] = useState<string[]>([]);
-  const [activeSide, setActiveSide] = useState<'left' | 'right'>('left');
-  
-  // Handlers UI
-  const toggleLeftPanel = useCallback(() => {
-    setLeftPanelOpen(prev => !prev);
-  }, []);
-  
-  const toggleRightPanel = useCallback(() => {
-    setRightPanelOpen(prev => !prev);
-  }, []);
-  
-  const closeBothSidebars = useCallback(() => {
-    setLeftPanelOpen(false);
-    setRightPanelOpen(false);
-  }, []);
-  
-  // Toggle full view for a side
-  const toggleFullView = useCallback((side: 'left' | 'right') => {
-    setViewMode(currentMode => {
-      if (side === 'left') {
-        return currentMode === 'left' ? 'both' : 'left';
-      } else {
-        return currentMode === 'right' ? 'both' : 'right';
-      }
-    });
-  }, []);
-  
-  // Actions de galerie
-  const galleryActions = useGalleryActions(
+  // Media operations
+  const mediaOperations = useMediaOperations(
     selectedIdsLeft,
     selectedIdsRight,
     activeSide,
-    setDeleteDialogOpen,
     setSelectedIdsLeft,
     setSelectedIdsRight,
-    setActiveSide
+    setDeleteDialogOpen
   );
   
   // Méthodes pour obtenir le nombre de colonnes
-  const getCurrentColumnsLeft = useCallback((): number => {
-    return columnsState.getColumnsForSide('left', isMobile, viewMode);
-  }, [columnsState, isMobile, viewMode]);
-  
-  const getCurrentColumnsRight = useCallback((): number => {
-    return columnsState.getColumnsForSide('right', isMobile, viewMode);
-  }, [columnsState, isMobile, viewMode]);
+  const getCurrentColumnsLeft = () => columnsLayout.getCurrentColumnsLeft(viewMode);
+  const getCurrentColumnsRight = () => columnsLayout.getCurrentColumnsRight(viewMode);
   
   // Méthode pour mettre à jour le nombre de colonnes
-  const updateColumnCount = useCallback((side: 'left' | 'right', count: number) => {
-    columnsState.updateColumnsCount(side, isMobile, viewMode, count);
-  }, [columnsState, isMobile, viewMode]);
+  const updateColumnCount = (side: 'left' | 'right', count: number) => {
+    columnsLayout.updateColumnCount(side, viewMode, count);
+  };
   
-  // Fonction pour obtenir le type de mode de vue (pour la cohérence du typage)
-  const getViewModeType = useCallback((side: 'left' | 'right'): ViewModeType => {
-    return columnsState.getViewModeType(isMobile, viewMode) as ViewModeType;
-  }, [columnsState, isMobile, viewMode]);
+  // Fonction pour obtenir le type de mode de vue
+  const getViewModeType = (side: 'left' | 'right'): ViewModeType => {
+    return columnsLayout.getViewModeType(viewMode) as ViewModeType;
+  };
   
   // Valeur du contexte
   const value: GalleryContextType = {
@@ -193,7 +159,7 @@ export const GalleryProvider: React.FC<{children: React.ReactNode}> = ({ childre
     setServerPanelOpen,
     
     // Actions
-    ...galleryActions,
+    ...mediaOperations,
     
     // Utilities
     isMobile,

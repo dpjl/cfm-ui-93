@@ -6,6 +6,9 @@ interface UseGalleryPreviewHandlerProps {
   onPreviewMedia?: (id: string) => void;
 }
 
+/**
+ * Hook simplifié pour la prévisualisation des médias
+ */
 export function useGalleryPreviewHandler({
   mediaIds,
   onPreviewMedia

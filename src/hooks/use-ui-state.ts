@@ -1,6 +1,9 @@
 
 import { useGalleryContext } from '@/contexts/GalleryContext';
 
+/**
+ * Hook pour accéder à l'état de l'interface utilisateur
+ */
 export function useUIState() {
   // Obtenir les valeurs directement du contexte
   const {
@@ -24,6 +27,7 @@ export function useUIState() {
   } = useGalleryContext();
 
   return {
+    // États UI
     deleteDialogOpen,
     setDeleteDialogOpen,
     leftPanelOpen,
@@ -36,10 +40,14 @@ export function useUIState() {
     setRightFilter,
     serverPanelOpen,
     setServerPanelOpen,
+    
+    // Méthodes UI
     toggleLeftPanel,
     toggleRightPanel,
     closeBothSidebars,
     toggleFullView,
+    
+    // Utilitaires
     isMobile
   };
 }

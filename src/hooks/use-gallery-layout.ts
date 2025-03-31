@@ -1,24 +1,14 @@
 
-import { useCallback, useMemo } from 'react';
-import { useIsMobile } from '@/hooks/use-breakpoint';
-import { GalleryViewMode, ViewModeType } from '@/types/gallery';
+import { useCallback } from 'react';
+import { useGalleryContext } from '@/contexts/GalleryContext';
+import { GalleryViewMode } from '@/types/gallery';
 
-interface GalleryLayoutOptions {
-  viewMode: GalleryViewMode;
-  isMobile: boolean;
-}
-
-export function useGalleryLayout(viewMode: GalleryViewMode) {
-  const isMobile = useIsMobile();
-  
-  // Déterminer si une galerie est visible en fonction du mode d'affichage
-  const isGalleryVisible = useCallback((position: 'left' | 'right') => {
-    if (position === 'left') {
-      return viewMode === 'both' || viewMode === 'left';
-    } else {
-      return viewMode === 'both' || viewMode === 'right';
-    }
-  }, [viewMode]);
+/**
+ * Hook pour la gestion de la mise en page des galeries
+ * Version simplifiée qui s'appuie sur le contexte
+ */
+export function useGalleryLayout() {
+  const { viewMode, isMobile, getViewModeType } = useGalleryContext();
   
   // Obtenir les classes CSS pour une galerie en fonction de sa position et du mode d'affichage
   const getGalleryClasses = useCallback((position: 'left' | 'right') => {
@@ -36,25 +26,23 @@ export function useGalleryLayout(viewMode: GalleryViewMode) {
     }
   }, [viewMode]);
   
-  // Déterminer le type de vue pour les calculs de colonnes
-  const viewModeType: ViewModeType = useMemo(() => {
-    if (isMobile) {
-      return viewMode === 'both' ? 'mobile-split' : 'mobile-single';
+  // Déterminer si une galerie est visible en fonction du mode d'affichage
+  const isGalleryVisible = useCallback((position: 'left' | 'right') => {
+    if (position === 'left') {
+      return viewMode === 'both' || viewMode === 'left';
     } else {
-      return viewMode === 'both' ? 'desktop' : 'desktop-single';
+      return viewMode === 'both' || viewMode === 'right';
     }
-  }, [isMobile, viewMode]);
+  }, [viewMode]);
   
   // Classes pour le conteneur principal des galeries
-  const containerClasses = useMemo(() => {
-    return "flex-1 overflow-hidden bg-background/50 backdrop-blur-sm rounded-lg border-2 border-border/40 shadow-sm relative";
-  }, []);
+  const containerClasses = "flex-1 overflow-hidden bg-background/50 backdrop-blur-sm rounded-lg border-2 border-border/40 shadow-sm relative";
   
   return {
     isMobile,
     isGalleryVisible,
     getGalleryClasses,
-    viewModeType,
+    viewModeType: getViewModeType('left'),
     containerClasses
   };
 }
