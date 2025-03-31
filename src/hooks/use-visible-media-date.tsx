@@ -1,6 +1,5 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { useGalleryContext } from '@/contexts/GalleryContext';
 import { useMediaCache } from './use-media-cache';
 import { format } from 'date-fns';
 
@@ -9,7 +8,7 @@ import { format } from 'date-fns';
  * @param containerRef - Référence à l'élément conteneur de la galerie
  * @param isActive - Si la galerie est active/visible
  * @param position - Position de la galerie ('source' ou 'destination')
- * @returns Objet contenant la date formatée du premier élément visible et un indicateur d'activité
+ * @returns Objet contenant la date formatée du premier élément visible
  */
 export function useVisibleMediaDate(
   containerRef: React.RefObject<HTMLElement>,
@@ -17,8 +16,6 @@ export function useVisibleMediaDate(
   position: 'source' | 'destination' = 'source'
 ) {
   const [visibleDate, setVisibleDate] = useState<string | null>(null);
-  const [isShowing, setIsShowing] = useState(false);
-  const timeoutRef = useRef<number | null>(null);
   const { getCachedMediaInfo } = useMediaCache();
 
   // Observer pour détecter les éléments visibles
@@ -61,15 +58,6 @@ export function useVisibleMediaDate(
             // Formatter la date au format court DD/MM/YYYY
             const formattedDate = format(date, 'dd/MM/yyyy');
             setVisibleDate(formattedDate);
-            setIsShowing(true);
-            
-            // Cacher le bandeau après 3 secondes d'inactivité
-            if (timeoutRef.current) {
-              window.clearTimeout(timeoutRef.current);
-            }
-            timeoutRef.current = window.setTimeout(() => {
-              setIsShowing(false);
-            }, 3000);
           } catch (e) {
             console.error('Error formatting date:', e);
           }
@@ -90,11 +78,8 @@ export function useVisibleMediaDate(
     // Nettoyage
     return () => {
       container.removeEventListener('scroll', handleScroll);
-      if (timeoutRef.current) {
-        window.clearTimeout(timeoutRef.current);
-      }
     };
   }, [containerRef, isActive, position, getCachedMediaInfo]);
 
-  return { visibleDate, isShowing };
+  return { visibleDate };
 }

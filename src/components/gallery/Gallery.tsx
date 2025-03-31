@@ -59,7 +59,7 @@ const Gallery: React.FC<GalleryProps> = ({
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const { visibleDate, isShowing } = useVisibleMediaDate(
+  const { visibleDate } = useVisibleMediaDate(
     containerRef,
     !isLoading && mediaIds.length > 0,
     position
@@ -139,7 +139,7 @@ const Gallery: React.FC<GalleryProps> = ({
       />
       
       <div className="flex-1 overflow-hidden relative scrollbar-vertical">
-        <DateBanner date={visibleDate} isVisible={isShowing} />
+        <DateBanner date={visibleDate} />
         
         {shouldShowInfoPanel && (
           <div className="absolute top-2 left-0 right-0 z-10 flex justify-center">
