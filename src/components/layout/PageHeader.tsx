@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Server, PanelLeft, PanelsLeftRight, PanelRight, Settings } from 'lucide-react';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
@@ -12,8 +12,8 @@ interface PageHeaderProps {
   isDeletionPending: boolean;
   isSidebarOpen: boolean;
   onCloseSidebars: () => void;
-  mobileViewMode: MobileViewMode;
-  setMobileViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
+  mobileViewMode: GalleryViewMode;
+  setMobileViewMode: React.Dispatch<React.SetStateAction<GalleryViewMode>>;
   selectedIdsLeft: string[];
   selectedIdsRight: string[];
   onDelete: () => void;

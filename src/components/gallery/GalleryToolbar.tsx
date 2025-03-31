@@ -6,7 +6,7 @@ import { useMediaQuery } from '../../hooks/use-media-query';
 import { CheckSquare, Square, ChevronLeft, ChevronRight, Settings, Maximize, Minimize } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 
 interface GalleryToolbarProps {
   directory?: string;
@@ -21,7 +21,7 @@ interface GalleryToolbarProps {
   selectionMode: SelectionMode;
   onToggleSelectionMode: () => void;
   // Nouvelles props pour le toggle de vue
-  mobileViewMode?: MobileViewMode;
+  mobileViewMode?: GalleryViewMode;
   onToggleFullView?: () => void;
 }
 

@@ -1,6 +1,6 @@
 
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { MobileViewMode, ViewModeType } from '@/types/gallery';
+import { GalleryViewMode, ViewModeType } from '@/types/gallery';
 
 // Types standard pour les différents modes d'affichage
 const VIEW_MODES = {
@@ -30,7 +30,7 @@ export function useColumnsState() {
   const [mobileSingleColumnsRight, setMobileSingleColumnsRight] = useLocalStorage('mobile-single-columns-right', DEFAULT_COLUMNS[VIEW_MODES.MOBILE_FULL].right);
   
   // Fonction utilitaire pour obtenir le type de vue en fonction de l'appareil et du mode
-  const getViewModeType = (isMobile: boolean, viewMode: MobileViewMode): string => {
+  const getViewModeType = (isMobile: boolean, viewMode: GalleryViewMode): string => {
     if (isMobile) {
       return viewMode === 'both' ? VIEW_MODES.MOBILE_SPLIT : VIEW_MODES.MOBILE_FULL;
     } else {
@@ -39,7 +39,7 @@ export function useColumnsState() {
   };
   
   // Fonction pour obtenir le nombre de colonnes actuel pour un côté
-  const getColumnsForSide = (side: 'left' | 'right', isMobile: boolean, viewMode: MobileViewMode): number => {
+  const getColumnsForSide = (side: 'left' | 'right', isMobile: boolean, viewMode: GalleryViewMode): number => {
     const viewModeType = getViewModeType(isMobile, viewMode);
     
     if (side === 'left') {
@@ -63,7 +63,7 @@ export function useColumnsState() {
   };
   
   // Fonction pour mettre à jour le nombre de colonnes
-  const updateColumnsCount = (side: 'left' | 'right', isMobile: boolean, viewMode: MobileViewMode, count: number) => {
+  const updateColumnsCount = (side: 'left' | 'right', isMobile: boolean, viewMode: GalleryViewMode, count: number) => {
     const viewModeType = getViewModeType(isMobile, viewMode);
     
     if (side === 'left') {

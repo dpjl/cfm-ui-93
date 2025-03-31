@@ -1,7 +1,8 @@
-// MobileViewMode now applies to both mobile and desktop views
-export type MobileViewMode = 'both' | 'left' | 'right';
 
-// ViewModeType is used for column count calculations
+// Renommer MobileViewMode en GalleryViewMode pour plus de cohérence
+export type GalleryViewMode = 'both' | 'left' | 'right';
+
+// ViewModeType est utilisé pour les calculs de colonnes
 export type ViewModeType = 'desktop' | 'desktop-single' | 'mobile-split' | 'mobile-single';
 
 // Basic media item interface
@@ -22,4 +23,5 @@ export type TranslationKey =
   | 'media_gallery' | 'too_many_items_to_select' | 'close_sidebars'
   | 'columns' | 'single_selection' | 'multiple_selection'
   | 'desktop_columns' | 'desktop_single_columns' | 'split_columns' | 'single_columns'
-  | 'delete_confirmation_title' | 'delete_confirmation_description' | 'deleting';
+  | 'delete_confirmation_title' | 'delete_confirmation_description' | 'deleting'
+  | 'select_all' | 'deselect_all' | 'hide_dates' | 'show_dates' | 'selected' | 'refresh' | 'delete';

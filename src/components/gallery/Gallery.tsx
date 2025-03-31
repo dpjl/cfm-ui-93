@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import VirtualizedGalleryGrid from './VirtualizedGalleryGrid';
@@ -11,7 +12,7 @@ import GalleryToolbar from './GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from '../media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { MediaItem, MobileViewMode } from '@/types/gallery';
+import { MediaItem, GalleryViewMode } from '@/types/gallery';
 
 interface GalleryProps {
   title: string;
@@ -29,7 +30,7 @@ interface GalleryProps {
   filter?: string;
   onToggleSidebar?: () => void;
   gap?: number;
-  mobileViewMode?: MobileViewMode;
+  mobileViewMode?: GalleryViewMode;
   onToggleFullView?: () => void;
 }
 

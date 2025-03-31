@@ -1,105 +1,65 @@
 
 import React from 'react';
-import { useIsMobile } from '@/hooks/use-breakpoint';
 import SidePanel from '@/components/layout/SidePanel';
 import GalleriesContainer from '@/components/layout/GalleriesContainer';
 import AppSidebar from '@/components/AppSidebar';
-import { MobileViewMode } from '@/types/gallery';
-import { MediaFilter } from '@/components/AppSidebar';
-import { useColumnsState } from '@/hooks/use-columns-state';
+import { useGalleryContext } from '@/contexts/GalleryContext';
 
-interface GalleryLayoutProps {
-  // Directory selection
-  selectedDirectoryIdLeft: string;
-  setSelectedDirectoryIdLeft: (id: string) => void;
-  selectedDirectoryIdRight: string;
-  setSelectedDirectoryIdRight: (id: string) => void;
+const GalleryLayout: React.FC = () => {
+  const {
+    // Directory selection
+    selectedDirectoryIdLeft,
+    setSelectedDirectoryIdLeft,
+    selectedDirectoryIdRight,
+    setSelectedDirectoryIdRight,
+    
+    // Column management
+    getCurrentColumnsLeft,
+    getCurrentColumnsRight,
+    updateColumnCount,
+    
+    // Selection state
+    selectedIdsLeft,
+    setSelectedIdsLeft,
+    selectedIdsRight,
+    setSelectedIdsRight,
+    
+    // Dialog state
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    activeSide,
+    deleteMutation,
+    handleDeleteSelected,
+    
+    // Panel state
+    leftPanelOpen,
+    toggleLeftPanel,
+    rightPanelOpen,
+    toggleRightPanel,
+    
+    // View mode
+    viewMode,
+    setViewMode,
+    
+    // Filters
+    leftFilter,
+    setLeftFilter,
+    rightFilter,
+    setRightFilter,
+    
+    // Utilities
+    isMobile,
+    getViewModeType
+  } = useGalleryContext();
   
-  // Column management
-  columnsCountLeft: number;
-  columnsCountRight: number;
-  onLeftColumnsChange: (count: number) => void;
-  onRightColumnsChange: (count: number) => void;
-  
-  // Selection state
-  selectedIdsLeft: string[];
-  setSelectedIdsLeft: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedIdsRight: string[];
-  setSelectedIdsRight: React.Dispatch<React.SetStateAction<string[]>>;
-  
-  // Dialog state
-  deleteDialogOpen: boolean;
-  setDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  activeSide: 'left' | 'right';
-  deleteMutation: any;
-  handleDeleteSelected: (side: 'left' | 'right') => void;
-  
-  // Panel state
-  leftPanelOpen: boolean;
-  toggleLeftPanel: () => void;
-  rightPanelOpen: boolean;
-  toggleRightPanel: () => void;
-  
-  // View mode
-  viewMode: MobileViewMode;
-  setViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
-  
-  // Filters
-  leftFilter: MediaFilter;
-  setLeftFilter: React.Dispatch<React.SetStateAction<MediaFilter>>;
-  rightFilter: MediaFilter;
-  setRightFilter: React.Dispatch<React.SetStateAction<MediaFilter>>;
-}
-
-const GalleryLayout: React.FC<GalleryLayoutProps> = ({
-  selectedDirectoryIdLeft,
-  setSelectedDirectoryIdLeft,
-  selectedDirectoryIdRight,
-  setSelectedDirectoryIdRight,
-  columnsCountLeft,
-  columnsCountRight,
-  onLeftColumnsChange,
-  onRightColumnsChange,
-  selectedIdsLeft,
-  setSelectedIdsLeft,
-  selectedIdsRight,
-  setSelectedIdsRight,
-  deleteDialogOpen,
-  setDeleteDialogOpen,
-  activeSide,
-  deleteMutation,
-  handleDeleteSelected,
-  leftPanelOpen,
-  toggleLeftPanel,
-  rightPanelOpen,
-  toggleRightPanel,
-  viewMode,
-  setViewMode,
-  leftFilter,
-  setLeftFilter,
-  rightFilter,
-  setRightFilter
-}) => {
-  const isMobile = useIsMobile();
-  const { getColumnValuesForSide, getViewModeType, updateColumnsCount } = useColumnsState();
+  // Récupérer le nombre de colonnes
+  const columnsCountLeft = getCurrentColumnsLeft();
+  const columnsCountRight = getCurrentColumnsRight();
   
   // Récupérer le type de vue actuel
-  const currentViewMode = getViewModeType(isMobile, viewMode);
+  const currentViewMode = getViewModeType('left');
   
-  // Force refresh du composant quand columnsCountLeft ou columnsCountRight changent
-  // en mettant à jour d'abord l'état central
-  React.useEffect(() => {
-    updateColumnsCount('left', isMobile, viewMode, columnsCountLeft);
-  }, [columnsCountLeft, isMobile, viewMode, updateColumnsCount]);
-  
-  React.useEffect(() => {
-    updateColumnsCount('right', isMobile, viewMode, columnsCountRight);
-  }, [columnsCountRight, isMobile, viewMode, updateColumnsCount]);
-  
-  // Récupérer les valeurs de colonnes à chaque rendu - maintenant réactif aux changements
-  const leftColumnValues = getColumnValuesForSide('left');
-  const rightColumnValues = getColumnValuesForSide('right');
-  
+  // Utiliser le contexte pour récupérer toutes les valeurs de colonnes
   return (
     <div className="flex h-full overflow-hidden mt-2 relative">
       <SidePanel 
@@ -116,8 +76,8 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           selectedFilter={leftFilter}
           onFilterChange={setLeftFilter}
           mobileViewMode={viewMode}
-          onColumnsChange={onLeftColumnsChange}
-          columnValues={leftColumnValues}
+          onColumnsChange={(count) => updateColumnCount('left', count)}
+          columnValues={getViewModeType('left')}
           currentViewMode={currentViewMode}
         />
       </SidePanel>
@@ -143,13 +103,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           rightFilter={rightFilter}
           onToggleLeftPanel={toggleLeftPanel}
           onToggleRightPanel={toggleRightPanel}
-          onColumnsChange={(side, count) => {
-            if (side === 'left') {
-              onLeftColumnsChange(count);
-            } else {
-              onRightColumnsChange(count);
-            }
-          }}
+          onColumnsChange={(side, count) => updateColumnCount(side, count)}
         />
       </div>
 
@@ -167,8 +121,8 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           selectedFilter={rightFilter}
           onFilterChange={setRightFilter}
           mobileViewMode={viewMode}
-          onColumnsChange={onRightColumnsChange}
-          columnValues={rightColumnValues}
+          onColumnsChange={(count) => updateColumnCount('right', count)}
+          columnValues={getViewModeType('right')}
           currentViewMode={currentViewMode}
         />
       </SidePanel>

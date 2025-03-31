@@ -5,7 +5,7 @@ import { useLanguage } from '@/hooks/use-language';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { Columns, Monitor, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 
 interface ColumnSliderProps {
   position: 'left' | 'right';
@@ -16,7 +16,7 @@ interface ColumnSliderProps {
   step?: number;
   label?: string;
   viewType: 'desktop' | 'desktop-single' | 'mobile-split' | 'mobile-single';
-  currentMobileViewMode?: MobileViewMode;
+  currentMobileViewMode?: GalleryViewMode;
 }
 
 const ColumnSlider: React.FC<ColumnSliderProps> = ({

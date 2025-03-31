@@ -2,14 +2,14 @@
 import React from 'react';
 import ColumnSlider from '@/components/sidebar/ColumnSlider';
 import { useLanguage } from '@/hooks/use-language';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 
 interface ColumnSlidersProps {
   position: 'left' | 'right';
   columnValues: {
     [key: string]: number;
   };
-  mobileViewMode: MobileViewMode;
+  mobileViewMode: GalleryViewMode;
   onColumnsChange?: (count: number) => void;
   currentViewMode?: string;
 }

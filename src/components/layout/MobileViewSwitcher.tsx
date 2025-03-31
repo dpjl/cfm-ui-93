@@ -2,12 +2,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 import { ArrowLeft, ArrowRight, Columns } from 'lucide-react';
 
 interface MobileViewSwitcherProps {
-  viewMode: MobileViewMode;
-  setViewMode: (mode: MobileViewMode) => void;
+  viewMode: GalleryViewMode;
+  setViewMode: (mode: GalleryViewMode) => void;
   className?: string;
   showOnDesktop?: boolean;
 }

@@ -2,7 +2,7 @@
 import React, { useRef } from 'react';
 import Gallery from '@/components/gallery/Gallery';
 import { useGalleryZoom } from '@/hooks/use-gallery-zoom';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 
 interface GalleryContentProps {
   mediaIds: string[];
@@ -21,7 +21,7 @@ interface GalleryContentProps {
   onToggleSidebar?: () => void;
   onColumnsChange?: (count: number) => void;
   // Nouvelles props pour le toggle de vue
-  mobileViewMode?: MobileViewMode;
+  mobileViewMode?: GalleryViewMode;
   onToggleFullView?: () => void;
 }
 
