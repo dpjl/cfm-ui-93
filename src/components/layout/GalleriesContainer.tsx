@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -24,7 +23,6 @@ interface BaseGalleryProps {
   activeSide: 'left' | 'right';
   deleteMutation: any;
   handleDeleteSelected: (side: 'left' | 'right') => void;
-  handleDelete: () => void; // Ajout de handleDelete dans les props
   leftFilter?: MediaFilter;
   rightFilter?: MediaFilter;
 }
@@ -54,7 +52,6 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   activeSide,
   deleteMutation,
   handleDeleteSelected,
-  handleDelete, // Utilisation de handleDelete passé en props
   mobileViewMode,
   setMobileViewMode,
   leftFilter,
@@ -82,17 +79,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   const handleSelectIdRight = (id: string) => setSelectedIdsRight((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
   const handlePreviewItemLeft = (id: string) => console.log(`Previewing item ${id} in source`);
   const handlePreviewItemRight = (id: string) => console.log(`Previewing item ${id} in destination`);
-  
-  // Modification de ce handler pour corriger le bug, c'est maintenant une fonction intermédiaire
-  const handleConfirmDelete = (side: 'left' | 'right') => () => {
-    handleDeleteSelected(side); // Définir le côté actif
-  };
-
-  // Nouvelle fonction qui sera appelée lors de la confirmation dans le dialogue
-  const executeDelete = () => {
-    handleDelete(); // Appel direct à handleDelete pour effectuer la suppression réelle
-    setDeleteDialogOpen(false); // Fermer le dialogue après confirmation
-  };
+  const handleConfirmDelete = (side: 'left' | 'right') => () => handleDeleteSelected(side);
 
   // Column change handlers
   const handleLeftColumnsChange = (count: number) => {
@@ -182,7 +169,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        onConfirm={executeDelete} // Utilisation de la nouvelle fonction
+        onConfirm={() => handleDeleteSelected(activeSide)}
         selectedIds={activeSide === 'left' ? selectedIdsLeft : selectedIdsRight}
         onCancel={() => setDeleteDialogOpen(false)}
         isPending={deleteMutation.isPending}
