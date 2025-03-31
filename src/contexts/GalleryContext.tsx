@@ -32,6 +32,8 @@ interface GalleryContextType {
   setSelectedIdsRight: React.Dispatch<React.SetStateAction<string[]>>;
   activeSide: 'left' | 'right';
   setActiveSide: React.Dispatch<React.SetStateAction<'left' | 'right'>>;
+  selectionMode: 'single' | 'multiple';
+  toggleSelectionMode: () => void;
   
   // UI state
   viewMode: GalleryViewMode;
@@ -42,6 +44,7 @@ interface GalleryContextType {
   toggleRightPanel: () => void;
   closeBothSidebars: () => void;
   toggleFullView: (side: 'left' | 'right') => void;
+  toggleServerPanel: () => void;
   
   // Filters
   leftFilter: MediaFilter;
@@ -59,6 +62,8 @@ interface GalleryContextType {
   handleRefresh: () => void;
   handleDeleteSelected: (side: 'left' | 'right') => void;
   handleDelete: () => void;
+  handleDownloadMedia: (id: string, position: 'source' | 'destination') => Promise<void>;
+  handleDownloadSelected: (ids: string[], position: 'source' | 'destination') => Promise<void>;
   deleteMutation: ReturnType<typeof useMutation>;
   
   // Utilities
@@ -84,14 +89,14 @@ export const GalleryProvider: React.FC<{children: React.ReactNode}> = ({ childre
   
   // Utiliser les hooks de base
   const directoryState = useDirectoryState();
-  const selectionState = useSelectionState();
+  const selectionState = useSelectionState({ initialSelectionMode: 'single' });
   const uiState = useUIPanelState();
   const filterState = useFilterState();
   const columnsLayout = useColumnsLayout();
   
   // Extraire les états des hooks
-  const { selectedIdsLeft, selectedIdsRight, activeSide, setActiveSide, setSelectedIdsLeft, setSelectedIdsRight } = selectionState;
-  const { viewMode, setViewMode, leftPanelOpen, rightPanelOpen, toggleLeftPanel, toggleRightPanel, closeBothSidebars, toggleFullView, deleteDialogOpen, setDeleteDialogOpen, serverPanelOpen, setServerPanelOpen } = uiState;
+  const { selectedIdsLeft, selectedIdsRight, activeSide, setActiveSide, setSelectedIdsLeft, setSelectedIdsRight, selectionMode, toggleSelectionMode } = selectionState;
+  const { viewMode, setViewMode, leftPanelOpen, rightPanelOpen, toggleLeftPanel, toggleRightPanel, closeBothSidebars, toggleFullView, deleteDialogOpen, setDeleteDialogOpen, serverPanelOpen, setServerPanelOpen, toggleServerPanel } = uiState;
   const { leftFilter, setLeftFilter, rightFilter, setRightFilter } = filterState;
   
   // Media operations
@@ -135,6 +140,8 @@ export const GalleryProvider: React.FC<{children: React.ReactNode}> = ({ childre
     setSelectedIdsRight,
     activeSide,
     setActiveSide,
+    selectionMode,
+    toggleSelectionMode,
     
     // UI state
     viewMode,
@@ -145,6 +152,7 @@ export const GalleryProvider: React.FC<{children: React.ReactNode}> = ({ childre
     toggleRightPanel,
     closeBothSidebars,
     toggleFullView,
+    toggleServerPanel,
     
     // Filters
     leftFilter,

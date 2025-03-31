@@ -17,6 +17,7 @@ export const useGalleryMediaHandler = (
   }, [selectedIds, position, handleDownloadSelected]);
 
   return {
-    handleDownloadSelected: downloadSelected
+    handleDownloadSelected: downloadSelected,
+    handleDownloadMedia
   };
 };

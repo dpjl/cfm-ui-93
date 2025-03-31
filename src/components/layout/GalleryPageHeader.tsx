@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { GalleryViewMode } from '@/types/gallery';
 import PageHeader from '@/components/layout/PageHeader';

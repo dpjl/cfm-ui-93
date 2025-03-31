@@ -19,17 +19,20 @@ interface PageHeaderProps {
   selectedIdsLeft: string[];
   selectedIdsRight: string[];
   onDelete: () => void;
+  onToggleServerPanel: () => void;
+  isServerPanelOpen: boolean;
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
   mobileViewMode,
   setMobileViewMode,
   onRefresh,
-  isDeletionPending
+  isDeletionPending,
+  onToggleServerPanel,
+  isServerPanelOpen
 }) => {
   const isMobile = useIsMobile();
   const { theme } = useTheme();
-  const { serverPanelOpen, toggleServerPanel } = useGalleryContext();
   
   return <header className="relative z-20 flex items-center justify-between gap-2 p-2 md:p-4 bg-background/80 backdrop-blur-md border-b border-border/40">
       <div className="flex items-center gap-3">
@@ -45,7 +48,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         <ThemeToggle />
         <LanguageToggle />
         
-        <Button onClick={toggleServerPanel} variant={serverPanelOpen ? "default" : "outline"} size={isMobile ? "icon" : "default"} className="relative">
+        <Button onClick={onToggleServerPanel} variant={isServerPanelOpen ? "default" : "outline"} size={isMobile ? "icon" : "default"} className="relative">
           {isMobile ? <Server className="h-4 w-4" /> : <>
               <Server className="h-4 w-4 mr-2" />
               <span>Serveur</span>

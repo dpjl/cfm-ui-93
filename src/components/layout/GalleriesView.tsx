@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Separator } from '@/components/ui/separator';
@@ -35,7 +36,7 @@ const GalleriesView: React.FC<GalleriesViewProps> = ({
   rightContent,
   className = ''
 }) => {
-  const { getGalleryClasses, containerClasses, isGalleryVisible } = useGalleryLayout(viewMode);
+  const { getGalleryClasses, containerClasses, isGalleryVisible } = useGalleryLayout();
 
   return (
     <div className={`${containerClasses} ${className}`}>
