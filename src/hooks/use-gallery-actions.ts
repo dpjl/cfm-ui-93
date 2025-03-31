@@ -1,5 +1,5 @@
 
-import { useGalleryContext } from '@/contexts/GalleryContext';
+import { useGalleryContext } from '@/contexts/gallery';
 
 /**
  * Hook simplifié pour les actions sur la galerie

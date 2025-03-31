@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { useGalleryContext } from '@/contexts/GalleryContext';
+import { useGalleryContext } from '@/contexts/gallery';
 
 /**
  * Hook simplifié pour manipuler les médias dans la galerie

@@ -1,5 +1,5 @@
 
-import { useGalleryContext } from '@/contexts/GalleryContext';
+import { useGalleryContext } from '@/contexts/gallery';
 
 /**
  * Hook pour accéder à l'état de l'interface utilisateur

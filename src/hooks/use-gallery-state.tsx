@@ -1,5 +1,5 @@
 
-import { useGalleryContext } from '@/contexts/GalleryContext';
+import { useGalleryContext } from '@/contexts/gallery';
 
 /**
  * Hook principal pour accéder à toutes les fonctionnalités de la galerie
