@@ -1,6 +1,6 @@
 
 import React, { useCallback } from 'react';
-import { useGalleryContext } from '@/contexts/gallery';
+import { useGalleryContext } from '@/contexts/GalleryContext';
 
 // Define the selection mode type
 export type SelectionMode = 'single' | 'multiple';

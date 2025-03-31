@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { useGalleryContext } from '@/contexts/gallery';
+import { useGalleryContext } from '@/contexts/GalleryContext';
 import { GalleryViewMode } from '@/types/gallery';
 
 /**
