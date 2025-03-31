@@ -38,8 +38,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           <img 
             src="/lovable-uploads/logo-cfm.svg" 
             alt="Logo" 
-            className={`h-8 md:h-10 w-auto ${theme === 'light' ? 'filter invert(100%) brightness(1.2) contrast(1.1)' : ''}`}
-            style={{ maxHeight: '2.5rem', width: 'auto' }}
+            className={`h-8 md:h-10 ${theme === 'light' ? 'invert' : ''}`}
           />
         </div>
         
