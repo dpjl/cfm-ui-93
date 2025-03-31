@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { MobileViewMode } from '@/types/gallery';
+import { useGalleryLayout } from '@/hooks/use-gallery-layout';
 
 interface MobileGalleriesViewProps {
   // Propriétés de vue
@@ -16,21 +17,17 @@ const MobileGalleriesView: React.FC<MobileGalleriesViewProps> = ({
   leftContent,
   rightContent
 }) => {
+  const { getGalleryClasses } = useGalleryLayout(mobileViewMode);
+  
   return (
     <div className="flex-1 overflow-hidden">
-      {/* Left Gallery (Source) */}
-      <div className={`transition-all duration-300 h-full ${
-        mobileViewMode === 'both' ? 'w-1/2 float-left' : 
-        mobileViewMode === 'left' ? 'w-full' : 'hidden'
-      }`}>
+      {/* Left Gallery - always in DOM but visibility controlled by CSS */}
+      <div className={getGalleryClasses('left')}>
         {leftContent}
       </div>
       
-      {/* Right Gallery (Destination) */}
-      <div className={`transition-all duration-300 h-full ${
-        mobileViewMode === 'both' ? 'w-1/2 float-right' : 
-        mobileViewMode === 'right' ? 'w-full' : 'hidden'
-      }`}>
+      {/* Right Gallery - always in DOM but visibility controlled by CSS */}
+      <div className={getGalleryClasses('right')}>
         {rightContent}
       </div>
     </div>

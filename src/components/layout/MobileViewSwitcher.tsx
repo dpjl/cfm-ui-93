@@ -9,16 +9,18 @@ interface MobileViewSwitcherProps {
   viewMode: MobileViewMode;
   setViewMode: (mode: MobileViewMode) => void;
   className?: string;
+  showOnDesktop?: boolean;
 }
 
 const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({
   viewMode,
   setViewMode,
-  className = ''
+  className = '',
+  showOnDesktop = false
 }) => {
   const isMobile = useIsMobile();
   
-  if (!isMobile) {
+  if (!isMobile && !showOnDesktop) {
     return null;
   }
   
@@ -29,6 +31,7 @@ const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({
         size="icon"
         onClick={() => setViewMode('left')}
         className="h-9 w-9"
+        title="Afficher uniquement la galerie source"
       >
         <ArrowLeft className="h-4 w-4" />
       </Button>
@@ -38,6 +41,7 @@ const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({
         size="icon"
         onClick={() => setViewMode('both')}
         className="h-9 w-9"
+        title="Afficher les deux galeries"
       >
         <Columns className="h-4 w-4" />
       </Button>
@@ -47,6 +51,7 @@ const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({
         size="icon"
         onClick={() => setViewMode('right')}
         className="h-9 w-9"
+        title="Afficher uniquement la galerie destination"
       >
         <ArrowRight className="h-4 w-4" />
       </Button>

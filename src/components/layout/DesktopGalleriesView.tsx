@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import GalleryContainer from '@/components/GalleryContainer';
 import { Separator } from '@/components/ui/separator';
 import { MobileViewMode } from '@/types/gallery';
 import { MediaFilter } from '@/components/AppSidebar';
+import { useGalleryLayout } from '@/hooks/use-gallery-layout';
 
 // Define container animation variants
 const containerVariants = {
@@ -84,16 +84,14 @@ const DesktopGalleriesView: React.FC<DesktopGalleriesViewProps> = ({
 }) => {
   // Use mobileViewMode if provided, otherwise fall back to viewMode
   const activeViewMode: MobileViewMode = mobileViewMode || viewMode;
+  const { getGalleryClasses, isGalleryVisible } = useGalleryLayout(activeViewMode);
 
   return (
     <div className="flex-1 overflow-hidden bg-background/50 backdrop-blur-sm rounded-lg border-2 border-border/40 shadow-sm relative">
       <div className="flex h-full">
         {/* Left Gallery */}
-        <div className={`overflow-hidden transition-all duration-300 ${
-          activeViewMode === 'both' ? 'w-1/2' : 
-          activeViewMode === 'left' ? 'w-full' : 'w-0'
-        }`}>
-          {(activeViewMode === 'both' || activeViewMode === 'left') && (
+        <div className={getGalleryClasses('left')}>
+          {isGalleryVisible('left') && (
             <motion.div
               variants={containerVariants}
               initial="hidden"
@@ -111,11 +109,8 @@ const DesktopGalleriesView: React.FC<DesktopGalleriesViewProps> = ({
         )}
 
         {/* Right Gallery */}
-        <div className={`overflow-hidden transition-all duration-300 ${
-          activeViewMode === 'both' ? 'w-1/2' : 
-          activeViewMode === 'right' ? 'w-full' : 'w-0'
-        }`}>
-          {(activeViewMode === 'both' || activeViewMode === 'right') && (
+        <div className={getGalleryClasses('right')}>
+          {isGalleryVisible('right') && (
             <motion.div
               variants={containerVariants}
               initial="hidden"

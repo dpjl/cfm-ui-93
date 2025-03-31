@@ -106,4 +106,35 @@
       -webkit-overflow-scrolling: touch;
     }
   }
+
+  /* Gallery transition classes */
+  .gallery-container {
+    @apply relative flex flex-1 overflow-hidden;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .gallery-panel {
+    @apply h-full relative;
+    transition: width 0.3s ease-in-out, opacity 0.2s ease-in-out;
+  }
+  
+  .gallery-panel.hidden-panel {
+    opacity: 0;
+    pointer-events: none;
+    width: 0 !important;
+    overflow: hidden;
+  }
+  
+  .gallery-panel.visible-panel {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  .gallery-panel.full-width {
+    width: 100% !important;
+  }
+  
+  .gallery-panel.half-width {
+    width: 50% !important;
+  }
 }
