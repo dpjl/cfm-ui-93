@@ -54,7 +54,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   activeSide,
   deleteMutation,
   handleDeleteSelected,
-  handleDelete, // Récupération de la prop handleDelete
+  handleDelete,
   mobileViewMode,
   setMobileViewMode,
   leftFilter,
@@ -83,7 +83,10 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   const handlePreviewItemLeft = (id: string) => console.log(`Previewing item ${id} in source`);
   const handlePreviewItemRight = (id: string) => console.log(`Previewing item ${id} in destination`);
   
-  // Nouvelle fonction qui exécute la suppression
+  // Restore the handleConfirmDelete function to fix the TypeScript errors
+  const handleConfirmDelete = (side: 'left' | 'right') => () => handleDeleteSelected(side);
+  
+  // Function for executing the actual delete operation
   const executeDelete = () => {
     handleDelete();
   };
@@ -176,7 +179,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        onConfirm={executeDelete} // Utiliser executeDelete au lieu de handleDeleteSelected
+        onConfirm={executeDelete} // Using the executeDelete function for actual deletion
         selectedIds={activeSide === 'left' ? selectedIdsLeft : selectedIdsRight}
         onCancel={() => setDeleteDialogOpen(false)}
         isPending={deleteMutation.isPending}
