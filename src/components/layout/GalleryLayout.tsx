@@ -30,6 +30,7 @@ const GalleryLayout: React.FC = () => {
     activeSide,
     deleteMutation,
     handleDeleteSelected,
+    handleDelete, // Ajout de handleDelete du contexte
     
     // Panel state
     leftPanelOpen,
@@ -111,6 +112,7 @@ const GalleryLayout: React.FC = () => {
           activeSide={activeSide}
           deleteMutation={deleteMutation}
           handleDeleteSelected={handleDeleteSelected}
+          handleDelete={handleDelete} // Passage de handleDelete comme prop
           mobileViewMode={viewMode}
           setMobileViewMode={setViewMode}
           leftFilter={leftFilter}

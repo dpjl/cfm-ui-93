@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -23,6 +24,7 @@ interface BaseGalleryProps {
   activeSide: 'left' | 'right';
   deleteMutation: any;
   handleDeleteSelected: (side: 'left' | 'right') => void;
+  handleDelete: () => void; // Ajout de la propriété handleDelete
   leftFilter?: MediaFilter;
   rightFilter?: MediaFilter;
 }
@@ -52,6 +54,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   activeSide,
   deleteMutation,
   handleDeleteSelected,
+  handleDelete, // Récupération de la prop handleDelete
   mobileViewMode,
   setMobileViewMode,
   leftFilter,
@@ -79,7 +82,11 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   const handleSelectIdRight = (id: string) => setSelectedIdsRight((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
   const handlePreviewItemLeft = (id: string) => console.log(`Previewing item ${id} in source`);
   const handlePreviewItemRight = (id: string) => console.log(`Previewing item ${id} in destination`);
-  const handleConfirmDelete = (side: 'left' | 'right') => () => handleDeleteSelected(side);
+  
+  // Nouvelle fonction qui exécute la suppression
+  const executeDelete = () => {
+    handleDelete();
+  };
 
   // Column change handlers
   const handleLeftColumnsChange = (count: number) => {
@@ -169,7 +176,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        onConfirm={() => handleDeleteSelected(activeSide)}
+        onConfirm={executeDelete} // Utiliser executeDelete au lieu de handleDeleteSelected
         selectedIds={activeSide === 'left' ? selectedIdsLeft : selectedIdsRight}
         onCancel={() => setDeleteDialogOpen(false)}
         isPending={deleteMutation.isPending}
