@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import VirtualizedGalleryGrid from './VirtualizedGalleryGrid';
@@ -12,7 +11,7 @@ import GalleryToolbar from './GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from '../media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { MediaItem, GalleryViewMode } from '@/types/gallery';
+import { MediaItem, MobileViewMode } from '@/types/gallery';
 
 interface GalleryProps {
   title: string;
@@ -30,7 +29,7 @@ interface GalleryProps {
   filter?: string;
   onToggleSidebar?: () => void;
   gap?: number;
-  galleryViewMode?: GalleryViewMode;
+  mobileViewMode?: MobileViewMode;
   onToggleFullView?: () => void;
 }
 
@@ -50,7 +49,7 @@ const Gallery: React.FC<GalleryProps> = ({
   filter = 'all',
   onToggleSidebar,
   gap = 8,
-  galleryViewMode,
+  mobileViewMode,
   onToggleFullView
 }) => {
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
@@ -127,7 +126,7 @@ const Gallery: React.FC<GalleryProps> = ({
         onToggleSidebar={onToggleSidebar}
         selectionMode={selection.selectionMode}
         onToggleSelectionMode={selection.toggleSelectionMode}
-        galleryViewMode={galleryViewMode}
+        mobileViewMode={mobileViewMode}
         onToggleFullView={onToggleFullView}
       />
       

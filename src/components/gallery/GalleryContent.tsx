@@ -2,7 +2,7 @@
 import React, { useRef } from 'react';
 import Gallery from '@/components/gallery/Gallery';
 import { useGalleryZoom } from '@/hooks/use-gallery-zoom';
-import { GalleryViewMode } from '@/types/gallery';
+import { MobileViewMode } from '@/types/gallery';
 
 interface GalleryContentProps {
   mediaIds: string[];
@@ -20,8 +20,8 @@ interface GalleryContentProps {
   position?: 'source' | 'destination';
   onToggleSidebar?: () => void;
   onColumnsChange?: (count: number) => void;
-  // Props pour le toggle de vue
-  galleryViewMode?: GalleryViewMode;
+  // Nouvelles props pour le toggle de vue
+  mobileViewMode?: MobileViewMode;
   onToggleFullView?: () => void;
 }
 
@@ -41,7 +41,7 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
   position = 'source',
   onToggleSidebar,
   onColumnsChange,
-  galleryViewMode,
+  mobileViewMode,
   onToggleFullView
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -90,7 +90,7 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
         filter={filter}
         onToggleSidebar={onToggleSidebar}
         gap={4}
-        galleryViewMode={galleryViewMode}
+        mobileViewMode={mobileViewMode}
         onToggleFullView={onToggleFullView}
       />
     </div>

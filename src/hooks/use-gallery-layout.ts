@@ -1,14 +1,14 @@
 
 import { useCallback, useMemo } from 'react';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { GalleryViewMode, ViewModeType } from '@/types/gallery';
+import { MobileViewMode, ViewModeType } from '@/types/gallery';
 
 interface GalleryLayoutOptions {
-  viewMode: GalleryViewMode;
+  viewMode: MobileViewMode;
   isMobile: boolean;
 }
 
-export function useGalleryLayout(viewMode: GalleryViewMode) {
+export function useGalleryLayout(viewMode: MobileViewMode) {
   const isMobile = useIsMobile();
   
   // Déterminer si une galerie est visible en fonction du mode d'affichage

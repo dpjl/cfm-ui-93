@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Server, PanelLeft, PanelsLeftRight, PanelRight, Settings } from 'lucide-react';
-import { GalleryViewMode } from '@/types/gallery';
+import { MobileViewMode } from '@/types/gallery';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
@@ -12,8 +12,8 @@ interface PageHeaderProps {
   isDeletionPending: boolean;
   isSidebarOpen: boolean;
   onCloseSidebars: () => void;
-  galleryViewMode: GalleryViewMode;
-  setGalleryViewMode: React.Dispatch<React.SetStateAction<GalleryViewMode>>;
+  mobileViewMode: MobileViewMode;
+  setMobileViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
   selectedIdsLeft: string[];
   selectedIdsRight: string[];
   onDelete: () => void;
@@ -24,8 +24,8 @@ interface PageHeaderProps {
 const PageHeader: React.FC<PageHeaderProps> = ({
   onToggleServerPanel,
   isServerPanelOpen,
-  galleryViewMode,
-  setGalleryViewMode,
+  mobileViewMode,
+  setMobileViewMode,
 }) => {
   const isMobile = useIsMobile();
   
@@ -44,9 +44,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         {!isMobile && (
           <div className="ml-4 flex gap-2 bg-background/90 shadow-sm border border-border/30 rounded-full p-1">
             <Button
-              variant={galleryViewMode === 'left' ? "default" : "ghost"}
+              variant={mobileViewMode === 'left' ? "default" : "ghost"}
               size="icon"
-              onClick={() => setGalleryViewMode('left')}
+              onClick={() => setMobileViewMode('left')}
               className="h-7 w-7 rounded-full"
               title="Source Gallery Only"
             >
@@ -54,9 +54,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             </Button>
             
             <Button
-              variant={galleryViewMode === 'both' ? "default" : "ghost"}
+              variant={mobileViewMode === 'both' ? "default" : "ghost"}
               size="icon"
-              onClick={() => setGalleryViewMode('both')}
+              onClick={() => setMobileViewMode('both')}
               className="h-7 w-7 rounded-full"
               title="Split View"
             >
@@ -64,9 +64,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             </Button>
             
             <Button
-              variant={galleryViewMode === 'right' ? "default" : "ghost"}
+              variant={mobileViewMode === 'right' ? "default" : "ghost"}
               size="icon"
-              onClick={() => setGalleryViewMode('right')}
+              onClick={() => setMobileViewMode('right')}
               className="h-7 w-7 rounded-full"
               title="Destination Gallery Only"
             >
