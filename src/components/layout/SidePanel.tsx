@@ -5,15 +5,17 @@ import { useIsMobile } from '@/hooks/use-breakpoint';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
+
 interface SidePanelProps {
   children: React.ReactNode;
   position: 'left' | 'right';
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  viewMode?: MobileViewMode;
+  viewMode?: GalleryViewMode;
 }
+
 const SidePanel: React.FC<SidePanelProps> = ({
   children,
   position,
@@ -25,8 +27,6 @@ const SidePanel: React.FC<SidePanelProps> = ({
   const isMobile = useIsMobile();
   const [isHovered, setIsHovered] = useState(false);
 
-  // Determine if we should show the trigger button based on view mode
-  // Fixed: Only show the settings button for the gallery that is visible
   const shouldShowTrigger = () => {
     if (viewMode === 'both') return true;
     if (position === 'left' && viewMode === 'left') return true;
@@ -34,7 +34,6 @@ const SidePanel: React.FC<SidePanelProps> = ({
     return false;
   };
 
-  // Mobile drawer implementation
   if (isMobile) {
     return <Drawer open={isOpen} onOpenChange={onOpenChange}>
         <DrawerTrigger asChild>
@@ -56,7 +55,6 @@ const SidePanel: React.FC<SidePanelProps> = ({
       </Drawer>;
   }
 
-  // Custom trigger button that shows the appropriate icon based on position
   const renderTriggerButton = () => {
     if (!shouldShowTrigger()) return null;
     const icon = position === 'left' ? <PanelLeft size={16} /> : <PanelRight size={16} />;
@@ -65,18 +63,14 @@ const SidePanel: React.FC<SidePanelProps> = ({
     return;
   };
 
-  // Desktop sheet implementation
   return <>
-      {/* Closed state button/indicator */}
       {!isOpen && renderTriggerButton()}
       
-      {/* Open state */}
       <Sheet open={isOpen} onOpenChange={onOpenChange} modal={false}>
         <SheetContent side={position} className={cn("w-72 p-0 border-0 shadow-lg bg-card/95 backdrop-blur-sm", position === 'left' ? "border-r" : "border-l")}>
           <div className="h-full flex flex-col p-0 overflow-hidden">
             <div className="flex items-center justify-between p-3 border-b">
               <h3 className="text-sm font-medium">{title}</h3>
-              {/* Add our custom close button */}
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenChange(false)}>
                 <X size={16} />
               </Button>
@@ -89,4 +83,5 @@ const SidePanel: React.FC<SidePanelProps> = ({
       </Sheet>
     </>;
 };
+
 export default SidePanel;

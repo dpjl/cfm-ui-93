@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 import PageHeader from '@/components/layout/PageHeader';
 
 interface GalleryPageHeaderProps {
@@ -8,8 +7,8 @@ interface GalleryPageHeaderProps {
   isDeletionPending: boolean;
   isSidebarOpen: boolean;
   onCloseSidebars: () => void;
-  mobileViewMode: MobileViewMode;
-  setMobileViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
+  mobileViewMode: GalleryViewMode;
+  setMobileViewMode: React.Dispatch<React.SetStateAction<GalleryViewMode>>;
   selectedIdsLeft: string[];
   selectedIdsRight: string[];
   onDelete: () => void;

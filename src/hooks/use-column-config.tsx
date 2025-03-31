@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 
 export type ColumnConfigKey = 
   | 'desktop-left' 
@@ -56,7 +55,7 @@ export function useColumnConfig() {
   };
   
   // Helper function to get the current column count
-  const getCurrentColumnCount = (position: 'left' | 'right', mobileViewMode: MobileViewMode): number => {
+  const getCurrentColumnCount = (position: 'left' | 'right', mobileViewMode: GalleryViewMode): number => {
     if (isMobile) {
       if (mobileViewMode === 'both') {
         return config[`mobile-split-${position}`];

@@ -20,6 +20,7 @@ interface GalleryContextType {
   getCurrentColumnsLeft: () => number;
   getCurrentColumnsRight: () => number;
   updateColumnCount: (side: 'left' | 'right', count: number) => void;
+  getColumnValuesForViewMode?: (side: 'left' | 'right') => { [key: string]: number };
   
   // Selection state
   selectedIdsLeft: string[];
@@ -146,6 +147,11 @@ export const GalleryProvider: React.FC<{children: React.ReactNode}> = ({ childre
     columnsState.updateColumnsCount(side, isMobile, viewMode, count);
   }, [columnsState, isMobile, viewMode]);
   
+  // Fonction pour obtenir le type de mode de vue (pour la cohérence du typage)
+  const getViewModeType = useCallback((side: 'left' | 'right'): ViewModeType => {
+    return columnsState.getViewModeType(isMobile, viewMode) as ViewModeType;
+  }, [columnsState, isMobile, viewMode]);
+  
   // Valeur du contexte
   const value: GalleryContextType = {
     // Directory state
@@ -191,7 +197,7 @@ export const GalleryProvider: React.FC<{children: React.ReactNode}> = ({ childre
     
     // Utilities
     isMobile,
-    getViewModeType: (side: 'left' | 'right') => columnsState.getViewModeType(isMobile, viewMode)
+    getViewModeType
   };
   
   return (

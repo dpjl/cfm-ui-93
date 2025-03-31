@@ -1,5 +1,4 @@
-
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 import { MediaFilter } from '@/components/AppSidebar';
 
 // Base gallery props that are common to most gallery components
@@ -23,9 +22,9 @@ export interface BaseGalleryProps {
 
 // Props specific to mobile/desktop view mode handling
 export interface ViewModeProps {
-  mobileViewMode?: MobileViewMode; // Optional for backward compatibility
-  setMobileViewMode?: React.Dispatch<React.SetStateAction<MobileViewMode>>;
-  viewMode?: MobileViewMode; // Used for consistency in some components
+  mobileViewMode?: GalleryViewMode; // Optional for backward compatibility
+  setMobileViewMode?: React.Dispatch<React.SetStateAction<GalleryViewMode>>;
+  viewMode?: GalleryViewMode; // Used for consistency in some components
 }
 
 // Props for sidebar toggle functionality

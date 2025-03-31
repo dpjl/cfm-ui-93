@@ -59,7 +59,21 @@ const GalleryLayout: React.FC = () => {
   // Récupérer le type de vue actuel
   const currentViewMode = getViewModeType('left');
   
-  // Utiliser le contexte pour récupérer toutes les valeurs de colonnes
+  // Get column values for left and right sides
+  const leftColumnValues = getColumnValuesForViewMode('left');
+  const rightColumnValues = getColumnValuesForViewMode('right');
+  
+  // Helper function to get column values in the correct format for the AppSidebar
+  function getColumnValuesForViewMode(side: 'left' | 'right') {
+    const viewModeType = getViewModeType(side);
+    return {
+      'desktop': side === 'left' ? columnsCountLeft : columnsCountRight,
+      'desktop-single': side === 'left' ? columnsCountLeft : columnsCountRight,
+      'mobile-split': side === 'left' ? columnsCountLeft : columnsCountRight,
+      'mobile-single': side === 'left' ? columnsCountLeft : columnsCountRight
+    };
+  }
+  
   return (
     <div className="flex h-full overflow-hidden mt-2 relative">
       <SidePanel 
@@ -77,7 +91,7 @@ const GalleryLayout: React.FC = () => {
           onFilterChange={setLeftFilter}
           mobileViewMode={viewMode}
           onColumnsChange={(count) => updateColumnCount('left', count)}
-          columnValues={getViewModeType('left')}
+          columnValues={leftColumnValues}
           currentViewMode={currentViewMode}
         />
       </SidePanel>
@@ -122,7 +136,7 @@ const GalleryLayout: React.FC = () => {
           onFilterChange={setRightFilter}
           mobileViewMode={viewMode}
           onColumnsChange={(count) => updateColumnCount('right', count)}
-          columnValues={getViewModeType('right')}
+          columnValues={rightColumnValues}
           currentViewMode={currentViewMode}
         />
       </SidePanel>

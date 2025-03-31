@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { Separator } from '@/components/ui/separator';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 import FilterOptions from '@/components/sidebar/FilterOptions';
 import FolderTreeSection from '@/components/sidebar/FolderTreeSection';
 import ColumnSliders from '@/components/sidebar/ColumnSliders';
@@ -17,7 +16,7 @@ interface AppSidebarProps {
   position?: 'left' | 'right';
   selectedFilter?: MediaFilter;
   onFilterChange?: (filter: MediaFilter) => void;
-  mobileViewMode?: MobileViewMode;
+  mobileViewMode?: GalleryViewMode;
   onColumnsChange?: (count: number) => void;
   columnValues: {
     [key: string]: number;

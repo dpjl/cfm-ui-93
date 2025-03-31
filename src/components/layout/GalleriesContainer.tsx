@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { fetchMediaIds } from '@/api/imageApi';
-import { MobileViewMode, ViewModeType } from '@/types/gallery';
+import { GalleryViewMode, ViewModeType } from '@/types/gallery';
 import { MediaFilter } from '@/components/AppSidebar';
 import GalleryContent from '@/components/gallery/GalleryContent';
 import DeleteConfirmationDialog from '@/components/gallery/DeleteConfirmationDialog';
@@ -34,8 +33,8 @@ interface SidebarToggleProps {
 }
 
 interface GalleriesContainerProps extends BaseGalleryProps, SidebarToggleProps {
-  mobileViewMode: MobileViewMode;
-  setMobileViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
+  mobileViewMode: GalleryViewMode;
+  setMobileViewMode: React.Dispatch<React.SetStateAction<GalleryViewMode>>;
   onColumnsChange?: (side: 'left' | 'right', count: number) => void;
 }
 
