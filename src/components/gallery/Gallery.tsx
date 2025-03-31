@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import VirtualizedGalleryGrid from './VirtualizedGalleryGrid';
@@ -13,6 +12,8 @@ import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from '../media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { MediaItem, GalleryViewMode } from '@/types/gallery';
+import DateBanner from './DateBanner';
+import { useVisibleMediaDate } from '@/hooks/use-visible-media-date';
 
 interface GalleryProps {
   title: string;
@@ -57,6 +58,12 @@ const Gallery: React.FC<GalleryProps> = ({
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  const { visibleDate, isShowing } = useVisibleMediaDate(
+    containerRef,
+    !isLoading && mediaIds.length > 0,
+    position
+  );
   
   const selection = useGallerySelection({
     mediaIds,
@@ -132,6 +139,8 @@ const Gallery: React.FC<GalleryProps> = ({
       />
       
       <div className="flex-1 overflow-hidden relative scrollbar-vertical">
+        <DateBanner date={visibleDate} isVisible={isShowing} />
+        
         {shouldShowInfoPanel && (
           <div className="absolute top-2 left-0 right-0 z-10 flex justify-center">
             <MediaInfoPanel
