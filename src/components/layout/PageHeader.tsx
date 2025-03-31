@@ -1,11 +1,12 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Server, PanelLeft, PanelsLeftRight, PanelRight, Settings } from 'lucide-react';
+import { Server, PanelLeft, PanelsLeftRight, PanelRight } from 'lucide-react';
 import { GalleryViewMode } from '@/types/gallery';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { useTheme } from '@/hooks/use-theme';
 
 interface PageHeaderProps {
   onRefresh: () => void;
@@ -28,15 +29,16 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   setMobileViewMode,
 }) => {
   const isMobile = useIsMobile();
+  const { theme } = useTheme();
   
   return (
     <header className="relative z-20 flex items-center justify-between gap-2 p-2 md:p-4 bg-background/80 backdrop-blur-md border-b border-border/40">
       <div className="flex items-center gap-3">
         <div>
           <img 
-            src="/lovable-uploads/ddf36f1d-ca4f-4437-8e57-df7c6f916ccc.png" 
+            src="/lovable-uploads/logo-cfm.svg" 
             alt="Logo" 
-            className="h-8 md:h-10"
+            className={`h-8 md:h-10 ${theme === 'light' ? 'invert' : ''}`}
           />
         </div>
         
