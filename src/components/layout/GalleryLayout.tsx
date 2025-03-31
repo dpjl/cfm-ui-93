@@ -1,12 +1,12 @@
 
 import React from 'react';
+import { useIsMobile } from '@/hooks/use-breakpoint';
 import SidePanel from '@/components/layout/SidePanel';
 import GalleriesContainer from '@/components/layout/GalleriesContainer';
 import AppSidebar from '@/components/AppSidebar';
-import { MediaFilter } from '@/components/AppSidebar';
 import { MobileViewMode } from '@/types/gallery';
+import { MediaFilter } from '@/components/AppSidebar';
 import { useColumnsState } from '@/hooks/use-columns-state';
-import { useGalleryLayout } from '@/hooks/use-gallery-layout';
 
 interface GalleryLayoutProps {
   // Directory selection
@@ -80,14 +80,14 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   rightFilter,
   setRightFilter
 }) => {
-  // Utiliser notre hook d'agencement de galeries
-  const { isMobile, getViewType } = useGalleryLayout();
+  const isMobile = useIsMobile();
   const { getColumnValuesForSide, getViewModeType, updateColumnsCount } = useColumnsState();
   
   // Récupérer le type de vue actuel
   const currentViewMode = getViewModeType(isMobile, viewMode);
   
-  // Réagir aux changements de colonnes (memoized effects)
+  // Force refresh du composant quand columnsCountLeft ou columnsCountRight changent
+  // en mettant à jour d'abord l'état central
   React.useEffect(() => {
     updateColumnsCount('left', isMobile, viewMode, columnsCountLeft);
   }, [columnsCountLeft, isMobile, viewMode, updateColumnsCount]);
@@ -96,7 +96,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
     updateColumnsCount('right', isMobile, viewMode, columnsCountRight);
   }, [columnsCountRight, isMobile, viewMode, updateColumnsCount]);
   
-  // Récupérer les valeurs de colonnes à chaque rendu
+  // Récupérer les valeurs de colonnes à chaque rendu - maintenant réactif aux changements
   const leftColumnValues = getColumnValuesForSide('left');
   const rightColumnValues = getColumnValuesForSide('right');
   
@@ -137,11 +137,12 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           activeSide={activeSide}
           deleteMutation={deleteMutation}
           handleDeleteSelected={handleDeleteSelected}
+          mobileViewMode={viewMode}
+          setMobileViewMode={setViewMode}
           leftFilter={leftFilter}
           rightFilter={rightFilter}
           onToggleLeftPanel={toggleLeftPanel}
           onToggleRightPanel={toggleRightPanel}
-          initialViewMode={viewMode}
           onColumnsChange={(side, count) => {
             if (side === 'left') {
               onLeftColumnsChange(count);
