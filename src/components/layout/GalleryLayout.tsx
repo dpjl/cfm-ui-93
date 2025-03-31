@@ -1,52 +1,38 @@
+
 import React, { useState, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { useGalleryActions } from '@/hooks/use-gallery-actions';
 import { useUIState } from '@/hooks/use-ui-state';
-import { useGallerySelection } from '@/hooks/use-gallery-selection';
+import { useGalleryContext } from '@/contexts/GalleryContext';
 import GalleriesContainer from './GalleriesContainer';
 
 const GalleryLayout: React.FC = () => {
-  const searchParams = useSearchParams();
   const isMobile = useIsMobile();
   const [columnsCountLeft, setColumnsCountLeft] = useState(3);
   const [columnsCountRight, setColumnsCountRight] = useState(3);
-  const selectedDirectoryIdLeftParam = searchParams.get('selectedDirectoryIdLeft') || 'photos-left';
-  const selectedDirectoryIdRightParam = searchParams.get('selectedDirectoryIdRight') || 'photos-right';
-  const [selectedDirectoryIdLeft, setSelectedDirectoryIdLeft] = useState(selectedDirectoryIdLeftParam);
-  const [selectedDirectoryIdRight, setSelectedDirectoryIdRight] = useState(selectedDirectoryIdRightParam);
+  
+  // Use the gallery context instead of individual hooks
   const {
-    deleteDialogOpen,
-    setDeleteDialogOpen,
-    viewMode,
-    setViewMode,
-    leftFilter,
-    rightFilter,
-    toggleLeftPanel,
-    toggleRightPanel,
-  } = useUIState();
-  const {
+    selectedDirectoryIdLeft,
+    selectedDirectoryIdRight,
     selectedIdsLeft,
     setSelectedIdsLeft,
     selectedIdsRight,
     setSelectedIdsRight,
     activeSide,
     setActiveSide,
-  } = useGallerySelection();
-  const {
-    deleteMutation,
-    handleRefresh,
-    handleDeleteSelected,
-    handleDelete
-  } = useGalleryActions(
-    selectedIdsLeft,
-    selectedIdsRight,
-    activeSide,
+    viewMode,
+    setViewMode,
+    leftFilter,
+    rightFilter,
+    toggleLeftPanel,
+    toggleRightPanel,
+    deleteDialogOpen,
     setDeleteDialogOpen,
-    setSelectedIdsLeft,
-    setSelectedIdsRight,
-    setActiveSide
-  );
+    handleDelete,
+    deleteMutation,
+    handleDeleteSelected,
+  } = useGalleryContext();
 
   const handleColumnsChange = useCallback((side: 'left' | 'right', count: number) => {
     if (side === 'left') {
@@ -71,7 +57,7 @@ const GalleryLayout: React.FC = () => {
       activeSide={activeSide}
       deleteMutation={deleteMutation}
       handleDeleteSelected={handleDeleteSelected}
-      handleDelete={handleDelete} // Ajout de handleDelete ici
+      handleDelete={handleDelete}
       mobileViewMode={viewMode}
       setMobileViewMode={setViewMode}
       leftFilter={leftFilter}
