@@ -1,3 +1,4 @@
+
 import { MediaItem } from '@/types/gallery';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -127,7 +128,8 @@ export async function fetchDirectoryTree(position?: 'left' | 'right'): Promise<D
 }
 
 export async function fetchMediaIds(directory: string, position: 'source' | 'destination', filter: string = 'all'): Promise<string[]> {
-  const url = `${API_BASE_URL}/media?directory=${encodeURIComponent(position)}${filter !== 'all' ? `&filter=${filter}` : ''}`;
+  // Mise à jour de l'URL: changement de /media à /list et ajout du paramètre folder
+  const url = `${API_BASE_URL}/list?directory=${encodeURIComponent(position)}&folder=${encodeURIComponent(directory)}${filter !== 'all' ? `&filter=${filter}` : ''}`;
   console.log("Fetching media IDs from:", url);
   
   try {
@@ -151,7 +153,8 @@ export async function fetchMediaIds(directory: string, position: 'source' | 'des
     const mockCount = 200 + Math.floor(Math.random() * 20); // Entre 200 et 220 médias
     
     // Générer des IDs uniques pour éviter les conflits
-    const prefix = `${position}-${filter === 'all' ? '' : filter + '-'}`;
+    // Ajout du directory (folder) dans le préfixe pour les données mock
+    const prefix = `${position}-${directory}-${filter === 'all' ? '' : filter + '-'}`;
     
     // Générer des IDs pour les images (80% du total)
     const imageCount = Math.floor(mockCount * 0.8);
@@ -168,7 +171,7 @@ export async function fetchMediaIds(directory: string, position: 'source' | 'des
     // Combiner et mélanger les IDs
     const mockMediaIds = [...imageIds, ...videoIds].sort(() => Math.random() - 0.5);
     
-    console.log(`Generated ${mockMediaIds.length} mock media IDs`);
+    console.log(`Generated ${mockMediaIds.length} mock media IDs with directory ${directory}`);
     return mockMediaIds;
   }
 }
