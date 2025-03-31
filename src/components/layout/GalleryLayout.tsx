@@ -4,9 +4,10 @@ import { useIsMobile } from '@/hooks/use-breakpoint';
 import SidePanel from '@/components/layout/SidePanel';
 import GalleriesContainer from '@/components/layout/GalleriesContainer';
 import AppSidebar from '@/components/AppSidebar';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 import { MediaFilter } from '@/components/AppSidebar';
 import { useColumnsState } from '@/hooks/use-columns-state';
+import { useGalleryContext } from '@/context/GalleryContext';
 
 interface GalleryLayoutProps {
   // Directory selection
@@ -34,17 +35,17 @@ interface GalleryLayoutProps {
   deleteMutation: any;
   handleDeleteSelected: (side: 'left' | 'right') => void;
   
-  // Panel state
+  // Panel state - maintenant via contexte
   leftPanelOpen: boolean;
   toggleLeftPanel: () => void;
   rightPanelOpen: boolean;
   toggleRightPanel: () => void;
   
-  // View mode
-  viewMode: MobileViewMode;
-  setViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
+  // View mode - maintenant via contexte
+  viewMode: GalleryViewMode;
+  setViewMode: React.Dispatch<React.SetStateAction<GalleryViewMode>>;
   
-  // Filters
+  // Filters - maintenant via contexte
   leftFilter: MediaFilter;
   setLeftFilter: React.Dispatch<React.SetStateAction<MediaFilter>>;
   rightFilter: MediaFilter;
@@ -115,7 +116,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           position="left"
           selectedFilter={leftFilter}
           onFilterChange={setLeftFilter}
-          mobileViewMode={viewMode}
+          galleryViewMode={viewMode}
           onColumnsChange={onLeftColumnsChange}
           columnValues={leftColumnValues}
           currentViewMode={currentViewMode}
@@ -137,8 +138,8 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           activeSide={activeSide}
           deleteMutation={deleteMutation}
           handleDeleteSelected={handleDeleteSelected}
-          mobileViewMode={viewMode}
-          setMobileViewMode={setViewMode}
+          galleryViewMode={viewMode}
+          setGalleryViewMode={setViewMode}
           leftFilter={leftFilter}
           rightFilter={rightFilter}
           onToggleLeftPanel={toggleLeftPanel}
@@ -166,7 +167,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           position="right"
           selectedFilter={rightFilter}
           onFilterChange={setRightFilter}
-          mobileViewMode={viewMode}
+          galleryViewMode={viewMode}
           onColumnsChange={onRightColumnsChange}
           columnValues={rightColumnValues}
           currentViewMode={currentViewMode}

@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Separator } from '@/components/ui/separator';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 import { useGalleryLayout } from '@/hooks/use-gallery-layout';
 
 // Define container animation variants
@@ -20,7 +20,7 @@ const containerVariants = {
 
 interface GalleriesViewProps {
   // Mode de vue actuel 
-  viewMode: MobileViewMode;
+  viewMode: GalleryViewMode;
   
   // Contenu des galeries
   leftContent: React.ReactNode;

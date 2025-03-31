@@ -3,12 +3,12 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { fetchMediaIds } from '@/api/imageApi';
-import { MobileViewMode, ViewModeType } from '@/types/gallery';
+import { GalleryViewMode, ViewModeType } from '@/types/gallery';
 import { MediaFilter } from '@/components/AppSidebar';
 import GalleryContent from '@/components/gallery/GalleryContent';
 import DeleteConfirmationDialog from '@/components/gallery/DeleteConfirmationDialog';
 import GalleriesView from './GalleriesView';
-import MobileViewSwitcher from './MobileViewSwitcher';
+import ViewModeSwitcher from './ViewModeSwitcher';
 
 interface BaseGalleryProps {
   columnsCountLeft: number;
@@ -34,8 +34,8 @@ interface SidebarToggleProps {
 }
 
 interface GalleriesContainerProps extends BaseGalleryProps, SidebarToggleProps {
-  mobileViewMode: MobileViewMode;
-  setMobileViewMode: React.Dispatch<React.SetStateAction<MobileViewMode>>;
+  galleryViewMode: GalleryViewMode;
+  setGalleryViewMode: React.Dispatch<React.SetStateAction<GalleryViewMode>>;
   onColumnsChange?: (side: 'left' | 'right', count: number) => void;
 }
 
@@ -53,8 +53,8 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   activeSide,
   deleteMutation,
   handleDeleteSelected,
-  mobileViewMode,
-  setMobileViewMode,
+  galleryViewMode,
+  setGalleryViewMode,
   leftFilter,
   rightFilter,
   onToggleLeftPanel,
@@ -99,18 +99,18 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
 
   // Toggle full view handlers
   const handleToggleLeftFullView = () => {
-    if (mobileViewMode === 'left') {
-      setMobileViewMode('both');
+    if (galleryViewMode === 'left') {
+      setGalleryViewMode('both');
     } else {
-      setMobileViewMode('left');
+      setGalleryViewMode('left');
     }
   };
 
   const handleToggleRightFullView = () => {
-    if (mobileViewMode === 'right') {
-      setMobileViewMode('both');
+    if (galleryViewMode === 'right') {
+      setGalleryViewMode('both');
     } else {
-      setMobileViewMode('right');
+      setGalleryViewMode('right');
     }
   };
 
@@ -125,14 +125,14 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
       isError={!!errorLeftMediaIds}
       error={errorLeftMediaIds}
       columnsCount={columnsCountLeft}
-      viewMode={mobileViewMode === 'both' ? 'split' : 'single'}
+      viewMode={galleryViewMode === 'both' ? 'split' : 'single'}
       onPreviewItem={handlePreviewItemLeft}
       onDeleteSelected={handleConfirmDelete('left')}
       position="source"
       filter={leftFilter}
       onToggleSidebar={onToggleLeftPanel}
       onColumnsChange={handleLeftColumnsChange}
-      mobileViewMode={mobileViewMode}
+      galleryViewMode={galleryViewMode}
       onToggleFullView={handleToggleLeftFullView}
     />
   );
@@ -147,14 +147,14 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
       isError={!!errorRightMediaIds}
       error={errorRightMediaIds}
       columnsCount={columnsCountRight}
-      viewMode={mobileViewMode === 'both' ? 'split' : 'single'}
+      viewMode={galleryViewMode === 'both' ? 'split' : 'single'}
       onPreviewItem={handlePreviewItemRight}
       onDeleteSelected={handleConfirmDelete('right')}
       position="destination"
       filter={rightFilter}
       onToggleSidebar={onToggleRightPanel}
       onColumnsChange={handleRightColumnsChange}
-      mobileViewMode={mobileViewMode}
+      galleryViewMode={galleryViewMode}
       onToggleFullView={handleToggleRightFullView}
     />
   );
@@ -162,7 +162,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <GalleriesView
-        viewMode={mobileViewMode}
+        viewMode={galleryViewMode}
         leftContent={leftGalleryContent}
         rightContent={rightGalleryContent}
       />

@@ -1,7 +1,8 @@
-// MobileViewMode now applies to both mobile and desktop views
-export type MobileViewMode = 'both' | 'left' | 'right';
 
-// ViewModeType is used for column count calculations
+// GalleryViewMode s'applique aux vues mobiles et desktop
+export type GalleryViewMode = 'both' | 'left' | 'right';
+
+// ViewModeType est utilisé pour les calculs de colonnes
 export type ViewModeType = 'desktop' | 'desktop-single' | 'mobile-split' | 'mobile-single';
 
 // Basic media item interface

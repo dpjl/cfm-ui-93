@@ -2,17 +2,17 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { MobileViewMode } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 import { ArrowLeft, ArrowRight, Columns } from 'lucide-react';
 
-interface MobileViewSwitcherProps {
-  viewMode: MobileViewMode;
-  setViewMode: (mode: MobileViewMode) => void;
+interface ViewModeSwitcherProps {
+  viewMode: GalleryViewMode;
+  setViewMode: (mode: GalleryViewMode) => void;
   className?: string;
   showOnDesktop?: boolean;
 }
 
-const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({
+const ViewModeSwitcher: React.FC<ViewModeSwitcherProps> = ({
   viewMode,
   setViewMode,
   className = '',
@@ -25,7 +25,7 @@ const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({
   }
   
   return (
-    <div className={`mobile-view-switcher ${className}`}>
+    <div className={`view-mode-switcher ${className}`}>
       <Button
         variant={viewMode === 'left' ? 'default' : 'outline'}
         size="icon"
@@ -59,4 +59,4 @@ const MobileViewSwitcher: React.FC<MobileViewSwitcherProps> = ({
   );
 };
 
-export default MobileViewSwitcher;
+export default ViewModeSwitcher;
