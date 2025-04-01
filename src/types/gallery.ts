@@ -32,4 +32,5 @@ export type TranslationKey =
   | 'delete_confirmation_title' | 'delete_confirmation_description' | 'deleting'
   | 'select_all' | 'deselect_all' | 'hide_dates' | 'show_dates' | 'selected' | 'refresh' | 'delete'
   | 'select_date' | 'year' | 'month' | 'january' | 'february' | 'march' | 'april' 
-  | 'may' | 'june' | 'july' | 'august' | 'september' | 'october' | 'november' | 'december';
+  | 'may' | 'june' | 'july' | 'august' | 'september' | 'october' | 'november' | 'december'
+  | 'cancel' | 'errorLoadingMedia'; // Added missing translation keys

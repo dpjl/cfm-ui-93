@@ -45,7 +45,6 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
   onToggleFullView
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mediaIds = mediaResponse?.mediaIds || [];
   
   // Déterminer les limites de colonnes en fonction du mode vue
   const getColumnLimits = () => {

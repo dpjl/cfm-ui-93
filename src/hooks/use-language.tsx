@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { TranslationKey } from '@/types/gallery';
 
 // Étendre le contexte pour les nouvelles traductions

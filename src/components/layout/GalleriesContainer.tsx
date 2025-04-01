@@ -24,7 +24,7 @@ interface BaseGalleryProps {
   activeSide: 'left' | 'right';
   deleteMutation: any;
   handleDeleteSelected: (side: 'left' | 'right') => void;
-  handleDelete: () => void; // Ajout de la propriété handleDelete
+  handleDelete: () => void;
   leftFilter?: MediaFilter;
   rightFilter?: MediaFilter;
 }
@@ -66,13 +66,13 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   const isMobile = useIsMobile();
 
   // Fetch left gallery media IDs
-  const { data: leftMediaIds = [], isLoading: isLoadingLeftMediaIds, error: errorLeftMediaIds } = useQuery({
+  const { data: leftMediaIds = { mediaIds: [], mediaDates: [] }, isLoading: isLoadingLeftMediaIds, error: errorLeftMediaIds } = useQuery({
     queryKey: ['leftMediaIds', selectedDirectoryIdLeft, leftFilter],
     queryFn: () => fetchMediaIds(selectedDirectoryIdLeft, 'source', leftFilter as string)
   });
   
   // Fetch right gallery media IDs
-  const { data: rightMediaIds = [], isLoading: isLoadingRightMediaIds, error: errorRightMediaIds } = useQuery({
+  const { data: rightMediaIds = { mediaIds: [], mediaDates: [] }, isLoading: isLoadingRightMediaIds, error: errorRightMediaIds } = useQuery({
     queryKey: ['rightMediaIds', selectedDirectoryIdRight, rightFilter],
     queryFn: () => fetchMediaIds(selectedDirectoryIdRight, 'destination', rightFilter as string)
   });
@@ -127,7 +127,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   const leftGalleryContent = (
     <GalleryContent
       title="Source"
-      mediaIds={leftMediaIds || []}
+      mediaResponse={leftMediaIds}
       selectedIds={selectedIdsLeft}
       onSelectId={handleSelectIdLeft}
       isLoading={isLoadingLeftMediaIds}
@@ -149,7 +149,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   const rightGalleryContent = (
     <GalleryContent
       title="Destination"
-      mediaIds={rightMediaIds || []}
+      mediaResponse={rightMediaIds}
       selectedIds={selectedIdsRight}
       onSelectId={handleSelectIdRight}
       isLoading={isLoadingRightMediaIds}
@@ -179,7 +179,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        onConfirm={executeDelete} // Using the executeDelete function for actual deletion
+        onConfirm={executeDelete}
         selectedIds={activeSide === 'left' ? selectedIdsLeft : selectedIdsRight}
         onCancel={() => setDeleteDialogOpen(false)}
         isPending={deleteMutation.isPending}
