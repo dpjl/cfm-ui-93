@@ -39,6 +39,8 @@ const translations: Record<string, Record<TranslationKey, string>> = {
     'selected': 'Selected',
     'refresh': 'Refresh',
     'delete': 'Delete',
+    'cancel': 'Cancel',
+    'errorLoadingMedia': 'Error loading media',
     
     // Nouvelles clés pour le sélecteur de date
     'select_date': 'Select Date',
@@ -86,6 +88,8 @@ const translations: Record<string, Record<TranslationKey, string>> = {
     'selected': 'Sélectionnés',
     'refresh': 'Actualiser',
     'delete': 'Supprimer',
+    'cancel': 'Annuler',
+    'errorLoadingMedia': 'Erreur de chargement des médias',
     
     // Nouvelles clés pour le sélecteur de date
     'select_date': 'Sélectionner une date',
