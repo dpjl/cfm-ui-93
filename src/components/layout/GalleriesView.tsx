@@ -42,7 +42,7 @@ const GalleriesView: React.FC<GalleriesViewProps> = ({
     <div className={`${containerClasses} ${className}`}>
       <div className="flex h-full">
         {/* Left Gallery - always mounted but conditionally visible */}
-        <div className={`${getGalleryClasses('left')} bg-neutral-50/50 dark:bg-neutral-900/50`}>
+        <div className={getGalleryClasses('left')}>
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -55,14 +55,11 @@ const GalleriesView: React.FC<GalleriesViewProps> = ({
 
         {/* Gallery Separator - only shown in split view */}
         {viewMode === 'both' && (
-          <Separator 
-            orientation="vertical" 
-            className="bg-neutral-200/60 dark:bg-neutral-800/60" 
-          />
+          <Separator orientation="vertical" className="bg-border/60" />
         )}
 
         {/* Right Gallery - always mounted but conditionally visible */}
-        <div className={`${getGalleryClasses('right')} bg-neutral-100/50 dark:bg-neutral-850/50`}>
+        <div className={getGalleryClasses('right')}>
           <motion.div
             variants={containerVariants}
             initial="hidden"
