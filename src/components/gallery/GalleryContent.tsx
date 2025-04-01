@@ -2,10 +2,10 @@
 import React, { useRef } from 'react';
 import Gallery from '@/components/gallery/Gallery';
 import { useGalleryZoom } from '@/hooks/use-gallery-zoom';
-import { GalleryViewMode } from '@/types/gallery';
+import { GalleryViewMode, MediaListResponse } from '@/types/gallery';
 
 interface GalleryContentProps {
-  mediaIds: string[];
+  mediaResponse: MediaListResponse;
   selectedIds: string[];
   onSelectId: (id: string) => void;
   isLoading: boolean;
@@ -26,7 +26,7 @@ interface GalleryContentProps {
 }
 
 const GalleryContent: React.FC<GalleryContentProps> = ({
-  mediaIds,
+  mediaResponse,
   selectedIds,
   onSelectId,
   isLoading,
@@ -45,6 +45,7 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
   onToggleFullView
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mediaIds = mediaResponse?.mediaIds || [];
   
   // Déterminer les limites de colonnes en fonction du mode vue
   const getColumnLimits = () => {
@@ -76,7 +77,7 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
     <div ref={containerRef} className="h-full w-full">
       <Gallery
         title={title}
-        mediaIds={mediaIds}
+        mediaResponse={mediaResponse}
         selectedIds={selectedIds}
         onSelectId={onSelectId}
         isLoading={isLoading}

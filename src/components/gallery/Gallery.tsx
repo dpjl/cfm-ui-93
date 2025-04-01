@@ -12,11 +12,11 @@ import GalleryToolbar from './GalleryToolbar';
 import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from '../media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
-import { MediaItem, GalleryViewMode } from '@/types/gallery';
+import { MediaItem, GalleryViewMode, MediaListResponse } from '@/types/gallery';
 
 interface GalleryProps {
   title: string;
-  mediaIds: string[];
+  mediaResponse: MediaListResponse;
   selectedIds: string[];
   onSelectId: (id: string) => void;
   isLoading?: boolean;
@@ -36,7 +36,7 @@ interface GalleryProps {
 
 const Gallery: React.FC<GalleryProps> = ({
   title,
-  mediaIds,
+  mediaResponse,
   selectedIds,
   onSelectId,
   isLoading = false,
@@ -57,6 +57,7 @@ const Gallery: React.FC<GalleryProps> = ({
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
+  const mediaIds = mediaResponse?.mediaIds || [];
   
   const selection = useGallerySelection({
     mediaIds,
@@ -151,7 +152,7 @@ const Gallery: React.FC<GalleryProps> = ({
           <GalleryEmptyState />
         ) : (
           <VirtualizedGalleryGrid
-            mediaIds={mediaIds}
+            mediaResponse={mediaResponse}
             selectedIds={selectedIds}
             onSelectId={selection.handleSelectItem}
             columnsCount={columnsCount}

@@ -6,6 +6,9 @@ import { DetailedMediaInfo } from '@/api/imageApi';
 import { useGalleryGrid } from '@/hooks/use-gallery-grid';
 import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 import GalleryGridCell from './GalleryGridCell';
+import DateSelector from './DateSelector';
+import { useMediaDates } from '@/hooks/use-media-dates';
+import { MediaListResponse } from '@/types/gallery';
 import { 
   calculateRowCount, 
   calculateGridParameters,
@@ -13,7 +16,7 @@ import {
 } from '@/utils/grid-utils';
 
 interface VirtualizedGalleryGridProps {
-  mediaIds: string[];
+  mediaResponse: MediaListResponse;
   selectedIds: string[];
   onSelectId: (id: string, extendSelection: boolean) => void;
   columnsCount: number;
@@ -29,7 +32,7 @@ interface VirtualizedGalleryGridProps {
  * With improved dimension calculations to prevent gaps
  */
 const VirtualizedGalleryGrid = memo(({
-  mediaIds,
+  mediaResponse,
   selectedIds,
   onSelectId,
   columnsCount = 5,
@@ -39,6 +42,8 @@ const VirtualizedGalleryGrid = memo(({
   position = 'source',
   gap = 8 // Valeur par défaut
 }: VirtualizedGalleryGridProps) => {
+  const mediaIds = mediaResponse?.mediaIds || [];
+  
   // Use custom hook for grid management
   const {
     gridRef,
@@ -46,14 +51,22 @@ const VirtualizedGalleryGrid = memo(({
     scrollPositionRef
   } = useGalleryGrid();
   
+  // Use hook for date navigation
+  const { dateIndex, scrollToYearMonth } = useMediaDates(mediaResponse);
+  
   // Use hook for tracking media changes to optimize rendering
-  useGalleryMediaTracking(mediaIds, gridRef);
+  useGalleryMediaTracking(mediaResponse, gridRef);
   
   // Calculate the number of rows based on media and columns
   const rowCount = calculateRowCount(mediaIds.length, columnsCount);
   
   // Get the scrollbar width
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
+  
+  // Handle year-month selection
+  const handleSelectYearMonth = (year: number, month: number) => {
+    scrollToYearMonth(year, month, gridRef);
+  };
   
   // Memoize the item data to prevent unnecessary renders
   const itemData = useMemo(() => ({
@@ -78,7 +91,7 @@ const VirtualizedGalleryGrid = memo(({
   }), [mediaIds, selectedIds, onSelectId, showDates, updateMediaInfo, position, columnsCount, gap]);
   
   return (
-    <div className="w-full h-full p-2 gallery-container">
+    <div className="w-full h-full p-2 gallery-container relative">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
           // Use the enhanced calculation function for all grid parameters
@@ -125,6 +138,15 @@ const VirtualizedGalleryGrid = memo(({
           );
         }}
       </AutoSizer>
+      
+      {dateIndex.years.length > 0 && (
+        <DateSelector
+          years={dateIndex.years}
+          monthsByYear={dateIndex.monthsByYear}
+          onSelectYearMonth={handleSelectYearMonth}
+          position={position}
+        />
+      )}
     </div>
   );
 });

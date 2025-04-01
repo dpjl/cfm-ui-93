@@ -1,5 +1,4 @@
-
-import { MediaItem } from '@/types/gallery';
+import { MediaItem, MediaListResponse } from '@/types/gallery';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -127,8 +126,7 @@ export async function fetchDirectoryTree(position?: 'left' | 'right'): Promise<D
   }
 }
 
-export async function fetchMediaIds(directory: string, position: 'source' | 'destination', filter: string = 'all'): Promise<string[]> {
-  // Mise à jour de l'URL: changement de /media à /list et ajout du paramètre folder
+export async function fetchMediaIds(directory: string, position: 'source' | 'destination', filter: string = 'all'): Promise<MediaListResponse> {
   const url = `${API_BASE_URL}/list?directory=${encodeURIComponent(position)}&folder=${encodeURIComponent(directory)}${filter !== 'all' ? `&filter=${filter}` : ''}`;
   console.log("Fetching media IDs from:", url);
   
@@ -142,14 +140,14 @@ export async function fetchMediaIds(directory: string, position: 'source' | 'des
     }
     
     const data = await response.json();
-    console.log("Received media IDs:", data);
+    console.log("Received media data:", data);
     
     return data;
   } catch (error) {
-    console.error("Error fetching media IDs:", error);
+    console.error("Error fetching media data:", error);
     
-    // Génère environ 200 IDs de média mock
-    console.log("Using mock media IDs due to error");
+    // Génère environ 200 IDs de média mock avec leurs dates
+    console.log("Using mock media data due to error");
     const mockCount = 200 + Math.floor(Math.random() * 20); // Entre 200 et 220 médias
     
     // Générer des IDs uniques pour éviter les conflits
@@ -171,8 +169,17 @@ export async function fetchMediaIds(directory: string, position: 'source' | 'des
     // Combiner et mélanger les IDs
     const mockMediaIds = [...imageIds, ...videoIds].sort(() => Math.random() - 0.5);
     
+    // Générer les dates correspondantes
+    const mockMediaDates = mockMediaIds.map(() => {
+      const date = randomDate();
+      return date.substring(0, 10); // Format YYYY-MM-DD
+    });
+    
     console.log(`Generated ${mockMediaIds.length} mock media IDs with directory ${directory}`);
-    return mockMediaIds;
+    return {
+      mediaIds: mockMediaIds,
+      mediaDates: mockMediaDates
+    };
   }
 }
 

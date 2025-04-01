@@ -16,6 +16,12 @@ export interface MediaItem {
   type?: "image" | "video";
 }
 
+// Structure de la réponse API pour les listes de médias avec leurs dates
+export interface MediaListResponse {
+  mediaIds: string[];
+  mediaDates: string[];
+}
+
 // Ensure all translation keys are properly typed
 export type TranslationKey = 
   | 'date' | 'size' | 'camera' | 'path' | 'hash' | 'duplicates'
@@ -24,4 +30,6 @@ export type TranslationKey =
   | 'columns' | 'single_selection' | 'multiple_selection'
   | 'desktop_columns' | 'desktop_single_columns' | 'split_columns' | 'single_columns'
   | 'delete_confirmation_title' | 'delete_confirmation_description' | 'deleting'
-  | 'select_all' | 'deselect_all' | 'hide_dates' | 'show_dates' | 'selected' | 'refresh' | 'delete';
+  | 'select_all' | 'deselect_all' | 'hide_dates' | 'show_dates' | 'selected' | 'refresh' | 'delete'
+  | 'select_date' | 'year' | 'month' | 'january' | 'february' | 'march' | 'april' 
+  | 'may' | 'june' | 'july' | 'august' | 'september' | 'october' | 'november' | 'december';

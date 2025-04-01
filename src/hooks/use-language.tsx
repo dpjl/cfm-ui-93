@@ -1,130 +1,140 @@
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { TranslationKey } from '@/types/gallery';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+// Étendre le contexte pour les nouvelles traductions
+interface LanguageContextType {
+  language: string;
+  setLanguage: React.Dispatch<React.SetStateAction<string>>;
+  t: (key: TranslationKey) => string;
+}
 
-// Define the supported languages
-export type Language = 'en' | 'fr';
-
-// Define the translations
-const translations = {
+const translations: Record<string, Record<TranslationKey, string>> = {
   en: {
-    selected: 'selected',
-    select_all: 'Select all',
-    deselect_all: 'Deselect all',
-    show_dates: 'Show dates',
-    hide_dates: 'Hide dates',
-    gallery_settings: 'Gallery settings',
-    preview: 'Preview',
-    download: 'Download',
-    delete: 'Delete',
-    confirm_delete: 'Confirm delete',
-    cancel: 'Cancel',
-    media_gallery: 'Media Gallery',
-    columns: 'Columns:',
-    refresh: 'Refresh',
-    close_sidebars: 'Close sidebars',
-    multiple_selection: 'Enable multiple selection',
-    single_selection: 'Switch to single selection',
-    too_many_items_to_select: 'Too many items to select (>100)',
-    // Add missing translations
-    desktop_columns: 'Desktop columns',
-    desktop_single_columns: 'Desktop full view columns',
-    split_columns: 'Split view columns',
-    single_columns: 'Single view columns',
-    noDirectories: 'No directories',
-    date: 'Date',
-    size: 'Size',
-    camera: 'Camera',
-    path: 'Path',
-    hash: 'Hash',
-    duplicates: 'Duplicates',
-    delete_confirmation_title: 'Delete selected media?',
-    delete_confirmation_description: 'This will permanently delete the selected media. This action cannot be undone.',
-    deleting: 'Deleting...',
-    noMediaFound: 'No media found',
-    errorLoadingMedia: 'Error loading media'
+    'date': 'Date',
+    'size': 'Size',
+    'camera': 'Camera',
+    'path': 'Path',
+    'hash': 'Hash',
+    'duplicates': 'Duplicates',
+    'noMediaFound': 'No media found',
+    'noDirectories': 'No directories found',
+    'media_gallery': 'Media Gallery',
+    'too_many_items_to_select': 'Too many items selected. Please select less than 1000.',
+    'close_sidebars': 'Close Sidebars',
+    'columns': 'Columns',
+    'single_selection': 'Single Selection',
+    'multiple_selection': 'Multiple Selection',
+    'desktop_columns': 'Desktop Columns',
+    'desktop_single_columns': 'Desktop Columns (Single)',
+    'split_columns': 'Split Columns',
+    'single_columns': 'Single Columns',
+    'delete_confirmation_title': 'Delete Confirmation',
+    'delete_confirmation_description': 'Are you sure you want to delete the selected items?',
+    'deleting': 'Deleting...',
+    'select_all': 'Select All',
+    'deselect_all': 'Deselect All',
+    'hide_dates': 'Hide Dates',
+    'show_dates': 'Show Dates',
+    'selected': 'Selected',
+    'refresh': 'Refresh',
+    'delete': 'Delete',
+    
+    // Nouvelles clés pour le sélecteur de date
+    'select_date': 'Select Date',
+    'year': 'Year',
+    'month': 'Month',
+    'january': 'January',
+    'february': 'February', 
+    'march': 'March',
+    'april': 'April',
+    'may': 'May',
+    'june': 'June',
+    'july': 'July',
+    'august': 'August',
+    'september': 'September',
+    'october': 'October',
+    'november': 'November',
+    'december': 'December'
   },
   fr: {
-    selected: 'sélectionné(s)',
-    select_all: 'Tout sélectionner',
-    deselect_all: 'Tout désélectionner',
-    show_dates: 'Afficher les dates',
-    hide_dates: 'Masquer les dates',
-    gallery_settings: 'Paramètres de la galerie',
-    preview: 'Aperçu',
-    download: 'Télécharger',
-    delete: 'Supprimer',
-    confirm_delete: 'Confirmer la suppression',
-    cancel: 'Annuler',
-    media_gallery: 'Galerie médias',
-    columns: 'Colonnes:',
-    refresh: 'Actualiser',
-    close_sidebars: 'Fermer les panneaux',
-    multiple_selection: 'Activer la sélection multiple',
-    single_selection: 'Passer à la sélection simple',
-    too_many_items_to_select: 'Trop d\'éléments à sélectionner (>100)',
-    // Add missing translations
-    desktop_columns: 'Colonnes bureau',
-    desktop_single_columns: 'Colonnes plein écran',
-    split_columns: 'Colonnes vue partagée',
-    single_columns: 'Colonnes vue unique',
-    noDirectories: 'Aucun répertoire',
-    date: 'Date',
-    size: 'Taille',
-    camera: 'Appareil photo',
-    path: 'Chemin',
-    hash: 'Hash',
-    duplicates: 'Doublons',
-    delete_confirmation_title: 'Supprimer les médias sélectionnés ?',
-    delete_confirmation_description: 'Cette action supprimera définitivement les médias sélectionnés. Cette action est irréversible.',
-    deleting: 'Suppression...',
-    noMediaFound: 'Aucun média trouvé',
-    errorLoadingMedia: 'Erreur lors du chargement des médias'
+    'date': 'Date',
+    'size': 'Taille',
+    'camera': 'Appareil photo',
+    'path': 'Chemin',
+    'hash': 'Hash',
+    'duplicates': 'Doublons',
+    'noMediaFound': 'Aucun média trouvé',
+    'noDirectories': 'Aucun répertoire trouvé',
+    'media_gallery': 'Galerie Médias',
+    'too_many_items_to_select': 'Trop d\'éléments sélectionnés. Veuillez sélectionner moins de 1000.',
+    'close_sidebars': 'Fermer les panneaux latéraux',
+    'columns': 'Colonnes',
+    'single_selection': 'Sélection unique',
+    'multiple_selection': 'Sélection multiple',
+    'desktop_columns': 'Colonnes (Bureau)',
+    'desktop_single_columns': 'Colonnes (Bureau, Simple)',
+    'split_columns': 'Colonnes (Divisé)',
+    'single_columns': 'Colonnes (Simple)',
+    'delete_confirmation_title': 'Confirmation de suppression',
+    'delete_confirmation_description': 'Êtes-vous sûr de vouloir supprimer les éléments sélectionnés ?',
+    'deleting': 'Suppression...',
+    'select_all': 'Tout sélectionner',
+    'deselect_all': 'Tout désélectionner',
+    'hide_dates': 'Masquer les dates',
+    'show_dates': 'Afficher les dates',
+    'selected': 'Sélectionnés',
+    'refresh': 'Actualiser',
+    'delete': 'Supprimer',
+    
+    // Nouvelles clés pour le sélecteur de date
+    'select_date': 'Sélectionner une date',
+    'year': 'Année',
+    'month': 'Mois',
+    'january': 'Janvier',
+    'february': 'Février', 
+    'march': 'Mars',
+    'april': 'Avril',
+    'may': 'Mai',
+    'june': 'Juin',
+    'july': 'Juillet',
+    'august': 'Août',
+    'september': 'Septembre',
+    'october': 'Octobre',
+    'november': 'Novembre',
+    'december': 'Décembre'
   }
-};
-
-// Now update the type for the translation keys to fix type checking
-export type TranslationKey = keyof typeof translations.en;
-
-// Create the context
-type LanguageContextType = {
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  t: (key: TranslationKey, params?: Record<string, any>) => string;
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Create provider component
-export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguage] = useState<Language>('fr');
+export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [language, setLanguage] = useState<string>(localStorage.getItem('language') || 'fr');
 
-  const t = (key: TranslationKey, params?: Record<string, any>): string => {
-    let text = translations[language][key] || key;
-    
-    // Handle interpolation if params are provided
-    if (params) {
-      Object.entries(params).forEach(([paramKey, paramValue]) => {
-        text = text.replace(`{${paramKey}}`, String(paramValue));
-      });
-    }
-    
-    return text;
+  useEffect(() => {
+    localStorage.setItem('language', language);
+  }, [language]);
+
+  const t = useCallback((key: TranslationKey) => {
+    return translations[language][key] || translations['en'][key] || key;
+  }, [language]);
+
+  const value = {
+    language,
+    setLanguage,
+    t,
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );
 };
 
-// Create hook for using the language context
-export const useLanguage = (): LanguageContextType => {
+export const useLanguage = () => {
   const context = useContext(LanguageContext);
-  
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
-  
   return context;
 };

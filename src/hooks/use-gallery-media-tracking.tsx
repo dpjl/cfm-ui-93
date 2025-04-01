@@ -1,19 +1,23 @@
 
 import { useEffect, useRef } from 'react';
 import type { FixedSizeGrid } from 'react-window';
+import { MediaListResponse } from '@/types/gallery';
 
 /**
  * Hook pour gérer le suivi des médias dans la galerie et leur affichage
  * Optimisé pour éviter les réinitialisations inutiles du défilement
  */
 export function useGalleryMediaTracking(
-  mediaIds: string[], 
+  mediaResponse: MediaListResponse | undefined, 
   gridRef: React.RefObject<FixedSizeGrid>
 ) {
   const prevMediaIdsRef = useRef<string[]>([]);
   
   // Détecter uniquement les changements importants dans les médias
   useEffect(() => {
+    if (!mediaResponse) return;
+    
+    const mediaIds = mediaResponse.mediaIds;
     const prevMediaIds = prevMediaIdsRef.current;
     
     // Vérifier s'il y a eu un changement significatif dans les médias
@@ -26,5 +30,5 @@ export function useGalleryMediaTracking(
       // Faire remonter la grille vers le haut
       gridRef.current.scrollTo({ scrollTop: 0 });
     }
-  }, [mediaIds, gridRef]);
+  }, [mediaResponse, gridRef]);
 }

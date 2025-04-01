@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchMediaInfo, DetailedMediaInfo } from '@/api/imageApi';
 import { useMediaCache } from './use-media-cache';
+import { useMediaDates } from './use-media-dates';
 
 export const useMediaInfo = (id: string, isIntersecting: boolean, position: 'source' | 'destination' = 'source') => {
   const [mediaInfo, setMediaInfo] = useState<DetailedMediaInfo | null>(null);
