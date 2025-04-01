@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { X, Eye, Trash, Download } from 'lucide-react';
@@ -34,24 +33,19 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
   position
 }) => {
   const isMobile = useIsMobile();
-  // If we have multiple selections, use the first one for display
   const displayId = mediaId || (selectedIds.length > 0 ? selectedIds[0] : null);
   
-  // Get media info from the map or use the hook for a single item
   const { mediaInfo, isLoading, error } = useMediaInfo(displayId, true, position);
   
-  // If there's no media to display, don't render the panel
   if (!displayId) return null;
   
-  // Use the media info from the map if available, otherwise use the hook result
   const displayInfo = mediaInfoMap.get(displayId) || mediaInfo;
   
-  // Multi-selection mode with more than 1 item
   const isMultiSelection = selectedIds.length > 1;
 
   return (
     <div className="w-full p-1 max-w-full">
-      <Card className="w-full bg-background/95 backdrop-blur-sm shadow-lg border border-border p-2 rounded-lg max-w-full">
+      <Card className="w-full bg-background/95 backdrop-blur-sm shadow-lg border border-border p-2 rounded-lg max-w-full z-[100]">
         <div className="flex justify-between items-center mb-1">
           <h3 className="text-sm font-medium flex items-center gap-1">
             {isMultiSelection ? (
