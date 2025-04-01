@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Calendar, ChevronLeft } from 'lucide-react';
 import { 
   Drawer,
@@ -27,6 +27,97 @@ const DateSelector: React.FC<DateSelectorProps> = ({
   const { t } = useLanguage();
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const timeoutRef = useRef<number | null>(null);
+  const galleryRef = useRef<HTMLElement | null>(null);
+
+  // Find parent gallery element for scroll listening
+  useEffect(() => {
+    // Find closest gallery container to attach scroll listener
+    const findGalleryContainer = () => {
+      let element = document.activeElement;
+      while (element && !element.classList.contains('gallery-container')) {
+        element = element.parentElement;
+      }
+      return element;
+    };
+
+    galleryRef.current = findGalleryContainer() as HTMLElement || 
+                         document.querySelector(`.gallery-container`) as HTMLElement;
+    
+    return () => {
+      galleryRef.current = null;
+    };
+  }, []);
+
+  // Hide button after inactivity
+  const hideAfterInactivity = useCallback(() => {
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current);
+    }
+    
+    setIsVisible(true);
+    
+    // Auto-hide after 3 seconds if drawer is not open
+    if (!isOpen) {
+      timeoutRef.current = window.setTimeout(() => {
+        setIsVisible(false);
+      }, 3000);
+    }
+  }, [isOpen]);
+
+  // Setup scroll listener and initial timeout
+  useEffect(() => {
+    // Show on scroll
+    const handleScroll = () => {
+      setIsVisible(true);
+      hideAfterInactivity();
+    };
+
+    // Show on mouse movement
+    const handleMouseMove = () => {
+      setIsVisible(true);
+      hideAfterInactivity();
+    };
+
+    // Add event listeners
+    document.addEventListener('mousemove', handleMouseMove);
+    
+    if (galleryRef.current) {
+      galleryRef.current.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Initialize timeout
+    hideAfterInactivity();
+
+    return () => {
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+      }
+      document.removeEventListener('mousemove', handleMouseMove);
+      
+      if (galleryRef.current) {
+        galleryRef.current.removeEventListener('scroll', handleScroll);
+      }
+      
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [hideAfterInactivity]);
+
+  // Reset visibility and timeout when drawer opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true);
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    } else {
+      hideAfterInactivity();
+    }
+  }, [isOpen, hideAfterInactivity]);
 
   const handleSelectYear = useCallback((year: number) => {
     setSelectedYear(year);
@@ -64,8 +155,9 @@ const DateSelector: React.FC<DateSelectorProps> = ({
         <Button 
           variant="ghost" 
           size="icon" 
-          className={`absolute ${buttonPositionClass} bg-background/80 backdrop-blur-sm border border-border/50 shadow-md hover:bg-background/90 z-50`}
+          className={`absolute ${buttonPositionClass} bg-background/80 backdrop-blur-sm border border-border/50 shadow-md hover:bg-background/90 z-50 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
           aria-label={t('select_date')}
+          onMouseEnter={() => setIsVisible(true)}
         >
           <Calendar className="h-5 w-5" />
         </Button>
