@@ -1,5 +1,5 @@
 
-import React, { memo, useMemo, forwardRef } from 'react';
+import React, { memo, useMemo, forwardRef, useRef } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -46,9 +46,33 @@ const VirtualizedGalleryGrid = forwardRef<FixedSizeGrid, VirtualizedGalleryGridP
     scrollPositionRef
   } = useGalleryGrid();
   
-  // Combiner la référence interne avec la référence passée en utilisant le hook useMemo pour éviter des calculs inutiles
+  // Create a stable ref object that combines the forwarded ref and internal ref
+  const combinedRef = useRef<FixedSizeGrid | null>(null);
+  
+  // Update the combined ref whenever either ref changes
   const gridRef = useMemo(() => {
-    return ref || internalGridRef;
+    return {
+      get current() {
+        return combinedRef.current;
+      },
+      set current(value) {
+        combinedRef.current = value;
+        
+        // Update the forwarded ref if it's a function
+        if (typeof ref === 'function') {
+          ref(value);
+        }
+        // Update the forwarded ref if it's an object
+        else if (ref && 'current' in ref) {
+          ref.current = value;
+        }
+        
+        // Update the internal ref
+        if (internalGridRef && 'current' in internalGridRef) {
+          internalGridRef.current = value;
+        }
+      }
+    };
   }, [ref, internalGridRef]);
   
   // Use hook for tracking media changes to optimize rendering
