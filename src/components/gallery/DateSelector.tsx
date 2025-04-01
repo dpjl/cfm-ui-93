@@ -53,13 +53,18 @@ const DateSelector: React.FC<DateSelectorProps> = ({
     return monthNames[month - 1] || '';
   };
 
+  // Determine button position class based on gallery position
+  const buttonPositionClass = position === 'source' 
+    ? "top-2 left-2" 
+    : "top-2 right-2";
+
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
         <Button 
           variant="ghost" 
           size="icon" 
-          className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm border border-border/50 shadow-md hover:bg-background/90 z-50"
+          className={`absolute ${buttonPositionClass} bg-background/80 backdrop-blur-sm border border-border/50 shadow-md hover:bg-background/90 z-50`}
           aria-label={t('select_date')}
         >
           <Calendar className="h-5 w-5" />
