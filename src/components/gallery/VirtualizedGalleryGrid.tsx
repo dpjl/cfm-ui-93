@@ -28,7 +28,7 @@ interface VirtualizedGalleryGridProps {
  * A virtualized grid component that efficiently renders large collections of media items
  * With improved dimension calculations to prevent gaps
  */
-const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
+const VirtualizedGalleryGrid = forwardRef<FixedSizeGrid, VirtualizedGalleryGridProps>(({
   mediaIds,
   selectedIds,
   onSelectId,
@@ -46,8 +46,10 @@ const VirtualizedGalleryGrid = forwardRef<any, VirtualizedGalleryGridProps>(({
     scrollPositionRef
   } = useGalleryGrid();
   
-  // Combiner la référence interne avec la référence passée
-  const gridRef = ref || internalGridRef;
+  // Combiner la référence interne avec la référence passée en utilisant le hook useMemo pour éviter des calculs inutiles
+  const gridRef = useMemo(() => {
+    return ref || internalGridRef;
+  }, [ref, internalGridRef]);
   
   // Use hook for tracking media changes to optimize rendering
   useGalleryMediaTracking(mediaIds, gridRef);
