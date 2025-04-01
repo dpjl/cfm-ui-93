@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { getMediaUrl } from '@/api/imageApi';
 import { useToast } from '@/components/ui/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -20,9 +20,6 @@ export function useMediaOperations(
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { getCachedMediaInfo, setCachedMediaInfo } = useMediaCache();
-  
-  // État qui va stocker le côté à supprimer
-  const [sideToDelete, setSideToDelete] = useState<'left' | 'right'>('left');
   
   // Download handler
   const handleDownloadMedia = useCallback(async (id: string, position: 'source' | 'destination'): Promise<void> => {
@@ -110,19 +107,16 @@ export function useMediaOperations(
   }, [queryClient, toast]);
   
   const handleDeleteSelected = useCallback((side: 'left' | 'right') => {
-    // Enregistre le côté à supprimer pour être utilisé lors de la confirmation
-    setSideToDelete(side);
     setDeleteDialogOpen(true);
   }, [setDeleteDialogOpen]);
   
   const handleDelete = useCallback(() => {
-    // Utilise sideToDelete au lieu de activeSide
-    if (sideToDelete === 'left' && selectedIdsLeft.length > 0) {
+    if (activeSide === 'left' && selectedIdsLeft.length > 0) {
       deleteMutation.mutate({ ids: selectedIdsLeft, directory: 'source' });
-    } else if (sideToDelete === 'right' && selectedIdsRight.length > 0) {
+    } else if (activeSide === 'right' && selectedIdsRight.length > 0) {
       deleteMutation.mutate({ ids: selectedIdsRight, directory: 'destination' });
     }
-  }, [sideToDelete, selectedIdsLeft, selectedIdsRight, deleteMutation]);
+  }, [activeSide, selectedIdsLeft, selectedIdsRight, deleteMutation]);
   
   return {
     // Mutation
