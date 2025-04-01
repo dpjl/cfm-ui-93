@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/drawer';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
-import { useIsMobile } from '@/hooks/use-media-query';
 
 interface DateSelectorProps {
   years: number[];
@@ -28,7 +27,6 @@ const DateSelector: React.FC<DateSelectorProps> = ({
   const { t } = useLanguage();
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   const handleSelectYear = useCallback((year: number) => {
     setSelectedYear(year);
@@ -55,21 +53,16 @@ const DateSelector: React.FC<DateSelectorProps> = ({
     return monthNames[month - 1] || '';
   };
 
-  // Classe de positionnement dynamique basée sur le type d'appareil
-  const buttonPositionClass = isMobile
-    ? "fixed bottom-16 right-3 z-[100]" // Position fixe plus haute sur mobile avec z-index élevé
-    : "absolute bottom-2 right-2 z-50"; // Position originale sur desktop
-
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
         <Button 
-          variant="outline" 
+          variant="ghost" 
           size="icon" 
-          className={`${buttonPositionClass} bg-background/90 backdrop-blur-sm border border-primary/30 shadow-md hover:bg-background/95 transition-all duration-300`}
+          className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm border border-border/50 shadow-md hover:bg-background/90 z-50"
           aria-label={t('select_date')}
         >
-          <Calendar className={`h-5 w-5 ${isMobile ? 'text-primary' : ''}`} />
+          <Calendar className="h-5 w-5" />
         </Button>
       </DrawerTrigger>
       <DrawerContent className="max-h-[85vh]">

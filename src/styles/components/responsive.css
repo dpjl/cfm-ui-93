@@ -1,3 +1,4 @@
+
 /* Mobile optimization styles */
 @layer components {
   /* Gallery specific responsive styles */
@@ -56,12 +57,6 @@
     [data-sidebar="group-content"] [data-radix-slider-thumb] {
       @apply h-6 w-6;
       touch-action: manipulation;
-    }
-    
-    /* Date selector button styles for mobile */
-    .date-selector-button-mobile {
-      @apply shadow-lg !important;
-      z-index: 9999 !important;
     }
   }
   
