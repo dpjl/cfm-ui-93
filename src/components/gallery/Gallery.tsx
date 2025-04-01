@@ -13,6 +13,8 @@ import { useGalleryMediaHandler } from '@/hooks/use-gallery-media-handler';
 import MediaInfoPanel from '../media/MediaInfoPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { MediaItem, GalleryViewMode } from '@/types/gallery';
+import DateSelector from './DateSelector';
+import { useMediaDates, MediaDateResponse } from '@/hooks/use-media-dates';
 
 interface GalleryProps {
   title: string;
@@ -32,6 +34,8 @@ interface GalleryProps {
   gap?: number;
   mobileViewMode?: GalleryViewMode;
   onToggleFullView?: () => void;
+  // Nouvelles props pour les dates
+  mediaDates?: string[];
 }
 
 const Gallery: React.FC<GalleryProps> = ({
@@ -51,12 +55,15 @@ const Gallery: React.FC<GalleryProps> = ({
   onToggleSidebar,
   gap = 8,
   mobileViewMode,
-  onToggleFullView
+  onToggleFullView,
+  // Nouvelles props pour les dates
+  mediaDates = []
 }) => {
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<any>(null);
   
   const selection = useGallerySelection({
     mediaIds,
@@ -74,6 +81,14 @@ const Gallery: React.FC<GalleryProps> = ({
     position
   );
 
+  // Adapter les données pour notre hook useMediaDates
+  const mediaDateResponse: MediaDateResponse = {
+    ids: mediaIds,
+    dates: mediaDates
+  };
+  
+  const { idToDateMap, dateToIdsMap, yearMonthToIdsMap, years, yearMonths } = useMediaDates(mediaDateResponse);
+
   const updateMediaInfo = useCallback((id: string, info: DetailedMediaInfo | null) => {
     setMediaInfoMap(prev => {
       const newMap = new Map(prev);
@@ -81,6 +96,22 @@ const Gallery: React.FC<GalleryProps> = ({
       return newMap;
     });
   }, []);
+  
+  // Fonction pour faire défiler jusqu'à une période
+  const scrollToYearMonth = useCallback((yearMonth: string) => {
+    const targetIds = yearMonthToIdsMap.get(yearMonth);
+    if (targetIds && targetIds.length > 0 && gridRef.current) {
+      // Trouver l'index du premier ID dans la liste complète
+      const targetIndex = mediaIds.indexOf(targetIds[0]);
+      if (targetIndex !== -1) {
+        // Faire défiler la galerie virtuelle à cet index
+        gridRef.current.scrollToItem({
+          align: 'start',
+          rowIndex: Math.floor(targetIndex / columnsCount)
+        });
+      }
+    }
+  }, [yearMonthToIdsMap, mediaIds, columnsCount]);
 
   const shouldShowInfoPanel = selectedIds.length > 0;
   
@@ -114,6 +145,8 @@ const Gallery: React.FC<GalleryProps> = ({
     }
     return false;
   };
+  
+  const showDateSelector = yearMonths.length > 0 && mediaIds.length > 0;
   
   return (
     <div className="flex flex-col h-full relative" ref={containerRef}>
@@ -151,6 +184,7 @@ const Gallery: React.FC<GalleryProps> = ({
           <GalleryEmptyState />
         ) : (
           <VirtualizedGalleryGrid
+            ref={gridRef} // Ajout d'une référence vers la grille
             mediaIds={mediaIds}
             selectedIds={selectedIds}
             onSelectId={selection.handleSelectItem}
@@ -159,6 +193,16 @@ const Gallery: React.FC<GalleryProps> = ({
             updateMediaInfo={updateMediaInfo}
             position={position}
             gap={gap}
+          />
+        )}
+        
+        {/* Ajout du sélecteur de date */}
+        {showDateSelector && (
+          <DateSelector
+            years={years}
+            yearMonths={yearMonths}
+            onSelectYearMonth={scrollToYearMonth}
+            position={position}
           />
         )}
       </div>
