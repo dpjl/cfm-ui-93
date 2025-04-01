@@ -1,5 +1,5 @@
 
-import React, { memo, useMemo, forwardRef, useRef } from 'react';
+import React, { memo, useMemo } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -21,14 +21,14 @@ interface VirtualizedGalleryGridProps {
   showDates?: boolean;
   updateMediaInfo?: (id: string, info: DetailedMediaInfo) => void;
   position: 'source' | 'destination';
-  gap?: number;
+  gap?: number; // Ajout du paramètre gap
 }
 
 /**
  * A virtualized grid component that efficiently renders large collections of media items
  * With improved dimension calculations to prevent gaps
  */
-const VirtualizedGalleryGrid = forwardRef<FixedSizeGrid, VirtualizedGalleryGridProps>(({
+const VirtualizedGalleryGrid = memo(({
   mediaIds,
   selectedIds,
   onSelectId,
@@ -37,43 +37,14 @@ const VirtualizedGalleryGrid = forwardRef<FixedSizeGrid, VirtualizedGalleryGridP
   showDates = false,
   updateMediaInfo,
   position = 'source',
-  gap = 8
-}, ref) => {
+  gap = 8 // Valeur par défaut
+}: VirtualizedGalleryGridProps) => {
   // Use custom hook for grid management
   const {
-    gridRef: internalGridRef,
+    gridRef,
     gridKey,
     scrollPositionRef
   } = useGalleryGrid();
-  
-  // Create a stable ref object that combines the forwarded ref and internal ref
-  const combinedRef = useRef<FixedSizeGrid | null>(null);
-  
-  // Update the combined ref whenever either ref changes
-  const gridRef = useMemo(() => {
-    return {
-      get current() {
-        return combinedRef.current;
-      },
-      set current(value) {
-        combinedRef.current = value;
-        
-        // Update the forwarded ref if it's a function
-        if (typeof ref === 'function') {
-          ref(value);
-        }
-        // Update the forwarded ref if it's an object
-        else if (ref && 'current' in ref) {
-          ref.current = value;
-        }
-        
-        // Update the internal ref
-        if (internalGridRef && 'current' in internalGridRef) {
-          internalGridRef.current = value;
-        }
-      }
-    };
-  }, [ref, internalGridRef]);
   
   // Use hook for tracking media changes to optimize rendering
   useGalleryMediaTracking(mediaIds, gridRef);
