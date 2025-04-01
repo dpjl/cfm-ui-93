@@ -59,7 +59,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
         <Button 
           variant="ghost" 
           size="icon" 
-          className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm border border-border/50 shadow-md hover:bg-background/90 z-10"
+          className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm border border-border/50 shadow-md hover:bg-background/90 z-50"
           aria-label={t('select_date')}
         >
           <Calendar className="h-5 w-5" />

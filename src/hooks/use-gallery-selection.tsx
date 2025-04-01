@@ -24,8 +24,21 @@ export function useGallerySelection({
   
   // Handle selecting an item with potential range selection
   const handleSelectItem = useCallback((id: string, extendSelection: boolean = false) => {
-    onSelectId(id);
-  }, [onSelectId]);
+    if (selectionMode === 'single' && !extendSelection) {
+      // En mode mono-sélection, on désélectionne tous les autres éléments d'abord
+      selectedIds.forEach(selectedId => {
+        if (selectedId !== id && selectedIds.includes(selectedId)) {
+          onSelectId(selectedId); // Désélectionner ce média
+        }
+      });
+      
+      // Ensuite on sélectionne le nouvel élément (ou on le désélectionne s'il était déjà sélectionné)
+      onSelectId(id);
+    } else {
+      // En mode multi-sélection, on toggle simplement la sélection
+      onSelectId(id);
+    }
+  }, [onSelectId, selectionMode, selectedIds]);
 
   // Handle select all functionality
   const handleSelectAll = useCallback(() => {
