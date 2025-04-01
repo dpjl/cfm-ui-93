@@ -83,28 +83,9 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   const handlePreviewItemLeft = (id: string) => console.log(`Previewing item ${id} in source`);
   const handlePreviewItemRight = (id: string) => console.log(`Previewing item ${id} in destination`);
   
-  // Separate handlers for each gallery's delete function
-  const handleDeleteLeft = () => {
-    setDeleteDialogOpen(true);
-    // Force activeSide to be 'left' when deleting from left gallery
-    if (activeSide !== 'left') {
-      // On simule un clic sur la galerie gauche
-      handleDeleteSelected('left');
-    } else {
-      handleDeleteSelected('left');
-    }
-  };
-  
-  const handleDeleteRight = () => {
-    setDeleteDialogOpen(true);
-    // Force activeSide to be 'right' when deleting from right gallery
-    if (activeSide !== 'right') {
-      // On simule un clic sur la galerie droite
-      handleDeleteSelected('right');
-    } else {
-      handleDeleteSelected('right');
-    }
-  };
+  // Simplified handlers for deletion
+  const handleDeleteLeft = () => handleDeleteSelected('left');
+  const handleDeleteRight = () => handleDeleteSelected('right');
 
   // Column change handlers
   const handleLeftColumnsChange = (count: number) => {

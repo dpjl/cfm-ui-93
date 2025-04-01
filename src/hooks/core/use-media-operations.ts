@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { getMediaUrl } from '@/api/imageApi';
 import { useToast } from '@/components/ui/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -20,6 +20,9 @@ export function useMediaOperations(
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { getCachedMediaInfo, setCachedMediaInfo } = useMediaCache();
+  
+  // État pour stocker la galerie à supprimer (indépendamment de activeSide)
+  const [galleryToDelete, setGalleryToDelete] = useState<'left' | 'right'>('left');
   
   // Download handler
   const handleDownloadMedia = useCallback(async (id: string, position: 'source' | 'destination'): Promise<void> => {
@@ -70,9 +73,10 @@ export function useMediaOperations(
       deleteImages(ids, directory),
     onSuccess: (_, { directory }) => {
       // Récupération des IDs correspondants à la galerie active
-      const activeSelectedIds = directory === 'source' ? selectedIdsLeft : selectedIdsRight;
+      const selectedIds = directory === 'source' ? selectedIdsLeft : selectedIdsRight;
+      
       toast({
-        title: `${activeSelectedIds.length} ${activeSelectedIds.length === 1 ? 'media' : 'media files'} deleted`,
+        title: `${selectedIds.length} ${selectedIds.length === 1 ? 'media' : 'media files'} deleted`,
         description: "The selected media files have been moved to the trash.",
       });
       
@@ -106,18 +110,23 @@ export function useMediaOperations(
     queryClient.invalidateQueries({ queryKey: ['mediaIds'] });
   }, [queryClient, toast]);
   
+  // Cette fonction est appelée quand on clique sur le bouton supprimer dans l'UI
   const handleDeleteSelected = useCallback((side: 'left' | 'right') => {
+    // Sauvegarde du côté à supprimer
+    setGalleryToDelete(side);
+    // Ouvrir le dialogue de confirmation
     setDeleteDialogOpen(true);
-  }, [setDeleteDialogOpen]);
+  }, [setDeleteDialogOpen, setGalleryToDelete]);
   
+  // Cette fonction est appelée quand on confirme la suppression dans le dialogue
   const handleDelete = useCallback(() => {
-    // Utiliser activeSide pour décider quelle galerie est concernée
-    if (activeSide === 'left' && selectedIdsLeft.length > 0) {
+    // Utiliser galleryToDelete au lieu de activeSide
+    if (galleryToDelete === 'left' && selectedIdsLeft.length > 0) {
       deleteMutation.mutate({ ids: selectedIdsLeft, directory: 'source' });
-    } else if (activeSide === 'right' && selectedIdsRight.length > 0) {
+    } else if (galleryToDelete === 'right' && selectedIdsRight.length > 0) {
       deleteMutation.mutate({ ids: selectedIdsRight, directory: 'destination' });
     }
-  }, [activeSide, selectedIdsLeft, selectedIdsRight, deleteMutation]);
+  }, [galleryToDelete, selectedIdsLeft, selectedIdsRight, deleteMutation]);
   
   return {
     // Mutation
