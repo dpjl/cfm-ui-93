@@ -2,12 +2,10 @@
 import React, { useState, useCallback } from 'react';
 import { Calendar, ChevronLeft } from 'lucide-react';
 import { 
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 
@@ -54,32 +52,37 @@ const DateSelector: React.FC<DateSelectorProps> = ({
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen}>
-      <DrawerTrigger asChild>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
         <Button 
           variant="ghost" 
           size="icon" 
-          className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm border border-border/50 shadow-md hover:bg-background/90 z-[999] pointer-events-auto"
+          className="fixed bottom-2 right-2 bg-background/80 backdrop-blur-sm border border-border/50 shadow-md hover:bg-background/90 z-[999] pointer-events-auto"
           aria-label={t('select_date')}
-          style={{ position: 'absolute', zIndex: 999 }}
         >
           <Calendar className="h-5 w-5" />
         </Button>
-      </DrawerTrigger>
-      <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader>
-          <DrawerTitle className="flex items-center gap-2">
+      </PopoverTrigger>
+      <PopoverContent 
+        className="w-[280px] p-0 z-[999]" 
+        align="end" 
+        sideOffset={16}
+      >
+        <div className="p-4 border-b">
+          <div className="flex items-center gap-2">
             {selectedYear !== null && (
               <Button variant="ghost" size="sm" onClick={handleBackToYears} className="p-1">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
             )}
-            {selectedYear !== null
-              ? `${selectedYear} - ${t('select_date')}`
-              : t('select_date')}
-          </DrawerTitle>
-        </DrawerHeader>
-        <div className="p-4 overflow-y-auto max-h-[70vh]">
+            <h3 className="font-medium">
+              {selectedYear !== null
+                ? `${selectedYear} - ${t('select_date')}`
+                : t('select_date')}
+            </h3>
+          </div>
+        </div>
+        <div className="p-4 max-h-[60vh] overflow-y-auto">
           {selectedYear === null ? (
             <div className="grid grid-cols-3 gap-2">
               {years.map(year => (
@@ -108,8 +111,8 @@ const DateSelector: React.FC<DateSelectorProps> = ({
             </div>
           )}
         </div>
-      </DrawerContent>
-    </Drawer>
+      </PopoverContent>
+    </Popover>
   );
 };
 
