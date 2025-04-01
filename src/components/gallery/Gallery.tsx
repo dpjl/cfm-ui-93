@@ -134,17 +134,19 @@ const Gallery: React.FC<GalleryProps> = ({
       
       <div className="flex-1 overflow-hidden relative scrollbar-vertical">
         {shouldShowInfoPanel && (
-          <div className="absolute top-2 left-0 right-0 z-10 flex justify-center">
-            <MediaInfoPanel
-              selectedIds={selectedIds}
-              onOpenPreview={preview.handleOpenPreview}
-              onDeleteSelected={onDeleteSelected}
-              onDownloadSelected={mediaHandler.handleDownloadSelected}
-              mediaInfoMap={mediaInfoMap}
-              selectionMode={selection.selectionMode}
-              position={position}
-              onClose={handleCloseInfoPanel}
-            />
+          <div className="absolute top-2 left-0 right-0 z-[60] flex justify-center pointer-events-none">
+            <div className="pointer-events-auto">
+              <MediaInfoPanel
+                selectedIds={selectedIds}
+                onOpenPreview={preview.handleOpenPreview}
+                onDeleteSelected={onDeleteSelected}
+                onDownloadSelected={mediaHandler.handleDownloadSelected}
+                mediaInfoMap={mediaInfoMap}
+                selectionMode={selection.selectionMode}
+                position={position}
+                onClose={handleCloseInfoPanel}
+              />
+            </div>
           </div>
         )}
         

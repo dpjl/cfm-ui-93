@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Calendar, ChevronLeft } from 'lucide-react';
 import { 
@@ -31,9 +30,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
   const timeoutRef = useRef<number | null>(null);
   const galleryRef = useRef<HTMLElement | null>(null);
 
-  // Find parent gallery element for scroll listening
   useEffect(() => {
-    // Find closest gallery container to attach scroll listener
     const findGalleryContainer = () => {
       let element = document.activeElement;
       while (element && !element.classList.contains('gallery-container')) {
@@ -50,7 +47,6 @@ const DateSelector: React.FC<DateSelectorProps> = ({
     };
   }, []);
 
-  // Hide button after inactivity
   const hideAfterInactivity = useCallback(() => {
     if (timeoutRef.current) {
       window.clearTimeout(timeoutRef.current);
@@ -58,7 +54,6 @@ const DateSelector: React.FC<DateSelectorProps> = ({
     
     setIsVisible(true);
     
-    // Auto-hide after 3 seconds if drawer is not open
     if (!isOpen) {
       timeoutRef.current = window.setTimeout(() => {
         setIsVisible(false);
@@ -66,21 +61,17 @@ const DateSelector: React.FC<DateSelectorProps> = ({
     }
   }, [isOpen]);
 
-  // Setup scroll listener and initial timeout
   useEffect(() => {
-    // Show on scroll
     const handleScroll = () => {
       setIsVisible(true);
       hideAfterInactivity();
     };
 
-    // Show on mouse movement
     const handleMouseMove = () => {
       setIsVisible(true);
       hideAfterInactivity();
     };
 
-    // Add event listeners
     document.addEventListener('mousemove', handleMouseMove);
     
     if (galleryRef.current) {
@@ -89,7 +80,6 @@ const DateSelector: React.FC<DateSelectorProps> = ({
     
     window.addEventListener('scroll', handleScroll, { passive: true });
     
-    // Initialize timeout
     hideAfterInactivity();
 
     return () => {
@@ -106,7 +96,6 @@ const DateSelector: React.FC<DateSelectorProps> = ({
     };
   }, [hideAfterInactivity]);
 
-  // Reset visibility and timeout when drawer opens/closes
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
@@ -144,7 +133,6 @@ const DateSelector: React.FC<DateSelectorProps> = ({
     return monthNames[month - 1] || '';
   };
 
-  // Determine button position class based on gallery position
   const buttonPositionClass = position === 'source' 
     ? "top-2 left-2" 
     : "top-2 right-2";
