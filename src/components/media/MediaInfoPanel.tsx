@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { X, Eye, Trash, Download } from 'lucide-react';
@@ -42,6 +43,11 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
   const displayInfo = mediaInfoMap.get(displayId) || mediaInfo;
   
   const isMultiSelection = selectedIds.length > 1;
+
+  // Fonction pour gérer la suppression selon la position du panneau
+  const handleDeleteClick = () => {
+    onDeleteSelected();
+  };
 
   return (
     <div className="w-full p-1 max-w-full pointer-events-auto">
@@ -119,7 +125,7 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
           <Button 
             variant="outline" 
             size="icon"
-            onClick={onDeleteSelected}
+            onClick={handleDeleteClick}
             className="h-7 w-7"
             title="Delete"
           >

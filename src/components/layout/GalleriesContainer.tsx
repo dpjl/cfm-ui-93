@@ -83,12 +83,27 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
   const handlePreviewItemLeft = (id: string) => console.log(`Previewing item ${id} in source`);
   const handlePreviewItemRight = (id: string) => console.log(`Previewing item ${id} in destination`);
   
-  // Restore the handleConfirmDelete function to fix the TypeScript errors
-  const handleConfirmDelete = (side: 'left' | 'right') => () => handleDeleteSelected(side);
+  // Separate handlers for each gallery's delete function
+  const handleDeleteLeft = () => {
+    setDeleteDialogOpen(true);
+    // Force activeSide to be 'left' when deleting from left gallery
+    if (activeSide !== 'left') {
+      // On simule un clic sur la galerie gauche
+      handleDeleteSelected('left');
+    } else {
+      handleDeleteSelected('left');
+    }
+  };
   
-  // Function for executing the actual delete operation
-  const executeDelete = () => {
-    handleDelete();
+  const handleDeleteRight = () => {
+    setDeleteDialogOpen(true);
+    // Force activeSide to be 'right' when deleting from right gallery
+    if (activeSide !== 'right') {
+      // On simule un clic sur la galerie droite
+      handleDeleteSelected('right');
+    } else {
+      handleDeleteSelected('right');
+    }
   };
 
   // Column change handlers
@@ -136,7 +151,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
       columnsCount={columnsCountLeft}
       viewMode={mobileViewMode === 'both' ? 'split' : 'single'}
       onPreviewItem={handlePreviewItemLeft}
-      onDeleteSelected={handleConfirmDelete('left')}
+      onDeleteSelected={handleDeleteLeft}
       position="source"
       filter={leftFilter}
       onToggleSidebar={onToggleLeftPanel}
@@ -158,7 +173,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
       columnsCount={columnsCountRight}
       viewMode={mobileViewMode === 'both' ? 'split' : 'single'}
       onPreviewItem={handlePreviewItemRight}
-      onDeleteSelected={handleConfirmDelete('right')}
+      onDeleteSelected={handleDeleteRight}
       position="destination"
       filter={rightFilter}
       onToggleSidebar={onToggleRightPanel}
@@ -179,7 +194,7 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        onConfirm={executeDelete}
+        onConfirm={handleDelete}
         selectedIds={activeSide === 'left' ? selectedIdsLeft : selectedIdsRight}
         onCancel={() => setDeleteDialogOpen(false)}
         isPending={deleteMutation.isPending}

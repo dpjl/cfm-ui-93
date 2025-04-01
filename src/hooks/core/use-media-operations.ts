@@ -111,6 +111,7 @@ export function useMediaOperations(
   }, [setDeleteDialogOpen]);
   
   const handleDelete = useCallback(() => {
+    // Utiliser activeSide pour décider quelle galerie est concernée
     if (activeSide === 'left' && selectedIdsLeft.length > 0) {
       deleteMutation.mutate({ ids: selectedIdsLeft, directory: 'source' });
     } else if (activeSide === 'right' && selectedIdsRight.length > 0) {
