@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import VirtualizedGalleryGrid from './VirtualizedGalleryGrid';
@@ -134,7 +133,7 @@ const Gallery: React.FC<GalleryProps> = ({
       
       <div className="flex-1 overflow-hidden relative scrollbar-vertical">
         {shouldShowInfoPanel && (
-          <div className="absolute top-2 left-0 right-0 z-10 flex justify-center">
+          <div className="absolute top-2 left-0 right-0 z-[200] flex justify-center pointer-events-none">
             <MediaInfoPanel
               selectedIds={selectedIds}
               onOpenPreview={preview.handleOpenPreview}

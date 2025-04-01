@@ -44,8 +44,8 @@ const MediaInfoPanel: React.FC<MediaInfoPanelProps> = ({
   const isMultiSelection = selectedIds.length > 1;
 
   return (
-    <div className="w-full p-1 max-w-full">
-      <Card className="w-full bg-background/95 backdrop-blur-sm shadow-lg border border-border p-2 rounded-lg max-w-full z-[100]">
+    <div className="w-full p-1 max-w-full pointer-events-auto">
+      <Card className="w-full bg-background/95 backdrop-blur-sm shadow-lg border border-border p-2 rounded-lg max-w-full z-[200]">
         <div className="flex justify-between items-center mb-1">
           <h3 className="text-sm font-medium flex items-center gap-1">
             {isMultiSelection ? (
