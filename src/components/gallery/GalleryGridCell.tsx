@@ -46,7 +46,7 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
         width: `${parseFloat(style.width as string) * data.columnsCount}px`,
         height: '40px', // Fixed height for separators
         zIndex: 10,
-        position: 'sticky',
+        position: 'sticky' as const, // Use TypeScript const assertion to specify the literal type
         top: 0,
         gridColumn: `span ${data.columnsCount}`,
       };
