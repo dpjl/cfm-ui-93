@@ -55,7 +55,7 @@ const GalleriesView: React.FC<GalleriesViewProps> = ({
 
         {/* Gallery Separator - only shown in split view */}
         {viewMode === 'both' && (
-          <Separator orientation="vertical" className="bg-border/60" />
+          <Separator orientation="vertical" className="bg-primary/30 w-[2px]" />
         )}
 
         {/* Right Gallery - always mounted but conditionally visible */}

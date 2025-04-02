@@ -60,7 +60,7 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
   }, [onClose, onNext, onPrevious, hasNext, hasPrevious]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm">
       <div className="absolute top-4 right-4 z-10">
         <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-white/20">
           <X size={24} />
