@@ -86,6 +86,7 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
   }, [mediaListResponse]);
 
   // Créer une structure de données enrichie avec des séparateurs de mois/année
+  // Nouvelle implémentation pour assurer que les séparateurs sont toujours au début d'une ligne
   const enrichedGalleryItems = useMemo(() => {
     if (!mediaListResponse?.mediaIds || !mediaListResponse?.mediaDates) {
       return [];
@@ -94,7 +95,7 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
     const { mediaIds, mediaDates } = mediaListResponse;
     const items: GalleryItem[] = [];
     let currentYearMonth: string | null = null;
-    let actualIndex = 0; // Index réel dans la liste originale de mediaIds
+    let actualIndex = 0; // Index réel dans la liste finale
 
     // Fonction pour formatter le label du mois/année (ex: "Janvier 2023")
     const formatMonthYearLabel = (yearMonth: string): string => {
@@ -106,39 +107,51 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
       return `${monthNames[month - 1]} ${year}`;
     };
 
-    // Parcourir les médias et ajouter des séparateurs aux changements de mois/année
+    // Premier passage : collecte des médias groupés par mois/année
+    const mediaByYearMonth = new Map<string, { id: string, index: number, date: string }[]>();
+    
     for (let i = 0; i < mediaIds.length; i++) {
       const id = mediaIds[i];
       const date = mediaDates[i];
-
+      
       if (date) {
         const [year, month] = date.split('-').map(Number);
         if (!isNaN(year) && !isNaN(month)) {
           const yearMonth = `${year}-${month.toString().padStart(2, '0')}`;
           
-          // Ajouter un séparateur si on change de mois/année
-          if (yearMonth !== currentYearMonth) {
-            currentYearMonth = yearMonth;
-            items.push({
-              type: 'separator',
-              yearMonth,
-              label: formatMonthYearLabel(yearMonth),
-              index: actualIndex
-            });
-            actualIndex++; // Incrémenter l'index réel pour le séparateur
+          if (!mediaByYearMonth.has(yearMonth)) {
+            mediaByYearMonth.set(yearMonth, []);
           }
+          
+          mediaByYearMonth.get(yearMonth)!.push({ id, index: i, date });
         }
       }
-      
-      // Ajouter le média
+    }
+    
+    // Deuxième passage : création de la liste finale avec séparateurs
+    const sortedYearMonths = Array.from(mediaByYearMonth.keys()).sort();
+    
+    for (const yearMonth of sortedYearMonths) {
+      // Ajouter un séparateur pour chaque mois/année
       items.push({
-        type: 'media',
-        id,
-        index: i, // Index original dans mediaIds
-        actualIndex // Index réel tenant compte des séparateurs
+        type: 'separator',
+        yearMonth,
+        label: formatMonthYearLabel(yearMonth),
+        index: actualIndex
       });
+      actualIndex++;
       
-      actualIndex++; // Incrémenter l'index réel
+      // Ajouter tous les médias de ce mois/année
+      const mediaItems = mediaByYearMonth.get(yearMonth)!;
+      for (const { id, index } of mediaItems) {
+        items.push({
+          type: 'media',
+          id,
+          index,          // Index original dans mediaIds
+          actualIndex     // Index réel tenant compte des séparateurs
+        });
+        actualIndex++;
+      }
     }
 
     return items;

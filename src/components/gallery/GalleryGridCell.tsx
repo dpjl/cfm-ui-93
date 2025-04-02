@@ -37,18 +37,27 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
   
   // For separator type, render a separator that spans the entire row
   if (item.type === 'separator') {
-    // Only render the separator in the first column of the row
+    // For separators, we want to render them only once per row and make them span all columns
+    // We'll render them in the first column and make them span the full width
     if (columnIndex === 0) {
       // Create a style that spans all columns
-      const spanningStyle = data.calculateCellStyle(style, columnIndex, true);
+      const spanningStyle = {
+        ...style,
+        width: `${parseFloat(style.width as string) * data.columnsCount}px`,
+        height: '40px', // Fixed height for separators
+        zIndex: 10,
+        position: 'sticky',
+        top: 0,
+        gridColumn: `span ${data.columnsCount}`,
+      };
       
       return (
-        <div style={spanningStyle} className="col-span-full">
+        <div style={spanningStyle} className="separator-row">
           <MonthYearSeparator label={item.label} />
         </div>
       );
     }
-    // Skip rendering separators in other columns
+    // Skip rendering separators in other columns of the same row
     return null;
   }
   
