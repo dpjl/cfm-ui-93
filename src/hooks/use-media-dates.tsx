@@ -125,6 +125,7 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
               label: formatMonthYearLabel(yearMonth),
               index: actualIndex
             });
+            actualIndex++; // Incrémenter l'index réel pour le séparateur
           }
         }
       }
@@ -134,7 +135,7 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
         type: 'media',
         id,
         index: i, // Index original dans mediaIds
-        actualIndex
+        actualIndex // Index réel tenant compte des séparateurs
       });
       
       actualIndex++; // Incrémenter l'index réel
