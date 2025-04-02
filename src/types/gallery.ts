@@ -1,4 +1,3 @@
-
 // Renommer MobileViewMode en GalleryViewMode pour plus de cohérence
 export type GalleryViewMode = 'both' | 'left' | 'right';
 
@@ -21,6 +20,11 @@ export interface MediaListResponse {
   mediaIds: string[];
   mediaDates: string[];
 }
+
+// Nouveau type pour représenter soit un média, soit un séparateur
+export type GalleryItem = 
+  | { type: 'media'; id: string; index: number }
+  | { type: 'separator'; yearMonth: string; label: string; index: number };
 
 // Ensure all translation keys are properly typed
 export type TranslationKey = 

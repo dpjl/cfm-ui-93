@@ -1,13 +1,15 @@
 
 import React, { memo } from 'react';
 import LazyMediaItem from '@/components/LazyMediaItem';
+import MonthYearSeparator from './MonthYearSeparator';
+import { GalleryItem } from '@/types/gallery';
 
 interface GalleryGridCellProps {
   columnIndex: number;
   rowIndex: number;
   style: React.CSSProperties;
   data: {
-    mediaIds: string[];
+    items: GalleryItem[];
     selectedIds: string[];
     onSelectId: (id: string, extendSelection: boolean) => void;
     showDates?: boolean;
@@ -15,12 +17,12 @@ interface GalleryGridCellProps {
     position: 'source' | 'destination';
     columnsCount: number;
     gap: number;
-    calculateCellStyle: (style: React.CSSProperties, columnIndex: number) => React.CSSProperties;
+    calculateCellStyle: (style: React.CSSProperties, columnIndex: number, isSeparator: boolean) => React.CSSProperties;
   };
 }
 
 /**
- * A cell component for the virtualized grid that renders a media item
+ * A cell component for the virtualized grid that renders a media item or separator
  * With improved positioning calculations
  */
 const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGridCellProps) => {
@@ -28,14 +30,34 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
   const index = rowIndex * data.columnsCount + columnIndex;
   
   // Return null for out of bounds indices to avoid errors
-  if (index >= data.mediaIds.length) return null;
+  if (index >= data.items.length) return null;
   
-  // Get the media ID and check if it's selected
-  const id = data.mediaIds[index];
+  // Get the item at this position
+  const item = data.items[index];
+  
+  // For separator type, render a separator that spans the entire row
+  if (item.type === 'separator') {
+    // Only render the separator in the first column of the row
+    if (columnIndex === 0) {
+      // Create a style that spans all columns
+      const spanningStyle = data.calculateCellStyle(style, columnIndex, true);
+      
+      return (
+        <div style={spanningStyle} className="col-span-full">
+          <MonthYearSeparator label={item.label} />
+        </div>
+      );
+    }
+    // Skip rendering separators in other columns
+    return null;
+  }
+  
+  // For media type, render the media item
+  const id = item.id;
   const isSelected = data.selectedIds.includes(id);
   
   // Calculate the cell style with proper gap adjustments
-  const adjustedStyle = data.calculateCellStyle(style, columnIndex);
+  const adjustedStyle = data.calculateCellStyle(style, columnIndex, false);
   
   return (
     <div style={adjustedStyle}>
@@ -44,7 +66,7 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
         id={id}
         selected={isSelected}
         onSelect={data.onSelectId}
-        index={index}
+        index={item.index}
         showDates={data.showDates}
         updateMediaInfo={data.updateMediaInfo}
         position={data.position}

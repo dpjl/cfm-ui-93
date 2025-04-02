@@ -1,5 +1,5 @@
 
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -8,9 +8,8 @@ import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 import GalleryGridCell from './GalleryGridCell';
 import DateSelector from './DateSelector';
 import { useMediaDates } from '@/hooks/use-media-dates';
-import { MediaListResponse } from '@/types/gallery';
+import { MediaListResponse, GalleryItem } from '@/types/gallery';
 import { 
-  calculateRowCount, 
   calculateGridParameters,
   getScrollbarWidth
 } from '@/utils/grid-utils';
@@ -24,12 +23,12 @@ interface VirtualizedGalleryGridProps {
   showDates?: boolean;
   updateMediaInfo?: (id: string, info: DetailedMediaInfo) => void;
   position: 'source' | 'destination';
-  gap?: number; // Ajout du paramètre gap
+  gap?: number;
 }
 
 /**
  * A virtualized grid component that efficiently renders large collections of media items
- * With improved dimension calculations to prevent gaps
+ * With improved dimension calculations to prevent gaps and support for month/year separators
  */
 const VirtualizedGalleryGrid = memo(({
   mediaResponse,
@@ -40,7 +39,7 @@ const VirtualizedGalleryGrid = memo(({
   showDates = false,
   updateMediaInfo,
   position = 'source',
-  gap = 8 // Valeur par défaut
+  gap = 8
 }: VirtualizedGalleryGridProps) => {
   const mediaIds = mediaResponse?.mediaIds || [];
   
@@ -51,26 +50,61 @@ const VirtualizedGalleryGrid = memo(({
     scrollPositionRef
   } = useGalleryGrid();
   
-  // Use hook for date navigation
-  const { dateIndex, scrollToYearMonth } = useMediaDates(mediaResponse);
+  // Use hook for date navigation and get enriched gallery items
+  const { 
+    dateIndex, 
+    scrollToYearMonth, 
+    enrichedGalleryItems 
+  } = useMediaDates(mediaResponse);
   
   // Use hook for tracking media changes to optimize rendering
   useGalleryMediaTracking(mediaResponse, gridRef);
-  
-  // Calculate the number of rows based on media and columns
-  const rowCount = calculateRowCount(mediaIds.length, columnsCount);
   
   // Get the scrollbar width
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
   
   // Handle year-month selection
-  const handleSelectYearMonth = (year: number, month: number) => {
+  const handleSelectYearMonth = useCallback((year: number, month: number) => {
     scrollToYearMonth(year, month, gridRef);
-  };
+  }, [scrollToYearMonth, gridRef]);
+  
+  // Calculate the number of rows based on enriched items and columns
+  const rowCount = useMemo(() => {
+    return Math.ceil(enrichedGalleryItems.length / columnsCount);
+  }, [enrichedGalleryItems.length, columnsCount]);
+  
+  // Enhanced cell style calculator that handles separators
+  const calculateCellStyle = useCallback((
+    originalStyle: React.CSSProperties, 
+    columnIndex: number,
+    isSeparator: boolean
+  ): React.CSSProperties => {
+    if (isSeparator) {
+      // Style for separator that spans all columns
+      return {
+        ...originalStyle,
+        width: `${parseFloat(originalStyle.width as string) * columnsCount}px`,
+        height: '40px', // Hauteur fixe pour les séparateurs
+        gridColumn: `span ${columnsCount}`,
+        paddingRight: 0,
+        paddingBottom: 0,
+        zIndex: 10
+      };
+    }
+    
+    // Regular cell style with gap
+    return {
+      ...originalStyle,
+      width: `${parseFloat(originalStyle.width as string) - gap}px`,
+      height: `${parseFloat(originalStyle.height as string) - gap}px`,
+      paddingRight: gap,
+      paddingBottom: gap,
+    };
+  }, [columnsCount, gap]);
   
   // Memoize the item data to prevent unnecessary renders
   const itemData = useMemo(() => ({
-    mediaIds,
+    items: enrichedGalleryItems,
     selectedIds,
     onSelectId,
     showDates,
@@ -78,17 +112,8 @@ const VirtualizedGalleryGrid = memo(({
     position,
     columnsCount,
     gap,
-    // Simplified cell style calculator - now uniform for all columns
-    calculateCellStyle: (originalStyle: React.CSSProperties) => {
-      return {
-        ...originalStyle,
-        width: `${parseFloat(originalStyle.width as string) - gap}px`,
-        height: `${parseFloat(originalStyle.height as string) - gap}px`,
-        paddingRight: gap,
-        paddingBottom: gap,
-      };
-    }
-  }), [mediaIds, selectedIds, onSelectId, showDates, updateMediaInfo, position, columnsCount, gap]);
+    calculateCellStyle
+  }), [enrichedGalleryItems, selectedIds, onSelectId, showDates, updateMediaInfo, position, columnsCount, gap, calculateCellStyle]);
   
   return (
     <div className="w-full h-full p-2 gallery-container relative">
@@ -97,11 +122,10 @@ const VirtualizedGalleryGrid = memo(({
           // Use the enhanced calculation function for all grid parameters
           const { 
             itemWidth, 
-            itemHeight, 
-            leftoverSpace 
+            itemHeight
           } = calculateGridParameters(width, columnsCount, gap, showDates);
           
-          // Calculate the actual column width including gap distribution
+          // Calculate the actual column width including gap
           const columnWidth = itemWidth + gap;
           
           // Apply padding to ensure no overlap with scrollbar
@@ -121,7 +145,15 @@ const VirtualizedGalleryGrid = memo(({
               overscanColumnCount={2}
               itemKey={({ columnIndex, rowIndex }) => {
                 const index = rowIndex * columnsCount + columnIndex;
-                return index < mediaIds.length ? mediaIds[index] : `empty-${rowIndex}-${columnIndex}`;
+                if (index >= enrichedGalleryItems.length) {
+                  return `empty-${rowIndex}-${columnIndex}`;
+                }
+                
+                const item = enrichedGalleryItems[index];
+                if (item.type === 'separator') {
+                  return `separator-${item.yearMonth}`;
+                }
+                return `media-${item.id}`;
               }}
               onScroll={({ scrollTop }) => {
                 scrollPositionRef.current = scrollTop;

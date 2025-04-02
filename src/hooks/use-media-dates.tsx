@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useMemo } from 'react';
-import { MediaListResponse } from '@/types/gallery';
+import { MediaListResponse, GalleryItem } from '@/types/gallery';
 
 interface MediaDateIndex {
   // Maps ID to date
@@ -85,21 +85,104 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
     };
   }, [mediaListResponse]);
 
+  // Créer une structure de données enrichie avec des séparateurs de mois/année
+  const enrichedGalleryItems = useMemo(() => {
+    if (!mediaListResponse?.mediaIds || !mediaListResponse?.mediaDates) {
+      return [];
+    }
+
+    const { mediaIds, mediaDates } = mediaListResponse;
+    const items: GalleryItem[] = [];
+    let currentYearMonth: string | null = null;
+    let actualIndex = 0; // Index réel dans la liste originale de mediaIds
+
+    // Fonction pour formatter le label du mois/année (ex: "Janvier 2023")
+    const formatMonthYearLabel = (yearMonth: string): string => {
+      const [year, month] = yearMonth.split('-').map(Number);
+      const monthNames = [
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      ];
+      return `${monthNames[month - 1]} ${year}`;
+    };
+
+    // Parcourir les médias et ajouter des séparateurs aux changements de mois/année
+    for (let i = 0; i < mediaIds.length; i++) {
+      const id = mediaIds[i];
+      const date = mediaDates[i];
+
+      if (date) {
+        const [year, month] = date.split('-').map(Number);
+        if (!isNaN(year) && !isNaN(month)) {
+          const yearMonth = `${year}-${month.toString().padStart(2, '0')}`;
+          
+          // Ajouter un séparateur si on change de mois/année
+          if (yearMonth !== currentYearMonth) {
+            currentYearMonth = yearMonth;
+            items.push({
+              type: 'separator',
+              yearMonth,
+              label: formatMonthYearLabel(yearMonth),
+              index: actualIndex
+            });
+          }
+        }
+      }
+      
+      // Ajouter le média
+      items.push({
+        type: 'media',
+        id,
+        index: i, // Index original dans mediaIds
+        actualIndex
+      });
+      
+      actualIndex++; // Incrémenter l'index réel
+    }
+
+    return items;
+  }, [mediaListResponse]);
+
+  // Index pour accéder rapidement à un séparateur par yearMonth
+  const separatorIndices = useMemo(() => {
+    const indices = new Map<string, number>();
+    enrichedGalleryItems.forEach((item, index) => {
+      if (item.type === 'separator') {
+        indices.set(item.yearMonth, index);
+      }
+    });
+    return indices;
+  }, [enrichedGalleryItems]);
+
   // Fonctions pour la navigation par date
   const scrollToYearMonth = useCallback((year: number, month: number, gridRef: React.RefObject<any>) => {
     const yearMonth = `${year}-${month.toString().padStart(2, '0')}`;
-    const index = dateIndex.yearMonthToIndex.get(yearMonth);
     
-    if (index !== undefined && gridRef.current) {
+    // Essayer d'abord avec l'index du séparateur (si disponible)
+    const separatorIndex = separatorIndices.get(yearMonth);
+    if (separatorIndex !== undefined && gridRef.current) {
+      const rowIndex = Math.floor(separatorIndex / gridRef.current.props.columnCount);
       gridRef.current.scrollToItem({
         align: 'start',
-        rowIndex: Math.floor(index / gridRef.current.props.columnCount)
+        rowIndex
       });
       setCurrentYearMonth(yearMonth);
       return true;
     }
+    
+    // Sinon, utiliser l'ancienne méthode avec yearMonthToIndex
+    const mediaIndex = dateIndex.yearMonthToIndex.get(yearMonth);
+    if (mediaIndex !== undefined && gridRef.current) {
+      gridRef.current.scrollToItem({
+        align: 'start',
+        rowIndex: Math.floor(mediaIndex / gridRef.current.props.columnCount)
+      });
+      setCurrentYearMonth(yearMonth);
+      return true;
+    }
+    
     return false;
-  }, [dateIndex]);
+  }, [dateIndex, separatorIndices]);
 
   const getDateForId = useCallback((id: string): string | undefined => {
     return dateIndex.idToDate.get(id);
@@ -110,6 +193,8 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
     currentYearMonth,
     scrollToYearMonth,
     getDateForId,
-    setCurrentYearMonth
+    setCurrentYearMonth,
+    enrichedGalleryItems,
+    separatorIndices
   };
 }
