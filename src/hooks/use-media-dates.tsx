@@ -86,7 +86,6 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
   }, [mediaListResponse]);
 
   // Créer une structure de données enrichie avec des séparateurs de mois/année
-  // Nouvelle implémentation pour assurer que les séparateurs sont toujours au début d'une ligne
   const enrichedGalleryItems = useMemo(() => {
     if (!mediaListResponse?.mediaIds || !mediaListResponse?.mediaDates) {
       return [];
@@ -94,7 +93,6 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
 
     const { mediaIds, mediaDates } = mediaListResponse;
     const items: GalleryItem[] = [];
-    let currentYearMonth: string | null = null;
     let actualIndex = 0; // Index réel dans la liste finale
 
     // Fonction pour formatter le label du mois/année (ex: "Janvier 2023")
@@ -129,7 +127,8 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
     }
     
     // Deuxième passage : création de la liste finale avec séparateurs
-    const sortedYearMonths = Array.from(mediaByYearMonth.keys()).sort();
+    // Utilisation de sort avec comparateur pour trier dans l'ordre chronologique inverse
+    const sortedYearMonths = Array.from(mediaByYearMonth.keys()).sort((a, b) => b.localeCompare(a));
     
     for (const yearMonth of sortedYearMonths) {
       // Ajouter un séparateur pour chaque mois/année

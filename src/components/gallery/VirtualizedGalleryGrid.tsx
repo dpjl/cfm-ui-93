@@ -73,7 +73,7 @@ const VirtualizedGalleryGrid = memo(({
     return Math.ceil(enrichedGalleryItems.length / columnsCount);
   }, [enrichedGalleryItems.length, columnsCount]);
   
-  // Enhanced cell style calculator that handles separators
+  // Enhanced cell style calculator that handles separators correctly
   const calculateCellStyle = useCallback((
     originalStyle: React.CSSProperties, 
     columnIndex: number,
@@ -84,11 +84,13 @@ const VirtualizedGalleryGrid = memo(({
       return {
         ...originalStyle,
         width: `${parseFloat(originalStyle.width as string) * columnsCount}px`,
-        height: '40px', // Hauteur fixe pour les séparateurs
-        gridColumn: `span ${columnsCount}`,
+        height: '36px',  // Hauteur réduite pour les séparateurs
         paddingRight: 0,
         paddingBottom: 0,
-        zIndex: 10
+        zIndex: 10,
+        position: 'sticky' as const,
+        top: 0,
+        gridColumn: `span ${columnsCount}`,
       };
     }
     
@@ -114,6 +116,20 @@ const VirtualizedGalleryGrid = memo(({
     gap,
     calculateCellStyle
   }), [enrichedGalleryItems, selectedIds, onSelectId, showDates, updateMediaInfo, position, columnsCount, gap, calculateCellStyle]);
+  
+  // Memoize the key generator function for better performance
+  const getItemKey = useCallback(({ columnIndex, rowIndex }: { columnIndex: number; rowIndex: number }) => {
+    const index = rowIndex * columnsCount + columnIndex;
+    if (index >= enrichedGalleryItems.length) {
+      return `empty-${rowIndex}-${columnIndex}`;
+    }
+    
+    const item = enrichedGalleryItems[index];
+    if (item.type === 'separator') {
+      return `separator-${item.yearMonth}`;
+    }
+    return `media-${item.id}`;
+  }, [enrichedGalleryItems, columnsCount]);
   
   return (
     <div className="w-full h-full p-2 gallery-container relative">
@@ -143,18 +159,7 @@ const VirtualizedGalleryGrid = memo(({
               itemData={itemData}
               overscanRowCount={5}
               overscanColumnCount={2}
-              itemKey={({ columnIndex, rowIndex }) => {
-                const index = rowIndex * columnsCount + columnIndex;
-                if (index >= enrichedGalleryItems.length) {
-                  return `empty-${rowIndex}-${columnIndex}`;
-                }
-                
-                const item = enrichedGalleryItems[index];
-                if (item.type === 'separator') {
-                  return `separator-${item.yearMonth}`;
-                }
-                return `media-${item.id}`;
-              }}
+              itemKey={getItemKey}
               onScroll={({ scrollTop }) => {
                 scrollPositionRef.current = scrollTop;
               }}
@@ -162,7 +167,7 @@ const VirtualizedGalleryGrid = memo(({
               className="scrollbar-vertical"
               style={{ 
                 overflowX: 'hidden',
-                scrollbarGutter: 'stable' as any // Reserve space for the scrollbar
+                scrollbarGutter: 'stable' as any
               }}
             >
               {GalleryGridCell}
