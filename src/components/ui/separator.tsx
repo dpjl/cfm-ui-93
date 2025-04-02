@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as SeparatorPrimitive from "@radix-ui/react-separator"
 
@@ -18,6 +19,8 @@ const Separator = React.forwardRef<
       className={cn(
         "shrink-0 bg-border",
         orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
+        // Ajout d'un fond plus contrasté pour la séparation verticale
+        orientation === "vertical" && "bg-border/40 dark:bg-border/60",
         className
       )}
       {...props}
