@@ -1,3 +1,4 @@
+
 import React, { memo, useMemo, useCallback } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -12,6 +13,7 @@ import {
   calculateGridParameters,
   getScrollbarWidth
 } from '@/utils/grid-utils';
+import { useGalleryContext } from '@/contexts/GalleryContext';
 
 interface VirtualizedGalleryGridProps {
   mediaResponse: MediaListResponse;
@@ -41,12 +43,18 @@ const VirtualizedGalleryGrid = memo(({
   gap = 8
 }: VirtualizedGalleryGridProps) => {
   const mediaIds = mediaResponse?.mediaIds || [];
+  const { getViewModeType } = useGalleryContext();
+  const viewModeType = getViewModeType(position === 'source' ? 'left' : 'right');
   
   const {
     gridRef,
     gridKey,
-    scrollPositionRef
-  } = useGalleryGrid();
+    handleScroll,
+    handleResize
+  } = useGalleryGrid({
+    position,
+    viewModeType
+  });
   
   const { 
     dateIndex, 
@@ -118,6 +126,11 @@ const VirtualizedGalleryGrid = memo(({
           
           const adjustedWidth = width - scrollbarWidth + 1;
           
+          // Observer les changements de dimensions avec un effet de bord
+          if (width > 0 && height > 0) {
+            handleResize(width, height);
+          }
+          
           return (
             <FixedSizeGrid
               ref={gridRef}
@@ -131,10 +144,7 @@ const VirtualizedGalleryGrid = memo(({
               overscanRowCount={5}
               overscanColumnCount={2}
               itemKey={getItemKey}
-              onScroll={({ scrollTop }) => {
-                scrollPositionRef.current = scrollTop;
-              }}
-              initialScrollTop={scrollPositionRef.current}
+              onScroll={handleScroll}
               className="scrollbar-vertical"
               style={{ 
                 overflowX: 'hidden',

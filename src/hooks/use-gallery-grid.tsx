@@ -1,13 +1,35 @@
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { FixedSizeGrid } from 'react-window';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
-export function useGalleryGrid() {
+// Type pour la position de défilement
+interface ScrollPosition {
+  top: number;
+  left: number;
+}
+
+// Props pour le hook
+interface UseGalleryGridProps {
+  position: 'source' | 'destination';
+  viewModeType: string;
+}
+
+export function useGalleryGrid({ position, viewModeType }: UseGalleryGridProps) {
   const gridRef = useRef<FixedSizeGrid>(null);
   const [gridKey, setGridKey] = useState(0);
   const previousSizeRef = useRef({ width: 0, height: 0 });
-  const scrollPositionRef = useRef(0);
+  
+  // Stocker la position de défilement dans localStorage pour persister entre les sessions
+  // Format de clé: 'scroll-position-{position}-{viewModeType}'
+  const storageKey = `scroll-position-${position}-${viewModeType}`;
+  const [savedScrollPosition, setSavedScrollPosition] = useLocalStorage<ScrollPosition>(
+    storageKey, 
+    { top: 0, left: 0 }
+  );
+
   const lastResetTimeRef = useRef(0);
+  const isRestoringRef = useRef(false);
 
   // Incrémenter la clé de la grille pour forcer le rendu
   const refreshGrid = useCallback(() => {
@@ -23,17 +45,46 @@ export function useGalleryGrid() {
   
   // Sauvegarder la position de défilement actuelle
   const saveScrollPosition = useCallback(() => {
-    if (gridRef.current) {
-      scrollPositionRef.current = gridRef.current.state.scrollTop;
+    if (gridRef.current && !isRestoringRef.current) {
+      const { scrollTop, scrollLeft } = gridRef.current.state;
+      setSavedScrollPosition({ top: scrollTop, left: scrollLeft });
     }
-  }, []);
+  }, [setSavedScrollPosition]);
+  
+  // Gérer le défilement dans la grille
+  const handleScroll = useCallback(({ scrollTop, scrollLeft }: { scrollTop: number, scrollLeft: number }) => {
+    // Ne pas sauvegarder pendant une restauration pour éviter les boucles
+    if (!isRestoringRef.current) {
+      setSavedScrollPosition({ top: scrollTop, left: scrollLeft });
+    }
+  }, [setSavedScrollPosition]);
   
   // Restaurer la position de défilement sauvegardée
   const restoreScrollPosition = useCallback(() => {
-    if (gridRef.current && scrollPositionRef.current > 0) {
-      gridRef.current.scrollTo({ scrollTop: scrollPositionRef.current });
+    if (gridRef.current && savedScrollPosition) {
+      // Marquer que nous sommes en train de restaurer pour éviter de sauvegarder pendant la restauration
+      isRestoringRef.current = true;
+      gridRef.current.scrollTo({ 
+        scrollTop: savedScrollPosition.top,
+        scrollLeft: savedScrollPosition.left
+      });
+      
+      // Remettre le flag à false après la restauration
+      setTimeout(() => {
+        isRestoringRef.current = false;
+      }, 100);
     }
-  }, []);
+  }, [savedScrollPosition]);
+
+  // Appliquer la restauration de la position après l'initialisation complète de la grille
+  useEffect(() => {
+    // Attendre que la grille soit complètement rendue
+    const timer = setTimeout(() => {
+      restoreScrollPosition();
+    }, 200);
+    
+    return () => clearTimeout(timer);
+  }, [restoreScrollPosition, gridKey]);
 
   // Gérer le redimensionnement avec debounce
   const handleResize = useCallback((width: number, height: number) => {
@@ -51,17 +102,13 @@ export function useGalleryGrid() {
       
       // Forcer le rafraîchissement de la grille
       refreshGrid();
-      
-      // Restaurer la position après la mise à jour
-      setTimeout(restoreScrollPosition, 50);
     }
-  }, [saveScrollPosition, restoreScrollPosition, refreshGrid]);
+  }, [saveScrollPosition, refreshGrid]);
 
   return {
     gridRef,
     gridKey,
-    scrollPositionRef,
-    previousSizeRef,
+    handleScroll,
     refreshGrid,
     saveScrollPosition,
     restoreScrollPosition,

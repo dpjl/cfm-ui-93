@@ -3,6 +3,7 @@ import React, { useRef } from 'react';
 import Gallery from '@/components/gallery/Gallery';
 import { useGalleryZoom } from '@/hooks/use-gallery-zoom';
 import { GalleryViewMode, MediaListResponse } from '@/types/gallery';
+import { useGalleryContext } from '@/contexts/GalleryContext';
 
 interface GalleryContentProps {
   mediaResponse: MediaListResponse;
@@ -45,6 +46,7 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
   onToggleFullView
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { getViewModeType } = useGalleryContext();
   
   // Déterminer les limites de colonnes en fonction du mode vue
   const getColumnLimits = () => {
