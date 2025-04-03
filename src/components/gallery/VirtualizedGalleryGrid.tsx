@@ -1,4 +1,3 @@
-
 import React, { memo, useMemo, useCallback } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -43,58 +42,35 @@ const VirtualizedGalleryGrid = memo(({
 }: VirtualizedGalleryGridProps) => {
   const mediaIds = mediaResponse?.mediaIds || [];
   
-  // Use custom hook for grid management
   const {
     gridRef,
     gridKey,
     scrollPositionRef
   } = useGalleryGrid();
   
-  // Use hook for date navigation and get enriched gallery items
   const { 
     dateIndex, 
     scrollToYearMonth, 
     enrichedGalleryItems 
   } = useMediaDates(mediaResponse);
   
-  // Use hook for tracking media changes to optimize rendering
   useGalleryMediaTracking(mediaResponse, gridRef);
   
-  // Get the scrollbar width
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
   
-  // Handle year-month selection
   const handleSelectYearMonth = useCallback((year: number, month: number) => {
     scrollToYearMonth(year, month, gridRef);
   }, [scrollToYearMonth, gridRef]);
   
-  // Calculate the number of rows based on enriched items and columns
   const rowCount = useMemo(() => {
     return Math.ceil(enrichedGalleryItems.length / columnsCount);
   }, [enrichedGalleryItems.length, columnsCount]);
   
-  // Enhanced cell style calculator that handles separators correctly
   const calculateCellStyle = useCallback((
     originalStyle: React.CSSProperties, 
     columnIndex: number,
     isSeparator: boolean
   ): React.CSSProperties => {
-    if (isSeparator) {
-      // Style for separator that spans all columns
-      return {
-        ...originalStyle,
-        width: `${parseFloat(originalStyle.width as string) * columnsCount}px`,
-        height: '36px',  // Hauteur réduite pour les séparateurs
-        paddingRight: 0,
-        paddingBottom: 0,
-        zIndex: 10,
-        position: 'sticky' as const,  // Réintégrer le positionnement sticky
-        top: 0,  // Réintégrer la position top
-        gridColumn: `span ${columnsCount}`,
-      };
-    }
-    
-    // Regular cell style with gap
     return {
       ...originalStyle,
       width: `${parseFloat(originalStyle.width as string) - gap}px`,
@@ -102,9 +78,8 @@ const VirtualizedGalleryGrid = memo(({
       paddingRight: gap,
       paddingBottom: gap,
     };
-  }, [columnsCount, gap]);
+  }, [gap]);
   
-  // Memoize the item data to prevent unnecessary renders
   const itemData = useMemo(() => ({
     items: enrichedGalleryItems,
     selectedIds,
@@ -117,7 +92,6 @@ const VirtualizedGalleryGrid = memo(({
     calculateCellStyle
   }), [enrichedGalleryItems, selectedIds, onSelectId, showDates, updateMediaInfo, position, columnsCount, gap, calculateCellStyle]);
   
-  // Memoize the key generator function for better performance
   const getItemKey = useCallback(({ columnIndex, rowIndex }: { columnIndex: number; rowIndex: number }) => {
     const index = rowIndex * columnsCount + columnIndex;
     if (index >= enrichedGalleryItems.length) {
@@ -135,16 +109,13 @@ const VirtualizedGalleryGrid = memo(({
     <div className="w-full h-full p-2 gallery-container relative">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
         {({ height, width }) => {
-          // Use the enhanced calculation function for all grid parameters
           const { 
             itemWidth, 
             itemHeight
           } = calculateGridParameters(width, columnsCount, gap, showDates);
           
-          // Calculate the actual column width including gap
           const columnWidth = itemWidth + gap;
           
-          // Apply padding to ensure no overlap with scrollbar
           const adjustedWidth = width - scrollbarWidth + 1;
           
           return (
@@ -188,7 +159,6 @@ const VirtualizedGalleryGrid = memo(({
   );
 });
 
-// Set component display name for debugging
 VirtualizedGalleryGrid.displayName = 'VirtualizedGalleryGrid';
 
 export default VirtualizedGalleryGrid;
