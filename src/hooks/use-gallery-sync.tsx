@@ -1,8 +1,9 @@
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useMemo, useEffect } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import { MediaListResponse } from '@/types/gallery';
 import { useMediaDates } from './use-media-dates';
+import { throttle } from 'lodash';
 
 interface UseGallerySyncProps {
   leftGridRef: React.RefObject<FixedSizeGrid>;
@@ -26,6 +27,7 @@ export function useGallerySync({
   
   // Flag pour éviter les boucles infinies de synchronisation
   const isSyncing = useRef<boolean>(false);
+  const lastSyncTime = useRef<number>(0);
   
   // Référence pour stocker les informations de la date actuelle
   const currentMonthRef = useRef<{ year: number; month: number } | null>(null);
@@ -34,98 +36,100 @@ export function useGallerySync({
   const leftDates = useMediaDates(leftMediaResponse);
   const rightDates = useMediaDates(rightMediaResponse);
   
-  // Fonction pour déterminer le mois actuel à partir d'une position de défilement
-  const determineCurrentMonth = useCallback((
-    scrollTop: number, 
-    dateIndex: ReturnType<typeof useMediaDates>['dateIndex'],
-    itemHeight: number,
-    columnsCount: number
-  ) => {
-    // Si pas de données d'années, retourner null
-    if (!dateIndex.years || dateIndex.years.length === 0) {
-      return null;
-    }
-    
-    // Parcourir les années dans l'index de dates
-    for (const year of dateIndex.years) {
-      // Vérifier que monthsByYear contient cette année et que c'est un tableau
-      const months = dateIndex.monthsByYear.get(year);
-      if (!months || !Array.isArray(months)) continue;
-      
-      // Parcourir les mois de cette année
-      for (const month of months) {
-        const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
-        
-        // Calculer l'indice approximatif pour ce mois (basé sur yearMonthToIndex)
-        const monthIndex = dateIndex.yearMonthToIndex.get(monthKey);
-        if (monthIndex === undefined) continue;
-        
-        // Calculer la position approximative de début et de fin
-        const rowIndex = Math.floor(monthIndex / columnsCount);
-        const startPos = rowIndex * itemHeight;
-        
-        // Estimer la fin en fonction du nombre d'éléments dans ce mois
-        // Nous utilisons un calcul approximatif basé sur les indices
-        let nextMonthIndex = Number.MAX_SAFE_INTEGER;
-        
-        // Trouver le prochain mois dans l'ordre chronologique
-        for (const nextYear of dateIndex.years) {
-          const nextMonths = dateIndex.monthsByYear.get(nextYear);
-          if (!nextMonths || !Array.isArray(nextMonths)) continue;
-          
-          for (const nextMonth of nextMonths) {
-            if (nextYear > year || (nextYear === year && nextMonth > month)) {
-              const nextKey = `${nextYear}-${nextMonth.toString().padStart(2, '0')}`;
-              const nextIdx = dateIndex.yearMonthToIndex.get(nextKey);
-              if (nextIdx !== undefined && nextIdx < nextMonthIndex) {
-                nextMonthIndex = nextIdx;
-              }
-            }
-          }
-        }
-        
-        // Calculer le nombre approximatif d'éléments dans ce mois
-        const itemCount = nextMonthIndex !== Number.MAX_SAFE_INTEGER
-          ? nextMonthIndex - monthIndex
-          : 20; // Valeur par défaut raisonnable
-        
-        const endPos = startPos + Math.ceil(itemCount / columnsCount) * itemHeight;
-        
-        // Si la position de défilement est dans ce mois
-        if (scrollTop >= startPos && scrollTop <= endPos) {
-          return { 
-            year, 
-            month, 
-            startPos, 
-            endPos,
-            progress: (scrollTop - startPos) / (endPos - startPos)
-          };
-        }
-      }
-    }
-    
-    return null;
-  }, []);
+  // Mémoriser les structures d'index pour une meilleure performance
+  const leftSeparatorsByYearMonth = useMemo(() => 
+    leftDates?.dateIndex?.separatorsByYearMonth || {}, 
+    [leftDates?.dateIndex?.separatorsByYearMonth]
+  );
   
-  // Fonction pour obtenir la hauteur d'un élément en pixels
+  const rightSeparatorsByYearMonth = useMemo(() => 
+    rightDates?.dateIndex?.separatorsByYearMonth || {}, 
+    [rightDates?.dateIndex?.separatorsByYearMonth]
+  );
+  
+  // Obtenir la hauteur d'un élément en pixels
   const getItemHeight = useCallback((grid: React.RefObject<FixedSizeGrid>) => {
     if (!grid.current) return 0;
     return grid.current.props.rowHeight as number;
   }, []);
   
-  // Fonction pour synchroniser les grilles
-  const syncGrids = useCallback((
+  // Fonction pour déterminer le mois/année à partir d'une position de défilement
+  const findYearMonthFromScrollPosition = useCallback((
+    scrollTop: number,
+    separatorsByYearMonth: Record<string, { index: number; itemCount: number }>,
+    columnsCount: number,
+    itemHeight: number
+  ) => {
+    if (!separatorsByYearMonth || Object.keys(separatorsByYearMonth).length === 0) {
+      return null;
+    }
+    
+    // Trier les mois par ordre chronologique inverse (le même ordre que dans la grille)
+    const yearMonths = Object.keys(separatorsByYearMonth).sort((a, b) => b.localeCompare(a));
+    
+    // Convertir la position de défilement en indice de ligne approximatif
+    const approximateRow = Math.floor(scrollTop / itemHeight);
+    
+    let bestMatch = { yearMonth: yearMonths[0], distance: Infinity, progress: 0 };
+    
+    for (const yearMonth of yearMonths) {
+      const separatorInfo = separatorsByYearMonth[yearMonth];
+      if (!separatorInfo) continue;
+      
+      const { index, itemCount } = separatorInfo;
+      
+      // Calculer la position en lignes du séparateur
+      const separatorRow = Math.floor(index / columnsCount);
+      
+      // Calculer la position de fin approximative du mois
+      const approximateEndRow = separatorRow + Math.ceil(itemCount / columnsCount);
+      
+      // Si nous sommes à l'intérieur de cette section de mois
+      if (approximateRow >= separatorRow && approximateRow <= approximateEndRow) {
+        const progress = (approximateRow - separatorRow) / (approximateEndRow - separatorRow);
+        
+        return {
+          yearMonth,
+          progress: Math.min(Math.max(0, progress), 1)
+        };
+      }
+      
+      // Sinon, calculer la distance pour trouver le plus proche
+      const distance = Math.abs(separatorRow - approximateRow);
+      if (distance < bestMatch.distance) {
+        const progress = approximateRow > separatorRow ? 
+          Math.min(1, (approximateRow - separatorRow) / Math.max(1, (approximateEndRow - separatorRow))) : 0;
+        
+        bestMatch = { yearMonth, distance, progress };
+      }
+    }
+    
+    return {
+      yearMonth: bestMatch.yearMonth,
+      progress: bestMatch.progress
+    };
+  }, []);
+  
+  // Fonction optimisée pour synchroniser les défilements
+  const syncScrollPosition = useCallback((
     sourceGrid: React.RefObject<FixedSizeGrid>,
     targetGrid: React.RefObject<FixedSizeGrid>,
     sourceScrollTop: number,
-    sourceDates: ReturnType<typeof useMediaDates>,
-    targetDates: ReturnType<typeof useMediaDates>,
-    sourceColumnsCount: number,
-    targetColumnsCount: number
+    sourceColumns: number,
+    targetColumns: number,
+    sourceSeparators: Record<string, { index: number; itemCount: number }>,
+    targetSeparators: Record<string, { index: number; itemCount: number }>
   ) => {
     if (!isSyncEnabled || isSyncing.current || !sourceGrid.current || !targetGrid.current) {
       return;
     }
+    
+    // Éviter les synchronisations trop fréquentes
+    const now = Date.now();
+    if (now - lastSyncTime.current < 50) {
+      return;
+    }
+    lastSyncTime.current = now;
     
     // Obtenir les hauteurs des éléments
     const sourceItemHeight = getItemHeight(sourceGrid);
@@ -134,110 +138,97 @@ export function useGallerySync({
     if (sourceItemHeight <= 0 || targetItemHeight <= 0) return;
     
     // Déterminer le mois courant dans la source
-    const currentMonthInfo = determineCurrentMonth(
-      sourceScrollTop, 
-      sourceDates.dateIndex, 
-      sourceItemHeight,
-      sourceColumnsCount
+    const sourceMonthInfo = findYearMonthFromScrollPosition(
+      sourceScrollTop,
+      sourceSeparators,
+      sourceColumns,
+      sourceItemHeight
     );
     
     // Si aucun mois n'est trouvé, ne pas synchroniser
-    if (!currentMonthInfo) return;
+    if (!sourceMonthInfo) return;
     
-    const { year, month, progress } = currentMonthInfo;
+    const { yearMonth, progress } = sourceMonthInfo;
     
-    // Stocker le mois courant pour référence
-    currentMonthRef.current = { year, month };
-    
-    // Trouver le mois correspondant dans la cible
-    const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
-    const targetMonthIndex = targetDates.dateIndex.yearMonthToIndex.get(monthKey);
+    // Trouve les informations du séparateur cible
+    const targetSeparatorInfo = targetSeparators[yearMonth];
     
     // Si le mois cible existe, calculer la position et synchroniser
-    if (targetMonthIndex !== undefined) {
+    if (targetSeparatorInfo) {
       isSyncing.current = true;
       
-      // Estimer la position de début et la fin pour le mois cible
-      const targetRowIndex = Math.floor(targetMonthIndex / targetColumnsCount);
-      const targetStartPos = targetRowIndex * targetItemHeight;
-      
-      // Estimer le nombre d'éléments dans ce mois pour la cible
-      let targetEndPos = targetStartPos + 10 * targetItemHeight; // Valeur par défaut
-      
-      // Parcourir les années dans l'index de dates cible pour trouver le mois suivant
-      const targetYears = targetDates.dateIndex.years;
-      if (targetYears && targetYears.length > 0) {
-        let nextMonthIndex = Number.MAX_SAFE_INTEGER;
+      try {
+        const { index, itemCount } = targetSeparatorInfo;
         
-        // Trouver le prochain mois dans l'ordre chronologique
-        for (const nextYear of targetYears) {
-          const nextMonths = targetDates.dateIndex.monthsByYear.get(nextYear);
-          if (!nextMonths || !Array.isArray(nextMonths)) continue;
-          
-          for (const nextMonth of nextMonths) {
-            if (nextYear > year || (nextYear === year && nextMonth > month)) {
-              const nextKey = `${nextYear}-${nextMonth.toString().padStart(2, '0')}`;
-              const nextIdx = targetDates.dateIndex.yearMonthToIndex.get(nextKey);
-              if (nextIdx !== undefined && nextIdx < nextMonthIndex) {
-                nextMonthIndex = nextIdx;
-              }
-            }
-          }
-        }
+        // Calculer la position de début du mois cible
+        const targetSeparatorRow = Math.floor(index / targetColumns);
+        const targetStartPos = targetSeparatorRow * targetItemHeight;
         
-        if (nextMonthIndex !== Number.MAX_SAFE_INTEGER) {
-          const itemCount = nextMonthIndex - targetMonthIndex;
-          targetEndPos = targetStartPos + Math.ceil(itemCount / targetColumnsCount) * targetItemHeight;
-        }
+        // Calculer la hauteur totale approximative du mois cible
+        const targetMonthRowsCount = Math.ceil(itemCount / targetColumns);
+        const targetMonthHeight = targetMonthRowsCount * targetItemHeight;
+        
+        // Calculer la position finale avec progression
+        const targetScrollTop = targetStartPos + (targetMonthHeight * progress);
+        
+        // Définir la position de défilement de la grille cible
+        targetGrid.current.scrollTo({ scrollTop: targetScrollTop });
+      } catch (error) {
+        console.error('Error during gallery sync:', error);
+      } finally {
+        // Réinitialiser le flag après un court délai
+        setTimeout(() => {
+          isSyncing.current = false;
+        }, 100);
       }
-      
-      // Calculer la position relative dans le mois cible
-      const targetScrollTop = targetStartPos + (targetEndPos - targetStartPos) * progress;
-      
-      // Définir la position de défilement de la grille cible
-      targetGrid.current.scrollTo({ scrollTop: targetScrollTop });
-      
-      // Réinitialiser le flag après un court délai
-      setTimeout(() => {
-        isSyncing.current = false;
-      }, 100);
     }
-  }, [isSyncEnabled, getItemHeight, determineCurrentMonth]);
+  }, [isSyncEnabled, getItemHeight, findYearMonthFromScrollPosition]);
   
-  // Gestionnaire de défilement pour la galerie gauche
-  const handleLeftScroll = useCallback(({ scrollTop }: { scrollTop: number }) => {
-    if (!isSyncEnabled || isSyncing.current) return;
-    
-    syncGrids(
-      leftGridRef, 
-      rightGridRef, 
-      scrollTop, 
-      leftDates, 
-      rightDates,
-      columnsCountLeft,
-      columnsCountRight
-    );
-  }, [isSyncEnabled, syncGrids, leftGridRef, rightGridRef, leftDates, rightDates, columnsCountLeft, columnsCountRight]);
+  // Throttle les fonctions de défilement pour une meilleure performance
+  const handleLeftScroll = useMemo(() => 
+    throttle(({ scrollTop }: { scrollTop: number }) => {
+      if (!isSyncEnabled || isSyncing.current) return;
+      
+      syncScrollPosition(
+        leftGridRef,
+        rightGridRef,
+        scrollTop,
+        columnsCountLeft,
+        columnsCountRight,
+        leftSeparatorsByYearMonth,
+        rightSeparatorsByYearMonth
+      );
+    }, 16), // ~60fps
+    [isSyncEnabled, syncScrollPosition, leftGridRef, rightGridRef, columnsCountLeft, columnsCountRight, leftSeparatorsByYearMonth, rightSeparatorsByYearMonth]
+  );
   
-  // Gestionnaire de défilement pour la galerie droite
-  const handleRightScroll = useCallback(({ scrollTop }: { scrollTop: number }) => {
-    if (!isSyncEnabled || isSyncing.current) return;
-    
-    syncGrids(
-      rightGridRef, 
-      leftGridRef, 
-      scrollTop, 
-      rightDates, 
-      leftDates,
-      columnsCountRight,
-      columnsCountLeft
-    );
-  }, [isSyncEnabled, syncGrids, rightGridRef, leftGridRef, rightDates, leftDates, columnsCountRight, columnsCountLeft]);
+  const handleRightScroll = useMemo(() => 
+    throttle(({ scrollTop }: { scrollTop: number }) => {
+      if (!isSyncEnabled || isSyncing.current) return;
+      
+      syncScrollPosition(
+        rightGridRef,
+        leftGridRef,
+        scrollTop,
+        columnsCountRight,
+        columnsCountLeft,
+        rightSeparatorsByYearMonth,
+        leftSeparatorsByYearMonth
+      );
+    }, 16), // ~60fps
+    [isSyncEnabled, syncScrollPosition, rightGridRef, leftGridRef, columnsCountRight, columnsCountLeft, rightSeparatorsByYearMonth, leftSeparatorsByYearMonth]
+  );
   
   // Fonction pour activer/désactiver la synchronisation
   const toggleSync = useCallback(() => {
     setIsSyncEnabled(prev => !prev);
   }, []);
+  
+  // Réinitialiser l'état de synchronisation quand les données changent
+  useEffect(() => {
+    isSyncing.current = false;
+    lastSyncTime.current = 0;
+  }, [leftMediaResponse, rightMediaResponse]);
   
   return {
     isSyncEnabled,

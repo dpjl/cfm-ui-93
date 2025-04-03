@@ -29,7 +29,6 @@ interface GalleryGridCellProps {
 const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGridCellProps) => {
   // Calculate the index in the flat array based on row and column
   const index = rowIndex * data.columnsCount + columnIndex;
-  const isSmallScreen = !useBreakpoint('sm');
   
   // Return null for out of bounds indices to avoid errors
   if (index >= data.items.length) return null;
@@ -57,15 +56,10 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
     // Only render this separator if it's the first occurrence in this row
     if (isFirstSeparatorOccurrence) {
       // Calculer le style normal pour ce séparateur (une cellule standard)
-      const separatorStyle = data.calculateCellStyle(style, columnIndex, false);
-      
-      // Sur les petits écrans, ajuster la taille pour une meilleure lisibilité
-      const finalStyle = isSmallScreen 
-        ? { ...separatorStyle, height: `${parseFloat(separatorStyle.height as string) * 0.9}px` }
-        : separatorStyle;
+      const separatorStyle = data.calculateCellStyle(style, columnIndex, true);
       
       return (
-        <div style={finalStyle} className="separator-cell relative" role="cell" aria-label={`Separator: ${item.label}`}>
+        <div style={separatorStyle} className="separator-cell relative" role="cell" aria-label={`Separator: ${item.label}`}>
           <MonthYearSeparator label={item.label} />
         </div>
       );

@@ -79,10 +79,10 @@ const VirtualizedGalleryGrid = forwardRef<FixedSizeGrid, VirtualizedGalleryGridP
       ...originalStyle,
       width: `${parseFloat(originalStyle.width as string) - gap}px`,
       height: `${parseFloat(originalStyle.height as string) - gap}px`,
-      paddingRight: gap,
+      paddingRight: columnIndex === columnsCount - 1 ? 0 : gap,
       paddingBottom: gap,
     };
-  }, [gap]);
+  }, [gap, columnsCount]);
   
   const itemData = useMemo(() => ({
     items: enrichedGalleryItems,

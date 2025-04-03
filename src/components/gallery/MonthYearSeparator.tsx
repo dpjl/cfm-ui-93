@@ -27,12 +27,12 @@ const MonthYearSeparator: React.FC<MonthYearSeparatorProps> = ({ label }) => {
 
   return (
     <motion.div 
-      className="flex items-center justify-center w-full h-full p-2 sm:p-3"
+      className="flex items-center justify-center w-full h-full"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="relative flex flex-col items-center justify-center bg-muted/20 backdrop-blur-sm rounded-lg p-2 w-[90%] h-[90%] shadow-subtle border border-muted/30 overflow-hidden group">
+      <div className="relative flex flex-col items-center justify-center bg-muted/20 backdrop-blur-sm rounded-lg w-full h-full shadow-subtle border border-muted/30 overflow-hidden group">
         {/* Fond du calendrier avec dégradé subtil */}
         <div className="absolute inset-0 bg-gradient-to-b from-sky-500/10 to-transparent opacity-50 group-hover:opacity-70 transition-opacity"></div>
         
