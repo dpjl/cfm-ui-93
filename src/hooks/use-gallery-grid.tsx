@@ -1,15 +1,26 @@
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { FixedSizeGrid } from 'react-window';
+import { useScrollPercentage } from './use-scroll-percentage';
 
-export function useGalleryGrid() {
+interface UseGalleryGridProps {
+  position: 'source' | 'destination';
+}
+
+export function useGalleryGrid({ position }: UseGalleryGridProps) {
   const gridRef = useRef<FixedSizeGrid>(null);
   const [gridKey, setGridKey] = useState(0);
   const previousSizeRef = useRef({ width: 0, height: 0 });
-  const scrollPositionRef = useRef(0);
   const lastResetTimeRef = useRef(0);
-
-  // Incrémenter la clé de la grille pour forcer le rendu
+  const isResettingRef = useRef(false);
+  
+  // Utiliser notre nouveau hook pour gérer le pourcentage de défilement
+  const { 
+    saveScrollPercentage, 
+    restoreScrollPercentage 
+  } = useScrollPercentage({ position });
+  
+  // Fonction pour incrémenter la clé de la grille et forcer un nouveau rendu
   const refreshGrid = useCallback(() => {
     // Éviter les resets trop fréquents (throttling)
     const now = Date.now();
@@ -17,24 +28,28 @@ export function useGalleryGrid() {
       return;
     }
     
+    // Sauvegarder la position actuelle de défilement avant le refresh
+    if (gridRef.current) {
+      saveScrollPercentage(gridRef);
+    }
+    
+    // Marquer que nous sommes en train de reset
+    isResettingRef.current = true;
+    
+    // Mettre à jour la clé pour forcer un nouveau rendu
     setGridKey(prev => prev + 1);
     lastResetTimeRef.current = now;
-  }, []);
+  }, [saveScrollPercentage]);
   
-  // Sauvegarder la position de défilement actuelle
-  const saveScrollPosition = useCallback(() => {
-    if (gridRef.current) {
-      scrollPositionRef.current = gridRef.current.state.scrollTop;
+  // Fonction à appeler quand la grille est prête après un refresh
+  const handleGridReady = useCallback(() => {
+    // Ne restaurer que si nous sommes en train de reset
+    if (isResettingRef.current) {
+      restoreScrollPercentage(gridRef);
+      isResettingRef.current = false;
     }
-  }, []);
+  }, [restoreScrollPercentage]);
   
-  // Restaurer la position de défilement sauvegardée
-  const restoreScrollPosition = useCallback(() => {
-    if (gridRef.current && scrollPositionRef.current > 0) {
-      gridRef.current.scrollTo({ scrollTop: scrollPositionRef.current });
-    }
-  }, []);
-
   // Gérer le redimensionnement avec debounce
   const handleResize = useCallback((width: number, height: number) => {
     // Vérifier si le changement de taille est significatif
@@ -44,27 +59,33 @@ export function useGalleryGrid() {
       
     if (isSignificantChange) {
       // Sauvegarder la position avant la mise à jour
-      saveScrollPosition();
+      if (gridRef.current) {
+        saveScrollPercentage(gridRef);
+      }
       
       // Mettre à jour la référence de taille
       previousSizeRef.current = { width, height };
       
       // Forcer le rafraîchissement de la grille
       refreshGrid();
-      
-      // Restaurer la position après la mise à jour
-      setTimeout(restoreScrollPosition, 50);
     }
-  }, [saveScrollPosition, restoreScrollPosition, refreshGrid]);
+  }, [saveScrollPercentage, refreshGrid]);
+  
+  // Sauvegarder la position avant démontage
+  useEffect(() => {
+    return () => {
+      if (gridRef.current) {
+        saveScrollPercentage(gridRef);
+      }
+    };
+  }, [saveScrollPercentage]);
 
   return {
     gridRef,
     gridKey,
-    scrollPositionRef,
-    previousSizeRef,
     refreshGrid,
-    saveScrollPosition,
-    restoreScrollPosition,
-    handleResize
+    handleResize,
+    handleGridReady,
+    saveScrollPercentage
   };
 }

@@ -1,4 +1,5 @@
-import React, { memo, useMemo, useCallback } from 'react';
+
+import React, { memo, useMemo, useCallback, useEffect, useRef } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -41,12 +42,15 @@ const VirtualizedGalleryGrid = memo(({
   gap = 8
 }: VirtualizedGalleryGridProps) => {
   const mediaIds = mediaResponse?.mediaIds || [];
+  const initialRenderRef = useRef(true);
   
   const {
     gridRef,
     gridKey,
-    scrollPositionRef
-  } = useGalleryGrid();
+    handleResize,
+    handleGridReady,
+    saveScrollPercentage
+  } = useGalleryGrid({ position });
   
   const { 
     dateIndex, 
@@ -63,7 +67,8 @@ const VirtualizedGalleryGrid = memo(({
   }, [scrollToYearMonth, gridRef]);
   
   const rowCount = useMemo(() => {
-    return Math.ceil(enrichedGalleryItems.length / columnsCount);
+    // Always ensure at least 1 row to avoid react-window errors
+    return Math.max(1, Math.ceil(enrichedGalleryItems.length / columnsCount));
   }, [enrichedGalleryItems.length, columnsCount]);
   
   const calculateCellStyle = useCallback((
@@ -79,6 +84,10 @@ const VirtualizedGalleryGrid = memo(({
       paddingBottom: gap,
     };
   }, [gap]);
+  
+  const handleScroll = useCallback(({ scrollTop }: { scrollTop: number }) => {
+    saveScrollPercentage(gridRef);
+  }, [saveScrollPercentage, gridRef]);
   
   const itemData = useMemo(() => ({
     items: enrichedGalleryItems,
@@ -105,9 +114,27 @@ const VirtualizedGalleryGrid = memo(({
     return `media-${item.id}`;
   }, [enrichedGalleryItems, columnsCount]);
   
+  // Signal when grid is ready for scroll restoration
+  useEffect(() => {
+    // Use requestIdleCallback (or fallback to setTimeout) to ensure the grid is fully rendered
+    const idleCallback = window.requestIdleCallback || setTimeout;
+    const timeoutId = idleCallback(() => {
+      handleGridReady();
+      initialRenderRef.current = false;
+    }, { timeout: 300 });
+    
+    return () => {
+      if (window.cancelIdleCallback) {
+        window.cancelIdleCallback(timeoutId as any);
+      } else {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [handleGridReady, gridKey]);
+  
   return (
     <div className="w-full h-full p-2 gallery-container relative">
-      <AutoSizer key={`gallery-grid-${gridKey}`}>
+      <AutoSizer key={`gallery-grid-${gridKey}`} onResize={handleResize}>
         {({ height, width }) => {
           const { 
             itemWidth, 
@@ -131,10 +158,7 @@ const VirtualizedGalleryGrid = memo(({
               overscanRowCount={5}
               overscanColumnCount={2}
               itemKey={getItemKey}
-              onScroll={({ scrollTop }) => {
-                scrollPositionRef.current = scrollTop;
-              }}
-              initialScrollTop={scrollPositionRef.current}
+              onScroll={handleScroll}
               className="scrollbar-vertical"
               style={{ 
                 overflowX: 'hidden',
