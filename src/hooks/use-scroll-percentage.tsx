@@ -1,6 +1,8 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { debounce } from 'lodash';
+import { toast } from '@/components/ui/use-toast';
 
 interface ScrollPercentageOptions {
   position: 'source' | 'destination';
@@ -71,30 +73,42 @@ export function useScrollPercentage({
   // Function that attempts to restore scroll position
   const attemptRestore = () => {
     const gridRef = latestGridRef.current;
-    if (!gridRef) return;
+    if (!gridRef || !gridRef.current) return false;
     
-    // Check if grid is fully initialized
-    const isGridReady = 
-      gridRef.current && 
-      gridRef.current._outerRef && 
-      gridRef.current._outerRef.scrollHeight > 0 &&
-      gridRef.current._instanceProps;
-    
-    if (isGridReady) {
-      isGridReadyRef.current = true;
-      
-      // Apply the scroll position
+    try {
+      // Check if grid is fully initialized - with multiple safeguards
       const grid = gridRef.current._outerRef;
-      const maxScroll = grid.scrollHeight - grid.clientHeight || 1;
-      const targetScrollTop = currentPercentageRef.current * maxScroll;
+      const isGridReady = 
+        gridRef.current && 
+        grid && 
+        grid.scrollHeight > 0 &&
+        typeof grid.scrollTop === 'number' &&
+        gridRef.current._instanceProps !== undefined;
       
-      // Use requestAnimationFrame for smoother scrolling
-      requestAnimationFrame(() => {
-        grid.scrollTop = targetScrollTop;
-      });
-      
-      return true;
-    } else if (restoreAttemptRef.current < maxRestoreAttempts) {
+      if (isGridReady) {
+        isGridReadyRef.current = true;
+        
+        // Apply the scroll position
+        const maxScroll = grid.scrollHeight - grid.clientHeight || 1;
+        const targetScrollTop = currentPercentageRef.current * maxScroll;
+        
+        // Use requestAnimationFrame for smoother scrolling
+        requestAnimationFrame(() => {
+          try {
+            grid.scrollTop = targetScrollTop;
+          } catch (err) {
+            console.error('Error setting scroll position:', err);
+          }
+        });
+        
+        return true;
+      } 
+    } catch (err) {
+      console.error('Error checking grid readiness:', err);
+    }
+    
+    // If we reach here, the grid is not ready yet or there was an error
+    if (restoreAttemptRef.current < maxRestoreAttempts) {
       // Retry with exponential backoff
       const delay = Math.min(100 * Math.pow(1.5, restoreAttemptRef.current), 2000);
       restoreAttemptRef.current++;

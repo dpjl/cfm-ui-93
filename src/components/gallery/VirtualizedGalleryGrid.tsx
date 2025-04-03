@@ -116,19 +116,14 @@ const VirtualizedGalleryGrid = memo(({
   
   // Signal when grid is ready for scroll restoration
   useEffect(() => {
-    // Use requestIdleCallback (or fallback to setTimeout) to ensure the grid is fully rendered
-    const idleCallback = window.requestIdleCallback || ((callback) => setTimeout(callback, 200));
-    const timeoutId = idleCallback(() => {
+    // Use a short delay to ensure the grid has time to initialize
+    const timer = setTimeout(() => {
       handleGridReady();
       initialRenderRef.current = false;
-    });
+    }, 100);
     
     return () => {
-      if (window.cancelIdleCallback) {
-        window.cancelIdleCallback(timeoutId);
-      } else {
-        clearTimeout(timeoutId as unknown as number);
-      }
+      clearTimeout(timer);
     };
   }, [handleGridReady, gridKey]);
   
