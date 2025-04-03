@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { debounce } from 'lodash';
@@ -30,6 +31,9 @@ export function useScrollPercentage({
   const isRestorationPendingRef = useRef<boolean>(false);
   const latestGridRef = useRef<any>(null);
   
+  // Flag to disable automatic saves during restoration
+  const isSaveDisabledRef = useRef<boolean>(false);
+  
   // Debounced function to save the scroll percentage to localStorage
   const debouncedSavePercentage = useRef(
     debounce((percentage: number) => {
@@ -42,6 +46,12 @@ export function useScrollPercentage({
   
   // Calculate and save scroll percentage
   const saveScrollPercentage = (gridRef: React.RefObject<any>) => {
+    // Skip saving if it's currently disabled (during restoration)
+    if (isSaveDisabledRef.current) {
+      console.log(`[${position}] Save disabled, skipping scroll position save`);
+      return;
+    }
+    
     if (!gridRef.current || !gridRef.current._outerRef) {
       console.log(`[${position}] Cannot save scroll: grid or _outerRef is undefined`);
       return;
@@ -123,6 +133,10 @@ export function useScrollPercentage({
   const restoreScrollPercentage = (gridRef: React.RefObject<any>) => {
     console.log(`[${position}] Requesting scroll restoration, percentage:`, currentPercentageRef.current.toFixed(4));
     
+    // Disable saves during restoration to prevent overwriting the position we want to restore
+    isSaveDisabledRef.current = true;
+    console.log(`[${position}] Saves disabled for restoration`);
+    
     // Save the grid ref for potential retry or event-based restoration
     latestGridRef.current = gridRef;
     
@@ -130,12 +144,13 @@ export function useScrollPercentage({
     isRestorationPendingRef.current = true;
     
     // Try immediately in case grid is already ready
-    if (applyScrollPosition()) {
-      console.log(`[${position}] Immediate scroll restoration succeeded`);
-      return;
-    }
+    const success = applyScrollPosition();
     
-    console.log(`[${position}] Deferred restoration, waiting for grid items to render`);
+    if (success) {
+      console.log(`[${position}] Immediate scroll restoration succeeded`);
+    } else {
+      console.log(`[${position}] Deferred restoration, waiting for grid items to render`);
+    }
     
     // Set a fallback timer in case the event doesn't fire
     const fallbackTimer = setTimeout(() => {
@@ -145,6 +160,12 @@ export function useScrollPercentage({
         // Clear the pending state regardless of success to avoid getting stuck
         isRestorationPendingRef.current = false;
       }
+      
+      // Re-enable saves after restoration attempt, with a small delay
+      setTimeout(() => {
+        console.log(`[${position}] Re-enabling saves after restoration`);
+        isSaveDisabledRef.current = false;
+      }, 100);
     }, 1000);
     
     return () => clearTimeout(fallbackTimer);
