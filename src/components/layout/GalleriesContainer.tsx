@@ -3,12 +3,10 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { fetchMediaIds } from '@/api/imageApi';
-import { GalleryViewMode, ViewModeType } from '@/types/gallery';
+import { GalleryViewMode } from '@/types/gallery';
 import { MediaFilter } from '@/components/AppSidebar';
-import GalleryContent from '@/components/gallery/GalleryContent';
 import DeleteConfirmationDialog from '@/components/gallery/DeleteConfirmationDialog';
 import GalleriesView from './GalleriesView';
-import MobileViewSwitcher from './MobileViewSwitcher';
 
 interface BaseGalleryProps {
   columnsCountLeft: number;
@@ -65,43 +63,6 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
-  // Fetch left gallery media IDs
-  const { data: leftMediaIds = { mediaIds: [], mediaDates: [] }, isLoading: isLoadingLeftMediaIds, error: errorLeftMediaIds } = useQuery({
-    queryKey: ['leftMediaIds', selectedDirectoryIdLeft, leftFilter],
-    queryFn: () => fetchMediaIds(selectedDirectoryIdLeft, 'source', leftFilter as string)
-  });
-  
-  // Fetch right gallery media IDs
-  const { data: rightMediaIds = { mediaIds: [], mediaDates: [] }, isLoading: isLoadingRightMediaIds, error: errorRightMediaIds } = useQuery({
-    queryKey: ['rightMediaIds', selectedDirectoryIdRight, rightFilter],
-    queryFn: () => fetchMediaIds(selectedDirectoryIdRight, 'destination', rightFilter as string)
-  });
-
-  // Handler functions
-  const handleSelectIdLeft = (id: string) => setSelectedIdsLeft((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
-  const handleSelectIdRight = (id: string) => setSelectedIdsRight((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
-  const handlePreviewItemLeft = (id: string) => console.log(`Previewing item ${id} in source`);
-  const handlePreviewItemRight = (id: string) => console.log(`Previewing item ${id} in destination`);
-  
-  // Simplified handlers for deletion
-  const handleDeleteLeft = () => handleDeleteSelected('left');
-  const handleDeleteRight = () => handleDeleteSelected('right');
-
-  // Column change handlers
-  const handleLeftColumnsChange = (count: number) => {
-    if (onColumnsChange) {
-      console.log('Left columns changed to:', count);
-      onColumnsChange('left', count);
-    }
-  };
-
-  const handleRightColumnsChange = (count: number) => {
-    if (onColumnsChange) {
-      console.log('Right columns changed to:', count);
-      onColumnsChange('right', count);
-    }
-  };
-
   // Toggle full view handlers
   const handleToggleLeftFullView = () => {
     if (mobileViewMode === 'left') {
@@ -119,57 +80,30 @@ const GalleriesContainer: React.FC<GalleriesContainerProps> = ({
     }
   };
 
-  // Prepare content for left and right galleries
-  const leftGalleryContent = (
-    <GalleryContent
-      title="Source"
-      mediaResponse={leftMediaIds}
-      selectedIds={selectedIdsLeft}
-      onSelectId={handleSelectIdLeft}
-      isLoading={isLoadingLeftMediaIds}
-      isError={!!errorLeftMediaIds}
-      error={errorLeftMediaIds}
-      columnsCount={columnsCountLeft}
-      viewMode={mobileViewMode === 'both' ? 'split' : 'single'}
-      onPreviewItem={handlePreviewItemLeft}
-      onDeleteSelected={handleDeleteLeft}
-      position="source"
-      filter={leftFilter}
-      onToggleSidebar={onToggleLeftPanel}
-      onColumnsChange={handleLeftColumnsChange}
-      mobileViewMode={mobileViewMode}
-      onToggleFullView={handleToggleLeftFullView}
-    />
-  );
-
-  const rightGalleryContent = (
-    <GalleryContent
-      title="Destination"
-      mediaResponse={rightMediaIds}
-      selectedIds={selectedIdsRight}
-      onSelectId={handleSelectIdRight}
-      isLoading={isLoadingRightMediaIds}
-      isError={!!errorRightMediaIds}
-      error={errorRightMediaIds}
-      columnsCount={columnsCountRight}
-      viewMode={mobileViewMode === 'both' ? 'split' : 'single'}
-      onPreviewItem={handlePreviewItemRight}
-      onDeleteSelected={handleDeleteRight}
-      position="destination"
-      filter={rightFilter}
-      onToggleSidebar={onToggleRightPanel}
-      onColumnsChange={handleRightColumnsChange}
-      mobileViewMode={mobileViewMode}
-      onToggleFullView={handleToggleRightFullView}
-    />
-  );
-
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <GalleriesView
-        viewMode={mobileViewMode}
-        leftContent={leftGalleryContent}
-        rightContent={rightGalleryContent}
+        selectedDirectoryIdLeft={selectedDirectoryIdLeft}
+        selectedDirectoryIdRight={selectedDirectoryIdRight}
+        columnsCountLeft={columnsCountLeft}
+        columnsCountRight={columnsCountRight}
+        selectedIdsLeft={selectedIdsLeft}
+        setSelectedIdsLeft={setSelectedIdsLeft}
+        selectedIdsRight={selectedIdsRight}
+        setSelectedIdsRight={setSelectedIdsRight}
+        deleteDialogOpen={deleteDialogOpen}
+        setDeleteDialogOpen={setDeleteDialogOpen}
+        activeSide={activeSide}
+        deleteMutation={deleteMutation}
+        handleDeleteSelected={handleDeleteSelected}
+        handleDelete={handleDelete}
+        onToggleLeftPanel={onToggleLeftPanel}
+        onToggleRightPanel={onToggleRightPanel}
+        onColumnsChange={onColumnsChange || ((side, count) => {})}
+        mobileViewMode={mobileViewMode}
+        onToggleFullView={side => side === 'left' ? handleToggleLeftFullView() : handleToggleRightFullView()}
+        leftFilter={leftFilter}
+        rightFilter={rightFilter}
       />
 
       <DeleteConfirmationDialog

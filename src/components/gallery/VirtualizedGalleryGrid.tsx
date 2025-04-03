@@ -1,5 +1,5 @@
 
-import React, { memo, useMemo, useCallback } from 'react';
+import React, { memo, useMemo, useCallback, forwardRef } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -31,22 +31,23 @@ interface VirtualizedGalleryGridProps {
  * A virtualized grid component that efficiently renders large collections of media items
  * With improved dimension calculations to prevent gaps and support for month/year separators
  */
-const VirtualizedGalleryGrid = memo(({
-  mediaResponse,
-  selectedIds,
-  onSelectId,
-  columnsCount = 5,
-  viewMode = 'single',
-  showDates = false,
-  updateMediaInfo,
-  position = 'source',
-  gap = 8,
-  onScroll
-}: VirtualizedGalleryGridProps) => {
+const VirtualizedGalleryGrid = forwardRef<FixedSizeGrid, VirtualizedGalleryGridProps>((
+  {
+    mediaResponse,
+    selectedIds,
+    onSelectId,
+    columnsCount = 5,
+    viewMode = 'single',
+    showDates = true,
+    updateMediaInfo,
+    position = 'source',
+    gap = 8,
+    onScroll
+  }, ref
+) => {
   const mediaIds = mediaResponse?.mediaIds || [];
   
   const {
-    gridRef,
     gridKey,
     scrollPositionRef
   } = useGalleryGrid();
@@ -57,13 +58,13 @@ const VirtualizedGalleryGrid = memo(({
     enrichedGalleryItems 
   } = useMediaDates(mediaResponse);
   
-  useGalleryMediaTracking(mediaResponse, gridRef);
+  useGalleryMediaTracking(mediaResponse, ref as React.RefObject<FixedSizeGrid>);
   
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
   
   const handleSelectYearMonth = useCallback((year: number, month: number) => {
-    scrollToYearMonth(year, month, gridRef);
-  }, [scrollToYearMonth, gridRef]);
+    scrollToYearMonth(year, month, ref as React.RefObject<FixedSizeGrid>);
+  }, [scrollToYearMonth, ref]);
   
   const rowCount = useMemo(() => {
     return Math.ceil(enrichedGalleryItems.length / columnsCount);
@@ -132,7 +133,7 @@ const VirtualizedGalleryGrid = memo(({
           
           return (
             <FixedSizeGrid
-              ref={gridRef}
+              ref={ref}
               columnCount={columnsCount}
               columnWidth={columnWidth}
               height={height}

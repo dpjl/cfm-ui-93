@@ -16,6 +16,7 @@ interface GalleriesViewProps extends BaseGalleryProps {
   onToggleFullView: (side: 'left' | 'right') => void;
   leftFilter?: MediaFilter;
   rightFilter?: MediaFilter;
+  handleDelete: () => void;
 }
 
 const GalleriesView = ({
@@ -62,6 +63,27 @@ const GalleriesView = ({
     columnsCountRight
   });
 
+  // Helper function to wrap setSelectedIds to match expected onSelectId signature
+  const handleSelectIdLeft = (id: string) => {
+    setSelectedIdsLeft((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((item) => item !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+  
+  const handleSelectIdRight = (id: string) => {
+    setSelectedIdsRight((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((item) => item !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
   return (
     <div className="flex flex-1 h-full">
       {/* Bouton de synchronisation */}
@@ -84,7 +106,7 @@ const GalleriesView = ({
           title="Source"
           mediaResponse={mediaLeft || { mediaIds: [], mediaDates: [] }}
           selectedIds={selectedIdsLeft}
-          onSelectId={setSelectedIdsLeft}
+          onSelectId={handleSelectIdLeft}
           isLoading={isLoadingLeft}
           isError={isErrorLeft}
           error={errorLeft}
@@ -114,7 +136,7 @@ const GalleriesView = ({
           title="Destination"
           mediaResponse={mediaRight || { mediaIds: [], mediaDates: [] }}
           selectedIds={selectedIdsRight}
-          onSelectId={setSelectedIdsRight}
+          onSelectId={handleSelectIdRight}
           isLoading={isLoadingRight}
           isError={isErrorRight}
           error={errorRight}
