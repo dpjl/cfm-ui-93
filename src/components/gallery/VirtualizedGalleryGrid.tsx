@@ -1,3 +1,4 @@
+
 import React, { memo, useMemo, useCallback } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -46,7 +47,11 @@ const VirtualizedGalleryGrid = memo(({
     gridRef,
     gridKey,
     scrollPositionRef
-  } = useGalleryGrid();
+  } = useGalleryGrid({
+    columnsCount,
+    mediaItemsCount: mediaIds.length,
+    viewMode: position === 'left' ? viewMode : 'both' // Map position to corresponding view mode
+  });
   
   const { 
     dateIndex, 
