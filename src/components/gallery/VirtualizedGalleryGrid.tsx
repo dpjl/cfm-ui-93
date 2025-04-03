@@ -8,7 +8,7 @@ import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 import GalleryGridCell from './GalleryGridCell';
 import DateSelector from './DateSelector';
 import { useMediaDates } from '@/hooks/use-media-dates';
-import { MediaListResponse, GalleryItem } from '@/types/gallery';
+import { MediaListResponse, GalleryItem, GalleryViewMode } from '@/types/gallery';
 import { 
   calculateGridParameters,
   getScrollbarWidth
@@ -50,7 +50,7 @@ const VirtualizedGalleryGrid = memo(({
   } = useGalleryGrid({
     columnsCount,
     mediaItemsCount: mediaIds.length,
-    viewMode: position === 'left' ? viewMode : 'both' // Map position to corresponding view mode
+    viewMode: position === 'source' ? mapPositionToViewMode(position, viewMode) : 'both' // Map position to corresponding view mode
   });
   
   const { 
@@ -109,6 +109,16 @@ const VirtualizedGalleryGrid = memo(({
     }
     return `media-${item.id}`;
   }, [enrichedGalleryItems, columnsCount]);
+
+  // Helper function to map position to GalleryViewMode
+  function mapPositionToViewMode(position: 'source' | 'destination', viewMode: 'single' | 'split'): GalleryViewMode {
+    if (position === 'source') {
+      return 'left';
+    } else if (position === 'destination') {
+      return 'right';
+    }
+    return 'both';
+  }
   
   return (
     <div className="w-full h-full p-2 gallery-container relative">
