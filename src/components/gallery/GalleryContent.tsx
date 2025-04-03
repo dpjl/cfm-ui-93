@@ -3,6 +3,7 @@ import React, { useRef } from 'react';
 import Gallery from '@/components/gallery/Gallery';
 import { useGalleryZoom } from '@/hooks/use-gallery-zoom';
 import { GalleryViewMode, MediaListResponse } from '@/types/gallery';
+import { FixedSizeGrid } from 'react-window';
 
 interface GalleryContentProps {
   mediaResponse: MediaListResponse;
@@ -20,9 +21,10 @@ interface GalleryContentProps {
   position?: 'source' | 'destination';
   onToggleSidebar?: () => void;
   onColumnsChange?: (count: number) => void;
-  // Nouvelles props pour le toggle de vue
   mobileViewMode?: GalleryViewMode;
   onToggleFullView?: () => void;
+  onScroll?: ({ scrollTop }: { scrollTop: number }) => void;
+  gridRef?: React.RefObject<FixedSizeGrid>;
 }
 
 const GalleryContent: React.FC<GalleryContentProps> = ({
@@ -42,7 +44,9 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
   onToggleSidebar,
   onColumnsChange,
   mobileViewMode,
-  onToggleFullView
+  onToggleFullView,
+  onScroll,
+  gridRef
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -92,6 +96,8 @@ const GalleryContent: React.FC<GalleryContentProps> = ({
         gap={4}
         mobileViewMode={mobileViewMode}
         onToggleFullView={onToggleFullView}
+        onScroll={onScroll}
+        gridRef={gridRef}
       />
     </div>
   );

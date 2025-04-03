@@ -57,6 +57,13 @@ export function useGalleryGrid() {
     }
   }, [saveScrollPosition, restoreScrollPosition, refreshGrid]);
 
+  // Méthode pour faire défiler la grille à une position spécifique
+  const scrollToPosition = useCallback((scrollTop: number) => {
+    if (gridRef.current) {
+      gridRef.current.scrollTo({ scrollTop });
+    }
+  }, []);
+
   return {
     gridRef,
     gridKey,
@@ -65,6 +72,7 @@ export function useGalleryGrid() {
     refreshGrid,
     saveScrollPosition,
     restoreScrollPosition,
-    handleResize
+    handleResize,
+    scrollToPosition
   };
 }

@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import VirtualizedGalleryGrid from './VirtualizedGalleryGrid';
@@ -31,6 +32,8 @@ interface GalleryProps {
   gap?: number;
   mobileViewMode?: GalleryViewMode;
   onToggleFullView?: () => void;
+  onScroll?: ({ scrollTop }: { scrollTop: number }) => void;
+  gridRef?: React.RefObject<any>;
 }
 
 const Gallery: React.FC<GalleryProps> = ({
@@ -50,7 +53,9 @@ const Gallery: React.FC<GalleryProps> = ({
   onToggleSidebar,
   gap = 8,
   mobileViewMode,
-  onToggleFullView
+  onToggleFullView,
+  onScroll,
+  gridRef
 }) => {
   const [mediaInfoMap, setMediaInfoMap] = useState<Map<string, DetailedMediaInfo | null>>(new Map());
   const { t } = useLanguage();
@@ -159,6 +164,9 @@ const Gallery: React.FC<GalleryProps> = ({
             updateMediaInfo={updateMediaInfo}
             position={position}
             gap={gap}
+            onScroll={onScroll}
+            // Pass gridRef to the component if provided
+            ref={gridRef}
           />
         )}
       </div>

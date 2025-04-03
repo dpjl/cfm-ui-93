@@ -1,3 +1,4 @@
+
 import React, { memo, useMemo, useCallback } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -23,6 +24,7 @@ interface VirtualizedGalleryGridProps {
   updateMediaInfo?: (id: string, info: DetailedMediaInfo) => void;
   position: 'source' | 'destination';
   gap?: number;
+  onScroll?: ({ scrollTop }: { scrollTop: number }) => void;
 }
 
 /**
@@ -38,7 +40,8 @@ const VirtualizedGalleryGrid = memo(({
   showDates = false,
   updateMediaInfo,
   position = 'source',
-  gap = 8
+  gap = 8,
+  onScroll
 }: VirtualizedGalleryGridProps) => {
   const mediaIds = mediaResponse?.mediaIds || [];
   
@@ -105,6 +108,15 @@ const VirtualizedGalleryGrid = memo(({
     return `media-${item.id}`;
   }, [enrichedGalleryItems, columnsCount]);
   
+  const handleGridScroll = useCallback(({ scrollTop, scrollLeft }: { scrollTop: number; scrollLeft: number }) => {
+    scrollPositionRef.current = scrollTop;
+    
+    // Propager l'événement de défilement au parent si nécessaire
+    if (onScroll) {
+      onScroll({ scrollTop });
+    }
+  }, [scrollPositionRef, onScroll]);
+  
   return (
     <div className="w-full h-full p-2 gallery-container relative">
       <AutoSizer key={`gallery-grid-${gridKey}`}>
@@ -131,9 +143,7 @@ const VirtualizedGalleryGrid = memo(({
               overscanRowCount={5}
               overscanColumnCount={2}
               itemKey={getItemKey}
-              onScroll={({ scrollTop }) => {
-                scrollPositionRef.current = scrollTop;
-              }}
+              onScroll={handleGridScroll}
               initialScrollTop={scrollPositionRef.current}
               className="scrollbar-vertical"
               style={{ 
