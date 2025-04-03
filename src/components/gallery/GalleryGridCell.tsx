@@ -3,6 +3,7 @@ import React, { memo } from 'react';
 import LazyMediaItem from '@/components/LazyMediaItem';
 import MonthYearSeparator from './MonthYearSeparator';
 import { GalleryItem } from '@/types/gallery';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
 
 interface GalleryGridCellProps {
   columnIndex: number;
@@ -28,6 +29,7 @@ interface GalleryGridCellProps {
 const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGridCellProps) => {
   // Calculate the index in the flat array based on row and column
   const index = rowIndex * data.columnsCount + columnIndex;
+  const isSmallScreen = !useBreakpoint('sm');
   
   // Return null for out of bounds indices to avoid errors
   if (index >= data.items.length) return null;
@@ -57,8 +59,13 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
       // Calculer le style normal pour ce séparateur (une cellule standard)
       const separatorStyle = data.calculateCellStyle(style, columnIndex, false);
       
+      // Sur les petits écrans, ajuster la taille pour une meilleure lisibilité
+      const finalStyle = isSmallScreen 
+        ? { ...separatorStyle, height: `${parseFloat(separatorStyle.height as string) * 0.9}px` }
+        : separatorStyle;
+      
       return (
-        <div style={separatorStyle} className="separator-cell">
+        <div style={finalStyle} className="separator-cell relative" role="cell" aria-label={`Separator: ${item.label}`}>
           <MonthYearSeparator label={item.label} />
         </div>
       );

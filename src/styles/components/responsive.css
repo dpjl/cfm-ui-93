@@ -58,6 +58,11 @@
       @apply h-6 w-6;
       touch-action: manipulation;
     }
+    
+    /* Month-year separator optimizations for mobile */
+    .separator-cell {
+      @apply text-xs;
+    }
   }
   
   /* Mobile view mode switcher */
