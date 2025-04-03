@@ -5,8 +5,6 @@ import { GalleryViewMode } from '@/types/gallery';
 
 interface GridVisibleArea {
   startIndex: number;
-  centerIndex: number;
-  topIndex: number;
   visibleIndices: number[];
 }
 
@@ -22,6 +20,7 @@ interface GridAnchorProps {
 /**
  * Hook that handles calculating and preserving scroll position
  * when grid layout changes (column count or view mode)
+ * Using a simplified approach that always maintains the top-left item position
  */
 export function useGridAnchor() {
   const previousDetailsRef = useRef<{
@@ -36,6 +35,7 @@ export function useGridAnchor() {
   
   /**
    * Get the current visible area of the grid
+   * Simplified to only track the top-left item and visible items
    */
   const getVisibleArea = useCallback((
     grid: FixedSizeGrid, 
@@ -44,14 +44,11 @@ export function useGridAnchor() {
   ): GridVisibleArea => {
     const { scrollTop, scrollLeft, outerHeight, outerWidth } = grid.state;
     
-    // Vérifier si _instanceProps existe et contient les propriétés nécessaires
+    // Check if grid instance is fully initialized
     if (!grid._instanceProps || !grid._instanceProps.rowHeight || !grid._instanceProps.columnWidth) {
       console.warn('Grid instance properties are not fully initialized yet');
-      // Retourner des valeurs par défaut pour éviter les erreurs
       return {
         startIndex: 0,
-        centerIndex: 0,
-        topIndex: 0,
         visibleIndices: [],
       };
     }
@@ -82,28 +79,14 @@ export function useGridAnchor() {
       }
     }
     
-    // Find the topmost visible item index
-    const topIndex = startRow * columnsCount + startCol;
-    
-    // Calculate center point of viewport
-    const centerX = scrollLeft + outerWidth / 2;
-    const centerY = scrollTop + outerHeight / 2;
-    
-    // Find closest item to center
-    const centerRow = Math.floor(centerY / rowHeight);
-    const centerCol = Math.floor(centerX / columnWidth);
-    const centerIndex = centerRow * columnsCount + centerCol;
-    
-    // Ensure centerIndex is within bounds
-    const boundedCenterIndex = Math.min(Math.max(0, centerIndex), totalItems - 1);
-    
-    // First item visible in viewport
+    // Calculate top-left visible item index
     const startIndex = startRow * columnsCount + startCol;
     
+    // Ensure startIndex is within bounds
+    const boundedStartIndex = Math.min(Math.max(0, startIndex), totalItems - 1);
+    
     return {
-      startIndex,
-      centerIndex: boundedCenterIndex,
-      topIndex,
+      startIndex: boundedStartIndex,
       visibleIndices
     };
   }, []);
@@ -133,6 +116,7 @@ export function useGridAnchor() {
   
   /**
    * Restore scroll position after layout change
+   * Simplified to always maintain the top-left item position
    */
   const restoreScrollAnchor = useCallback((props: GridAnchorProps) => {
     const { 
@@ -146,11 +130,11 @@ export function useGridAnchor() {
     if (!gridRef.current || !previousDetailsRef.current.visibleArea) return;
     
     const grid = gridRef.current;
-    const { visibleArea, viewModeType: previousViewModeType } = previousDetailsRef.current;
-    const currentViewModeType = viewMode === 'both' ? 'split' : 'single';
+    const { visibleArea } = previousDetailsRef.current;
     
+    // Check if we need to restore position (column count or view mode change)
     const isColumnChange = columnsCount !== previousColumnsCount;
-    const isViewModeChange = currentViewModeType !== previousViewModeType;
+    const isViewModeChange = viewMode !== previousViewMode;
     
     if (!isColumnChange && !isViewModeChange) return;
     
@@ -159,42 +143,30 @@ export function useGridAnchor() {
       if (!gridRef.current) return;
       
       try {
-        // Vérifier si _instanceProps est défini avant d'utiliser getOffsetForCell
+        // Check if _instanceProps is defined before using grid methods
         if (!grid._instanceProps || !grid._instanceProps.rowHeight || !grid._instanceProps.columnWidth) {
           console.warn('Grid instance properties not fully initialized, delaying scroll restoration');
-          // Essayer à nouveau après un court délai
+          // Try again after a short delay
           setTimeout(() => restoreScrollAnchor(props), 100);
           return;
         }
         
-        // For column count changes (zoom effect) - maintain center item
-        if (isColumnChange && !isViewModeChange) {
-          const { centerIndex } = visibleArea;
-          const newRowIndex = Math.floor(centerIndex / columnsCount);
-          const newColIndex = centerIndex % columnsCount;
-          
-          const scrollInfo = grid.getOffsetForCell({
-            rowIndex: newRowIndex,
-            columnIndex: newColIndex,
-            alignment: 'center'
-          });
-          
-          grid.scrollTo({ scrollTop: scrollInfo.scrollTop });
-        } 
-        // For view mode changes - maintain top item
-        else if (isViewModeChange) {
-          const { topIndex } = visibleArea;
-          const newRowIndex = Math.floor(topIndex / columnsCount);
-          const newColIndex = topIndex % columnsCount;
-          
-          const scrollInfo = grid.getOffsetForCell({
-            rowIndex: newRowIndex,
-            columnIndex: newColIndex,
-            alignment: 'start'
-          });
-          
-          grid.scrollTo({ scrollTop: scrollInfo.scrollTop });
-        }
+        // Use the startIndex (top-left item) for all types of changes
+        const { startIndex } = visibleArea;
+        
+        // Calculate the new row and column indices based on the new column count
+        const newRowIndex = Math.floor(startIndex / columnsCount);
+        const newColIndex = startIndex % columnsCount;
+        
+        // Get the scroll position that would bring this item to the top-left
+        const scrollInfo = grid.getOffsetForCell({
+          rowIndex: newRowIndex,
+          columnIndex: newColIndex,
+          alignment: 'start' // Always align to start (top-left)
+        });
+        
+        // Apply the scroll position
+        grid.scrollTo({ scrollTop: scrollInfo.scrollTop });
       } catch (error) {
         console.error('Error restoring scroll position:', error);
       }
