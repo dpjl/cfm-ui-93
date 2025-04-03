@@ -20,7 +20,7 @@ interface GalleryContentProps {
   position?: 'source' | 'destination';
   onToggleSidebar?: () => void;
   onColumnsChange?: (count: number) => void;
-  // Props pour le toggle de vue
+  // Nouvelles props pour le toggle de vue
   mobileViewMode?: GalleryViewMode;
   onToggleFullView?: () => void;
 }
