@@ -1,5 +1,4 @@
-
-import React, { memo, useMemo, useCallback, useEffect } from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -8,7 +7,7 @@ import { useGalleryMediaTracking } from '@/hooks/use-gallery-media-tracking';
 import GalleryGridCell from './GalleryGridCell';
 import DateSelector from './DateSelector';
 import { useMediaDates } from '@/hooks/use-media-dates';
-import { MediaListResponse, GalleryItem, GalleryViewMode } from '@/types/gallery';
+import { MediaListResponse, GalleryItem } from '@/types/gallery';
 import { 
   calculateGridParameters,
   getScrollbarWidth
@@ -46,14 +45,8 @@ const VirtualizedGalleryGrid = memo(({
   const {
     gridRef,
     gridKey,
-    scrollPositionRef,
-    handleGridInitialized,
-    gridReadyRef
-  } = useGalleryGrid({
-    columnsCount,
-    mediaItemsCount: mediaIds.length,
-    viewMode: mapPositionToViewMode(position, viewMode)
-  });
+    scrollPositionRef
+  } = useGalleryGrid();
   
   const { 
     dateIndex, 
@@ -63,22 +56,11 @@ const VirtualizedGalleryGrid = memo(({
   
   useGalleryMediaTracking(mediaResponse, gridRef);
   
-  // Ensure grid is marked as ready after mount
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      handleGridInitialized();
-    }, 200); // Add a small delay to ensure grid is fully mounted
-    
-    return () => clearTimeout(timeoutId);
-  }, [handleGridInitialized, gridKey]);
-  
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
   
   const handleSelectYearMonth = useCallback((year: number, month: number) => {
-    if (gridReadyRef.current) {
-      scrollToYearMonth(year, month, gridRef);
-    }
-  }, [scrollToYearMonth, gridRef, gridReadyRef]);
+    scrollToYearMonth(year, month, gridRef);
+  }, [scrollToYearMonth, gridRef]);
   
   const rowCount = useMemo(() => {
     return Math.ceil(enrichedGalleryItems.length / columnsCount);
@@ -122,16 +104,6 @@ const VirtualizedGalleryGrid = memo(({
     }
     return `media-${item.id}`;
   }, [enrichedGalleryItems, columnsCount]);
-
-  // Helper function to map position to GalleryViewMode
-  function mapPositionToViewMode(position: 'source' | 'destination', viewMode: 'single' | 'split'): GalleryViewMode {
-    if (position === 'source') {
-      return 'left';
-    } else if (position === 'destination') {
-      return 'right';
-    }
-    return 'both';
-  }
   
   return (
     <div className="w-full h-full p-2 gallery-container relative">
@@ -152,7 +124,7 @@ const VirtualizedGalleryGrid = memo(({
               columnCount={columnsCount}
               columnWidth={columnWidth}
               height={height}
-              rowCount={Math.max(1, rowCount)} // Ensure at least 1 row to prevent errors
+              rowCount={rowCount}
               rowHeight={itemHeight + gap}
               width={width}
               itemData={itemData}
@@ -160,11 +132,9 @@ const VirtualizedGalleryGrid = memo(({
               overscanColumnCount={2}
               itemKey={getItemKey}
               onScroll={({ scrollTop }) => {
-                if (gridReadyRef.current) {
-                  scrollPositionRef.current = scrollTop;
-                }
+                scrollPositionRef.current = scrollTop;
               }}
-              initialScrollTop={0} // Start at top, will be updated by our hook when ready
+              initialScrollTop={scrollPositionRef.current}
               className="scrollbar-vertical"
               style={{ 
                 overflowX: 'hidden',
