@@ -21,7 +21,7 @@ export function useGalleryGrid(props?: UseGalleryGridProps) {
   const previousColumnsRef = useRef(props?.columnsCount || 0);
   const previousViewModeRef = useRef<GalleryViewMode>(props?.viewMode || 'both');
   
-  // Use our grid anchor hook
+  // Use our simplified grid anchor hook
   const { saveScrollAnchor, restoreScrollAnchor } = useGridAnchor();
   
   // Effect to handle column count or view mode changes
@@ -38,12 +38,11 @@ export function useGalleryGrid(props?: UseGalleryGridProps) {
       viewMode !== previousViewMode
     )) {
       try {
-        // Save current position before update
+        // Save current position using percentage approach
         saveScrollAnchor({
           gridRef,
           columnsCount: previousColumnsCount,
           previousColumnsCount,
-          mediaItemsCount,
           viewMode: previousViewMode,
           previousViewMode
         });
@@ -51,14 +50,13 @@ export function useGalleryGrid(props?: UseGalleryGridProps) {
         // Refresh grid to apply new layout
         refreshGrid();
         
-        // Restore scroll position after refresh with a small delay to ensure grid has rendered
+        // Restore scroll position after refresh
         setTimeout(() => {
           try {
             restoreScrollAnchor({
               gridRef,
               columnsCount,
               previousColumnsCount,
-              mediaItemsCount,
               viewMode,
               previousViewMode
             });
@@ -76,7 +74,7 @@ export function useGalleryGrid(props?: UseGalleryGridProps) {
     }
   }, [props?.columnsCount, props?.viewMode, props?.mediaItemsCount, saveScrollAnchor, restoreScrollAnchor]);
 
-  // Incrémenter la clé de la grille pour forcer le rendu
+  // Incrémente la clé de la grille pour forcer le rendu
   const refreshGrid = useCallback(() => {
     // Éviter les resets trop fréquents (throttling)
     const now = Date.now();
@@ -88,14 +86,14 @@ export function useGalleryGrid(props?: UseGalleryGridProps) {
     lastResetTimeRef.current = now;
   }, []);
   
-  // Sauvegarder la position de défilement actuelle
+  // Mettre à jour la référence de la position de défilement
   const saveScrollPosition = useCallback(() => {
     if (gridRef.current) {
       scrollPositionRef.current = gridRef.current.state.scrollTop;
     }
   }, []);
   
-  // Restaurer la position de défilement sauvegardée
+  // Restaurer la position de défilement
   const restoreScrollPosition = useCallback(() => {
     if (gridRef.current && scrollPositionRef.current > 0) {
       gridRef.current.scrollTo({ scrollTop: scrollPositionRef.current });

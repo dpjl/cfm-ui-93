@@ -50,7 +50,7 @@ const VirtualizedGalleryGrid = memo(({
   } = useGalleryGrid({
     columnsCount,
     mediaItemsCount: mediaIds.length,
-    viewMode: position === 'source' ? mapPositionToViewMode(position, viewMode) : 'both' // Map position to corresponding view mode
+    viewMode: mapPositionToViewMode(position, viewMode)
   });
   
   const { 
