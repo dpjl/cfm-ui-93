@@ -41,29 +41,65 @@ export function useGallerySync({
     itemHeight: number,
     columnsCount: number
   ) => {
-    // Parcourir les mois dans l'index de dates
+    // Si pas de données d'années, retourner null
+    if (!dateIndex.years || dateIndex.years.length === 0) {
+      return null;
+    }
+    
+    // Parcourir les années dans l'index de dates
     for (const year of dateIndex.years) {
-      const months = dateIndex.monthsByYear[year];
+      // Vérifier que monthsByYear contient cette année et que c'est un tableau
+      const months = dateIndex.monthsByYear.get(year);
+      if (!months || !Array.isArray(months)) continue;
       
+      // Parcourir les mois de cette année
       for (const month of months) {
-        const monthKey = `${year}-${month}`;
-        const separatorInfo = dateIndex.separatorsByYearMonth[monthKey];
+        const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
         
-        if (separatorInfo) {
-          const rowIndex = Math.floor(separatorInfo.index / columnsCount);
-          const startPos = rowIndex * itemHeight;
-          const endPos = startPos + (separatorInfo.itemCount / columnsCount) * itemHeight;
+        // Calculer l'indice approximatif pour ce mois (basé sur yearMonthToIndex)
+        const monthIndex = dateIndex.yearMonthToIndex.get(monthKey);
+        if (monthIndex === undefined) continue;
+        
+        // Calculer la position approximative de début et de fin
+        const rowIndex = Math.floor(monthIndex / columnsCount);
+        const startPos = rowIndex * itemHeight;
+        
+        // Estimer la fin en fonction du nombre d'éléments dans ce mois
+        // Nous utilisons un calcul approximatif basé sur les indices
+        let nextMonthIndex = Number.MAX_SAFE_INTEGER;
+        
+        // Trouver le prochain mois dans l'ordre chronologique
+        for (const nextYear of dateIndex.years) {
+          const nextMonths = dateIndex.monthsByYear.get(nextYear);
+          if (!nextMonths || !Array.isArray(nextMonths)) continue;
           
-          // Si la position de défilement est dans ce mois
-          if (scrollTop >= startPos && scrollTop <= endPos) {
-            return { 
-              year, 
-              month, 
-              startPos, 
-              endPos,
-              progress: (scrollTop - startPos) / (endPos - startPos)
-            };
+          for (const nextMonth of nextMonths) {
+            if (nextYear > year || (nextYear === year && nextMonth > month)) {
+              const nextKey = `${nextYear}-${nextMonth.toString().padStart(2, '0')}`;
+              const nextIdx = dateIndex.yearMonthToIndex.get(nextKey);
+              if (nextIdx !== undefined && nextIdx < nextMonthIndex) {
+                nextMonthIndex = nextIdx;
+              }
+            }
           }
+        }
+        
+        // Calculer le nombre approximatif d'éléments dans ce mois
+        const itemCount = nextMonthIndex !== Number.MAX_SAFE_INTEGER
+          ? nextMonthIndex - monthIndex
+          : 20; // Valeur par défaut raisonnable
+        
+        const endPos = startPos + Math.ceil(itemCount / columnsCount) * itemHeight;
+        
+        // Si la position de défilement est dans ce mois
+        if (scrollTop >= startPos && scrollTop <= endPos) {
+          return { 
+            year, 
+            month, 
+            startPos, 
+            endPos,
+            progress: (scrollTop - startPos) / (endPos - startPos)
+          };
         }
       }
     }
@@ -114,16 +150,46 @@ export function useGallerySync({
     currentMonthRef.current = { year, month };
     
     // Trouver le mois correspondant dans la cible
-    const monthKey = `${year}-${month}`;
-    const targetSeparatorInfo = targetDates.dateIndex.separatorsByYearMonth[monthKey];
+    const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+    const targetMonthIndex = targetDates.dateIndex.yearMonthToIndex.get(monthKey);
     
     // Si le mois cible existe, calculer la position et synchroniser
-    if (targetSeparatorInfo) {
+    if (targetMonthIndex !== undefined) {
       isSyncing.current = true;
       
-      const targetRowIndex = Math.floor(targetSeparatorInfo.index / targetColumnsCount);
+      // Estimer la position de début et la fin pour le mois cible
+      const targetRowIndex = Math.floor(targetMonthIndex / targetColumnsCount);
       const targetStartPos = targetRowIndex * targetItemHeight;
-      const targetEndPos = targetStartPos + (targetSeparatorInfo.itemCount / targetColumnsCount) * targetItemHeight;
+      
+      // Estimer le nombre d'éléments dans ce mois pour la cible
+      let targetEndPos = targetStartPos + 10 * targetItemHeight; // Valeur par défaut
+      
+      // Parcourir les années dans l'index de dates cible pour trouver le mois suivant
+      const targetYears = targetDates.dateIndex.years;
+      if (targetYears && targetYears.length > 0) {
+        let nextMonthIndex = Number.MAX_SAFE_INTEGER;
+        
+        // Trouver le prochain mois dans l'ordre chronologique
+        for (const nextYear of targetYears) {
+          const nextMonths = targetDates.dateIndex.monthsByYear.get(nextYear);
+          if (!nextMonths || !Array.isArray(nextMonths)) continue;
+          
+          for (const nextMonth of nextMonths) {
+            if (nextYear > year || (nextYear === year && nextMonth > month)) {
+              const nextKey = `${nextYear}-${nextMonth.toString().padStart(2, '0')}`;
+              const nextIdx = targetDates.dateIndex.yearMonthToIndex.get(nextKey);
+              if (nextIdx !== undefined && nextIdx < nextMonthIndex) {
+                nextMonthIndex = nextIdx;
+              }
+            }
+          }
+        }
+        
+        if (nextMonthIndex !== Number.MAX_SAFE_INTEGER) {
+          const itemCount = nextMonthIndex - targetMonthIndex;
+          targetEndPos = targetStartPos + Math.ceil(itemCount / targetColumnsCount) * targetItemHeight;
+        }
+      }
       
       // Calculer la position relative dans le mois cible
       const targetScrollTop = targetStartPos + (targetEndPos - targetStartPos) * progress;

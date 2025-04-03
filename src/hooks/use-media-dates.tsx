@@ -2,7 +2,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { MediaListResponse, GalleryItem } from '@/types/gallery';
 
-interface MediaDateIndex {
+interface DateIndex {
   // Maps ID to date
   idToDate: Map<string, string>;
   // Maps year-month to first index in the array
@@ -11,6 +11,8 @@ interface MediaDateIndex {
   years: number[];
   // Available months for each year
   monthsByYear: Map<number, number[]>;
+  // Maps year-month to separator information (for enriched items)
+  separatorsByYearMonth: Record<string, {index: number, itemCount: number}>;
 }
 
 export function useMediaDates(mediaListResponse?: MediaListResponse) {
@@ -23,7 +25,8 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
         idToDate: new Map(),
         yearMonthToIndex: new Map(),
         years: [],
-        monthsByYear: new Map()
+        monthsByYear: new Map(),
+        separatorsByYearMonth: {}
       };
     }
 
@@ -33,6 +36,7 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
     const yearMonthSet = new Set<string>();
     const yearSet = new Set<number>();
     const monthsByYear = new Map<number, Set<number>>();
+    const separatorsByYearMonth: Record<string, {index: number, itemCount: number}> = {};
 
     // Construire les maps et sets
     for (let i = 0; i < mediaIds.length; i++) {
@@ -81,7 +85,8 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
       idToDate,
       yearMonthToIndex,
       years,
-      monthsByYear: monthsByYearMap
+      monthsByYear: monthsByYearMap,
+      separatorsByYearMonth
     };
   }, [mediaListResponse]);
 
@@ -130,18 +135,28 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
     // Utilisation de sort avec comparateur pour trier dans l'ordre chronologique inverse
     const sortedYearMonths = Array.from(mediaByYearMonth.keys()).sort((a, b) => b.localeCompare(a));
     
+    // Mettre à jour le separatorsByYearMonth dans dateIndex
     for (const yearMonth of sortedYearMonths) {
+      const separatorIndex = actualIndex;
+      
       // Ajouter un séparateur pour chaque mois/année
       items.push({
         type: 'separator',
         yearMonth,
         label: formatMonthYearLabel(yearMonth),
-        index: actualIndex
+        index: separatorIndex
       });
       actualIndex++;
       
       // Ajouter tous les médias de ce mois/année
       const mediaItems = mediaByYearMonth.get(yearMonth)!;
+      
+      // Sauvegarder les informations du séparateur dans dateIndex
+      dateIndex.separatorsByYearMonth[yearMonth] = {
+        index: separatorIndex,
+        itemCount: mediaItems.length + 1 // +1 pour inclure le séparateur lui-même
+      };
+      
       for (const { id, index } of mediaItems) {
         items.push({
           type: 'media',
@@ -154,7 +169,7 @@ export function useMediaDates(mediaListResponse?: MediaListResponse) {
     }
 
     return items;
-  }, [mediaListResponse]);
+  }, [mediaListResponse, dateIndex]);
 
   // Index pour accéder rapidement à un séparateur par yearMonth
   const separatorIndices = useMemo(() => {
