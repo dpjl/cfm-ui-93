@@ -37,34 +37,42 @@ export function useGalleryGrid(props?: UseGalleryGridProps) {
       columnsCount !== previousColumnsCount || 
       viewMode !== previousViewMode
     )) {
-      // Save current position before update
-      saveScrollAnchor({
-        gridRef,
-        columnsCount: previousColumnsCount,
-        previousColumnsCount,
-        mediaItemsCount,
-        viewMode: previousViewMode,
-        previousViewMode
-      });
-      
-      // Refresh grid to apply new layout
-      refreshGrid();
-      
-      // Restore scroll position after refresh
-      setTimeout(() => {
-        restoreScrollAnchor({
+      try {
+        // Save current position before update
+        saveScrollAnchor({
           gridRef,
-          columnsCount,
+          columnsCount: previousColumnsCount,
           previousColumnsCount,
           mediaItemsCount,
-          viewMode,
+          viewMode: previousViewMode,
           previousViewMode
         });
-      }, 50);
-      
-      // Update previous values
-      previousColumnsRef.current = columnsCount;
-      previousViewModeRef.current = viewMode;
+        
+        // Refresh grid to apply new layout
+        refreshGrid();
+        
+        // Restore scroll position after refresh with a small delay to ensure grid has rendered
+        setTimeout(() => {
+          try {
+            restoreScrollAnchor({
+              gridRef,
+              columnsCount,
+              previousColumnsCount,
+              mediaItemsCount,
+              viewMode,
+              previousViewMode
+            });
+          } catch (error) {
+            console.error('Error in restore scroll timeout callback:', error);
+          }
+        }, 100);
+        
+        // Update previous values
+        previousColumnsRef.current = columnsCount;
+        previousViewModeRef.current = viewMode;
+      } catch (error) {
+        console.error('Error handling grid updates:', error);
+      }
     }
   }, [props?.columnsCount, props?.viewMode, props?.mediaItemsCount, saveScrollAnchor, restoreScrollAnchor]);
 
@@ -102,17 +110,21 @@ export function useGalleryGrid(props?: UseGalleryGridProps) {
       Math.abs(previousSizeRef.current.height - height) > 5;
       
     if (isSignificantChange) {
-      // Sauvegarder la position avant la mise à jour
-      saveScrollPosition();
-      
-      // Mettre à jour la référence de taille
-      previousSizeRef.current = { width, height };
-      
-      // Forcer le rafraîchissement de la grille
-      refreshGrid();
-      
-      // Restaurer la position après la mise à jour
-      setTimeout(restoreScrollPosition, 50);
+      try {
+        // Sauvegarder la position avant la mise à jour
+        saveScrollPosition();
+        
+        // Mettre à jour la référence de taille
+        previousSizeRef.current = { width, height };
+        
+        // Forcer le rafraîchissement de la grille
+        refreshGrid();
+        
+        // Restaurer la position après la mise à jour
+        setTimeout(restoreScrollPosition, 100);
+      } catch (error) {
+        console.error('Error handling resize:', error);
+      }
     }
   }, [saveScrollPosition, restoreScrollPosition, refreshGrid]);
 

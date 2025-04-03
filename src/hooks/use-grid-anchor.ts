@@ -44,6 +44,18 @@ export function useGridAnchor() {
   ): GridVisibleArea => {
     const { scrollTop, scrollLeft, outerHeight, outerWidth } = grid.state;
     
+    // Vérifier si _instanceProps existe et contient les propriétés nécessaires
+    if (!grid._instanceProps || !grid._instanceProps.rowHeight || !grid._instanceProps.columnWidth) {
+      console.warn('Grid instance properties are not fully initialized yet');
+      // Retourner des valeurs par défaut pour éviter les erreurs
+      return {
+        startIndex: 0,
+        centerIndex: 0,
+        topIndex: 0,
+        visibleIndices: [],
+      };
+    }
+    
     // Get grid item dimensions
     const { rowHeight, columnWidth } = grid._instanceProps;
     
@@ -104,15 +116,19 @@ export function useGridAnchor() {
     
     if (!gridRef.current) return;
     
-    const grid = gridRef.current;
-    const visibleArea = getVisibleArea(grid, columnsCount, mediaItemsCount);
-    const viewModeType = viewMode === 'both' ? 'split' : 'single';
-    
-    previousDetailsRef.current = {
-      columnsCount,
-      viewModeType,
-      visibleArea,
-    };
+    try {
+      const grid = gridRef.current;
+      const visibleArea = getVisibleArea(grid, columnsCount, mediaItemsCount);
+      const viewModeType = viewMode === 'both' ? 'split' : 'single';
+      
+      previousDetailsRef.current = {
+        columnsCount,
+        viewModeType,
+        visibleArea,
+      };
+    } catch (error) {
+      console.error('Error saving scroll anchor:', error);
+    }
   }, [getVisibleArea]);
   
   /**
@@ -143,6 +159,14 @@ export function useGridAnchor() {
       if (!gridRef.current) return;
       
       try {
+        // Vérifier si _instanceProps est défini avant d'utiliser getOffsetForCell
+        if (!grid._instanceProps || !grid._instanceProps.rowHeight || !grid._instanceProps.columnWidth) {
+          console.warn('Grid instance properties not fully initialized, delaying scroll restoration');
+          // Essayer à nouveau après un court délai
+          setTimeout(() => restoreScrollAnchor(props), 100);
+          return;
+        }
+        
         // For column count changes (zoom effect) - maintain center item
         if (isColumnChange && !isViewModeChange) {
           const { centerIndex } = visibleArea;
