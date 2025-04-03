@@ -117,24 +117,29 @@ const VirtualizedGalleryGrid = memo(({
   // Signal when grid is ready for scroll restoration
   useEffect(() => {
     // Use requestIdleCallback (or fallback to setTimeout) to ensure the grid is fully rendered
-    const idleCallback = window.requestIdleCallback || setTimeout;
+    const idleCallback = window.requestIdleCallback || ((callback) => setTimeout(callback, 200));
     const timeoutId = idleCallback(() => {
       handleGridReady();
       initialRenderRef.current = false;
-    }, { timeout: 300 });
+    });
     
     return () => {
       if (window.cancelIdleCallback) {
-        window.cancelIdleCallback(timeoutId as any);
+        window.cancelIdleCallback(timeoutId);
       } else {
-        clearTimeout(timeoutId);
+        clearTimeout(timeoutId as unknown as number);
       }
     };
   }, [handleGridReady, gridKey]);
   
+  // Adapter pour corriger la signature de handleResize
+  const handleAutosizeChange = useCallback(({ width, height }: { width: number; height: number }) => {
+    handleResize(width, height);
+  }, [handleResize]);
+  
   return (
     <div className="w-full h-full p-2 gallery-container relative">
-      <AutoSizer key={`gallery-grid-${gridKey}`} onResize={handleResize}>
+      <AutoSizer key={`gallery-grid-${gridKey}`} onResize={handleAutosizeChange}>
         {({ height, width }) => {
           const { 
             itemWidth, 

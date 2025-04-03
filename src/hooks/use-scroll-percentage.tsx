@@ -78,8 +78,7 @@ export function useScrollPercentage({
       gridRef.current && 
       gridRef.current._outerRef && 
       gridRef.current._outerRef.scrollHeight > 0 &&
-      gridRef.current._instanceProps &&
-      gridRef.current._instanceProps.rowHeight;
+      gridRef.current._instanceProps;
     
     if (isGridReady) {
       isGridReadyRef.current = true;

@@ -8,10 +8,17 @@ interface RequestIdleCallbackDeadline {
   timeRemaining: () => number;
 }
 
-interface Window {
-  requestIdleCallback: (
-    callback: (deadline: RequestIdleCallbackDeadline) => void,
-    opts?: RequestIdleCallbackOptions
-  ) => number;
-  cancelIdleCallback: (handle: number) => void;
+type RequestIdleCallbackHandle = number;
+
+declare global {
+  interface Window {
+    requestIdleCallback: (
+      callback: (deadline: RequestIdleCallbackDeadline) => void,
+      opts?: RequestIdleCallbackOptions
+    ) => RequestIdleCallbackHandle;
+    cancelIdleCallback: (handle: RequestIdleCallbackHandle) => void;
+  }
 }
+
+// Nécessaire pour les modules .ts
+export {};
