@@ -1,4 +1,3 @@
-
 import React, { memo, useMemo, useCallback } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -88,8 +87,6 @@ const VirtualizedGalleryGrid = memo(({
         paddingRight: 0,
         paddingBottom: 0,
         zIndex: 10,
-        position: 'sticky' as const,
-        top: 0,
         gridColumn: `span ${columnsCount}`,
       };
     }

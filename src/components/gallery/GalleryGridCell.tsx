@@ -35,11 +35,25 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
   // Get the item at this position
   const item = data.items[index];
   
-  // For separator type, render a separator that spans the entire row
+  // For separator type, we need a more robust approach that doesn't depend on columnIndex === 0
   if (item.type === 'separator') {
-    // For separators, we want to render them only once per row and make them span all columns
-    // We'll render them in the first column and make them span the full width
-    if (columnIndex === 0) {
+    // Determine if this is the first occurrence of this separator in the current row
+    // We check all items in the current row to see if any previous item has the same yearMonth
+    const rowStartIndex = rowIndex * data.columnsCount;
+    const rowEndIndex = Math.min(rowStartIndex + columnIndex, data.items.length - 1);
+    
+    let isFirstSeparatorOccurrence = true;
+    // Check if the same separator appears earlier in this row
+    for (let i = rowStartIndex; i < rowEndIndex; i++) {
+      const prevItem = data.items[i];
+      if (prevItem.type === 'separator' && prevItem.yearMonth === item.yearMonth) {
+        isFirstSeparatorOccurrence = false;
+        break;
+      }
+    }
+    
+    // Only render this separator if it's the first occurrence in this row
+    if (isFirstSeparatorOccurrence) {
       // Create a style that spans all columns
       const spanningStyle = data.calculateCellStyle(style, columnIndex, true);
       
@@ -49,7 +63,7 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
         </div>
       );
     }
-    // Skip rendering separators in other columns of the same row
+    // Skip rendering duplicate separators in the same row
     return null;
   }
   
