@@ -54,11 +54,18 @@ const GalleryGridCell = memo(({ columnIndex, rowIndex, style, data }: GalleryGri
     
     // Only render this separator if it's the first occurrence in this row
     if (isFirstSeparatorOccurrence) {
-      // Create a style that spans all columns
+      // Calculer le style normal pour ce séparateur
       const spanningStyle = data.calculateCellStyle(style, columnIndex, true);
       
+      // Forcer le séparateur à commencer à gauche et couvrir toute la largeur de la galerie
+      const fullWidthStyle = {
+        ...spanningStyle,
+        left: 0,  // Forcer le positionnement à partir de la gauche
+        gridColumn: `1 / span ${data.columnsCount}`,  // Commencer à la première colonne
+      };
+      
       return (
-        <div style={spanningStyle} className="separator-row">
+        <div style={fullWidthStyle} className="separator-row">
           <MonthYearSeparator label={item.label} />
         </div>
       );
