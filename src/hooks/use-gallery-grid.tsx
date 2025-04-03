@@ -14,10 +14,11 @@ export function useGalleryGrid({ position }: UseGalleryGridProps) {
   const lastResetTimeRef = useRef(0);
   const isResettingRef = useRef(false);
   
-  // Utiliser notre nouveau hook pour gérer le pourcentage de défilement
+  // Utiliser notre hook pour gérer le pourcentage de défilement avec l'approche basée sur les événements
   const { 
     saveScrollPercentage, 
-    restoreScrollPercentage 
+    restoreScrollPercentage,
+    handleGridItemsRendered 
   } = useScrollPercentage({ position });
   
   // Fonction pour incrémenter la clé de la grille et forcer un nouveau rendu
@@ -53,11 +54,9 @@ export function useGalleryGrid({ position }: UseGalleryGridProps) {
     
     // Ne restaurer que si nous sommes en train de reset
     if (isResettingRef.current) {
-      console.log(`[${position}] Grid is ready after reset, restoring scroll position`);
+      console.log(`[${position}] Grid is ready after reset, triggering scroll position restoration`);
       restoreScrollPercentage(gridRef);
       isResettingRef.current = false;
-    } else {
-      console.log(`[${position}] Grid ready but not after reset, skipping restoration`);
     }
   }, [restoreScrollPercentage, position]);
   
@@ -85,6 +84,12 @@ export function useGalleryGrid({ position }: UseGalleryGridProps) {
     }
   }, [saveScrollPercentage, refreshGrid, position]);
   
+  // Gestionnaire pour les événements d'éléments rendus de la grille
+  const onItemsRendered = useCallback(() => {
+    console.log(`[${position}] Grid items rendered event triggered`);
+    handleGridItemsRendered();
+  }, [handleGridItemsRendered, position]);
+  
   // Sauvegarder la position avant démontage
   useEffect(() => {
     // Log au montage
@@ -105,6 +110,7 @@ export function useGalleryGrid({ position }: UseGalleryGridProps) {
     refreshGrid,
     handleResize,
     handleGridReady,
-    saveScrollPercentage
+    saveScrollPercentage,
+    onItemsRendered
   };
 }

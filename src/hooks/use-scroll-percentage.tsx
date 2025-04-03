@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { debounce } from 'lodash';
@@ -26,12 +25,9 @@ export function useScrollPercentage({
   // Keep current percentage in a ref to avoid unnecessary rerenders
   const currentPercentageRef = useRef<number>(storedPercentage);
   
-  // Track ready state of the grid
+  // Track grid initialization state
   const isGridReadyRef = useRef<boolean>(false);
-  const restoreAttemptRef = useRef<number>(0);
-  const maxRestoreAttempts = 10;
-  
-  // Store the latest grid ref to access during restoration attempts
+  const isRestorationPendingRef = useRef<boolean>(false);
   const latestGridRef = useRef<any>(null);
   
   // Debounced function to save the scroll percentage to localStorage
@@ -64,88 +60,94 @@ export function useScrollPercentage({
     debouncedSavePercentage(percentage);
   };
   
-  // Safe scroll restoration with verification that grid is ready
-  const restoreScrollPercentage = (gridRef: React.RefObject<any>) => {
-    console.log(`[${position}] Attempting to restore scroll, current percentage:`, currentPercentageRef.current.toFixed(4));
-    
-    // Save the grid ref for potential retry attempts
-    latestGridRef.current = gridRef;
-    
-    // Reset attempt counter when explicitly called
-    restoreAttemptRef.current = 0;
-    
-    // Start the restore process
-    attemptRestore();
+  // Function to handle when items are rendered in the grid
+  // This indicates that the grid is ready to receive scroll commands
+  const handleGridItemsRendered = () => {
+    if (isRestorationPendingRef.current) {
+      console.log(`[${position}] Items rendered event received while restoration pending, applying scroll position`);
+      isGridReadyRef.current = true;
+      applyScrollPosition();
+    }
   };
   
-  // Function that attempts to restore scroll position
-  const attemptRestore = () => {
+  // Apply the stored scroll position to the grid
+  const applyScrollPosition = () => {
     const gridRef = latestGridRef.current;
-    if (!gridRef || !gridRef.current) {
-      console.log(`[${position}] Attempt #${restoreAttemptRef.current}: gridRef is not available`);
+    if (!gridRef?.current?._outerRef) {
+      console.log(`[${position}] Cannot apply scroll: grid or _outerRef is not available`);
       return false;
     }
     
     try {
-      // Check if grid is fully initialized - with multiple safeguards
       const grid = gridRef.current._outerRef;
       
-      console.log(`[${position}] Grid inspection:`, {
-        hasGrid: !!grid,
-        scrollHeight: grid?.scrollHeight,
-        hasScrollTop: typeof grid?.scrollTop === 'number',
-        hasInstanceProps: !!gridRef.current._instanceProps,
-        attemptNumber: restoreAttemptRef.current
+      if (typeof grid.scrollTop !== 'number') {
+        console.log(`[${position}] Cannot apply scroll: scrollTop is not available`);
+        return false;
+      }
+      
+      console.log(`[${position}] Grid ready for scroll restoration:`, {
+        scrollHeight: grid.scrollHeight,
+        clientHeight: grid.clientHeight,
+        percentage: currentPercentageRef.current
       });
       
-      const isGridReady = 
-        gridRef.current && 
-        grid && 
-        grid.scrollHeight > 0 &&
-        typeof grid.scrollTop === 'number' &&
-        gridRef.current._instanceProps !== undefined;
+      // Apply the scroll position
+      const maxScroll = grid.scrollHeight - grid.clientHeight || 1;
+      const targetScrollTop = currentPercentageRef.current * maxScroll;
       
-      if (isGridReady) {
-        isGridReadyRef.current = true;
-        
-        // Apply the scroll position
-        const maxScroll = grid.scrollHeight - grid.clientHeight || 1;
-        const targetScrollTop = currentPercentageRef.current * maxScroll;
-        
-        console.log(`[${position}] Grid is ready! Restoring to ${targetScrollTop.toFixed(2)}px (${currentPercentageRef.current.toFixed(4)} of ${maxScroll}px)`);
-        
-        // Use requestAnimationFrame for smoother scrolling
-        requestAnimationFrame(() => {
-          try {
-            grid.scrollTop = targetScrollTop;
-            console.log(`[${position}] Scroll restoration complete, new scrollTop:`, grid.scrollTop);
-          } catch (err) {
-            console.error(`[${position}] Error setting scroll position:`, err);
-          }
-        });
-        
-        return true;
-      } else {
-        console.log(`[${position}] Grid not ready yet (attempt ${restoreAttemptRef.current}/${maxRestoreAttempts})`);
-      }
+      console.log(`[${position}] Applying scroll position: ${targetScrollTop.toFixed(2)}px (${currentPercentageRef.current.toFixed(4)} of ${maxScroll}px)`);
+      
+      // Use requestAnimationFrame for smoother scrolling
+      requestAnimationFrame(() => {
+        try {
+          grid.scrollTop = targetScrollTop;
+          console.log(`[${position}] Scroll restoration complete, new scrollTop:`, grid.scrollTop);
+          
+          // Clear the pending state since we've applied the position
+          isRestorationPendingRef.current = false;
+        } catch (err) {
+          console.error(`[${position}] Error setting scroll position:`, err);
+          return false;
+        }
+      });
+      
+      return true;
     } catch (err) {
-      console.error(`[${position}] Error checking grid readiness:`, err);
-    }
-    
-    // If we reach here, the grid is not ready yet or there was an error
-    if (restoreAttemptRef.current < maxRestoreAttempts) {
-      // Retry with exponential backoff
-      const delay = Math.min(100 * Math.pow(1.5, restoreAttemptRef.current), 2000);
-      restoreAttemptRef.current++;
-      
-      console.log(`[${position}] Scheduling retry #${restoreAttemptRef.current} in ${delay.toFixed(0)}ms`);
-      setTimeout(attemptRestore, delay);
+      console.error(`[${position}] Error during scroll restoration:`, err);
       return false;
-    } else {
-      console.warn(`[${position}] Gave up after ${maxRestoreAttempts} attempts to restore scroll`);
+    }
+  };
+  
+  // Function to trigger the scroll restoration process
+  const restoreScrollPercentage = (gridRef: React.RefObject<any>) => {
+    console.log(`[${position}] Requesting scroll restoration, percentage:`, currentPercentageRef.current.toFixed(4));
+    
+    // Save the grid ref for potential retry or event-based restoration
+    latestGridRef.current = gridRef;
+    
+    // Set flag that we want to restore when possible
+    isRestorationPendingRef.current = true;
+    
+    // Try immediately in case grid is already ready
+    if (applyScrollPosition()) {
+      console.log(`[${position}] Immediate scroll restoration succeeded`);
+      return;
     }
     
-    return false;
+    console.log(`[${position}] Deferred restoration, waiting for grid items to render`);
+    
+    // Set a fallback timer in case the event doesn't fire
+    const fallbackTimer = setTimeout(() => {
+      if (isRestorationPendingRef.current) {
+        console.log(`[${position}] Fallback timer for scroll restoration expired, attempting final restoration`);
+        applyScrollPosition();
+        // Clear the pending state regardless of success to avoid getting stuck
+        isRestorationPendingRef.current = false;
+      }
+    }, 1000);
+    
+    return () => clearTimeout(fallbackTimer);
   };
   
   // Clean up the debounced function on unmount
@@ -159,6 +161,7 @@ export function useScrollPercentage({
   return {
     saveScrollPercentage,
     restoreScrollPercentage,
-    currentPercentage: currentPercentageRef.current
+    currentPercentage: currentPercentageRef.current,
+    handleGridItemsRendered
   };
 }
