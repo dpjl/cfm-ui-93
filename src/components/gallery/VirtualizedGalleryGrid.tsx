@@ -43,6 +43,9 @@ const VirtualizedGalleryGrid = memo(({
 }: VirtualizedGalleryGridProps) => {
   const mediaIds = mediaResponse?.mediaIds || [];
   const initialRenderRef = useRef(true);
+  const gridInitializedRef = useRef(false);
+  
+  console.log(`[${position}] VirtualizedGalleryGrid rendering, initialRender:`, initialRenderRef.current, 'mediaIds length:', mediaIds.length);
   
   const {
     gridRef,
@@ -86,8 +89,9 @@ const VirtualizedGalleryGrid = memo(({
   }, [gap]);
   
   const handleScroll = useCallback(({ scrollTop }: { scrollTop: number }) => {
+    console.log(`[${position}] Grid scrolled to ${scrollTop}px`);
     saveScrollPercentage(gridRef);
-  }, [saveScrollPercentage, gridRef]);
+  }, [saveScrollPercentage, gridRef, position]);
   
   const itemData = useMemo(() => ({
     items: enrichedGalleryItems,
@@ -114,18 +118,55 @@ const VirtualizedGalleryGrid = memo(({
     return `media-${item.id}`;
   }, [enrichedGalleryItems, columnsCount]);
   
+  // Log grid initialization
+  useEffect(() => {
+    console.log(`[${position}] Grid mounting with key:`, gridKey);
+    return () => {
+      console.log(`[${position}] Grid unmounting with key:`, gridKey);
+    };
+  }, [gridKey, position]);
+  
   // Signal when grid is ready for scroll restoration
   useEffect(() => {
     // Use a short delay to ensure the grid has time to initialize
+    console.log(`[${position}] Scheduling grid ready callback in 100ms`);
     const timer = setTimeout(() => {
+      console.log(`[${position}] Timer fired, initializing grid`);
       handleGridReady();
       initialRenderRef.current = false;
+      gridInitializedRef.current = true;
     }, 100);
     
     return () => {
+      console.log(`[${position}] Clearing grid initialization timer`);
       clearTimeout(timer);
     };
-  }, [handleGridReady, gridKey]);
+  }, [handleGridReady, gridKey, position]);
+  
+  // Check grid initialization over time
+  useEffect(() => {
+    // Additional check for grid initialization after longer delays
+    const checkTimes = [500, 1000, 2000];
+    
+    const timers = checkTimes.map(delay => 
+      setTimeout(() => {
+        if (gridRef.current && gridRef.current._outerRef) {
+          console.log(`[${position}] Grid check after ${delay}ms:`, {
+            scrollHeight: gridRef.current._outerRef.scrollHeight,
+            clientHeight: gridRef.current._outerRef.clientHeight,
+            scrollTop: gridRef.current._outerRef.scrollTop,
+            hasInstanceProps: !!gridRef.current._instanceProps
+          });
+        } else {
+          console.log(`[${position}] Grid not available after ${delay}ms`);
+        }
+      }, delay)
+    );
+    
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, [gridRef, position, gridKey]);
   
   // Adapter pour corriger la signature de handleResize
   const handleAutosizeChange = useCallback(({ width, height }: { width: number; height: number }) => {
@@ -144,6 +185,15 @@ const VirtualizedGalleryGrid = memo(({
           const columnWidth = itemWidth + gap;
           
           const adjustedWidth = width - scrollbarWidth + 1;
+          
+          console.log(`[${position}] Rendering grid with dimensions:`, {
+            gridHeight: height, 
+            gridWidth: width, 
+            itemWidth, 
+            itemHeight, 
+            columnWidth,
+            rowCount
+          });
           
           return (
             <FixedSizeGrid
