@@ -16,6 +16,7 @@ export function useGalleryGrid(props?: UseGalleryGridProps) {
   const scrollPositionRef = useRef(0);
   const previousSizeRef = useRef({ width: 0, height: 0 });
   const lastResetTimeRef = useRef(0);
+  const gridReadyRef = useRef(false);
   
   // Track previous values for comparison
   const previousColumnsRef = useRef(props?.columnsCount || 0);
@@ -33,7 +34,7 @@ export function useGalleryGrid(props?: UseGalleryGridProps) {
     const previousViewMode = previousViewModeRef.current;
     
     // Only proceed if we have a grid reference and values have changed
-    if (gridRef.current && (
+    if (gridRef.current && gridReadyRef.current && (
       columnsCount !== previousColumnsCount || 
       viewMode !== previousViewMode
     )) {
@@ -50,16 +51,18 @@ export function useGalleryGrid(props?: UseGalleryGridProps) {
         // Refresh grid to apply new layout
         refreshGrid();
         
-        // Restore scroll position after refresh
-        setTimeout(() => {
+        // Restore scroll position after refresh with a safe delay
+        const timeoutId = setTimeout(() => {
           try {
-            restoreScrollAnchor({
-              gridRef,
-              columnsCount,
-              previousColumnsCount,
-              viewMode,
-              previousViewMode
-            });
+            if (gridRef.current) {
+              restoreScrollAnchor({
+                gridRef,
+                columnsCount,
+                previousColumnsCount,
+                viewMode,
+                previousViewMode
+              });
+            }
           } catch (error) {
             console.error('Error in restore scroll timeout callback:', error);
           }
@@ -68,63 +71,75 @@ export function useGalleryGrid(props?: UseGalleryGridProps) {
         // Update previous values
         previousColumnsRef.current = columnsCount;
         previousViewModeRef.current = viewMode;
+        
+        return () => clearTimeout(timeoutId);
       } catch (error) {
         console.error('Error handling grid updates:', error);
       }
     }
   }, [props?.columnsCount, props?.viewMode, props?.mediaItemsCount, saveScrollAnchor, restoreScrollAnchor]);
 
-  // Incrémente la clé de la grille pour forcer le rendu
+  // Force grid re-render to apply layout changes
   const refreshGrid = useCallback(() => {
-    // Éviter les resets trop fréquents (throttling)
+    // Throttle resets to avoid excessive re-renders
     const now = Date.now();
     if (now - lastResetTimeRef.current < 500) {
       return;
     }
     
+    // Reset grid ready state before re-render
+    gridReadyRef.current = false;
+    
+    // Increment key to force re-render
     setGridKey(prev => prev + 1);
     lastResetTimeRef.current = now;
   }, []);
   
-  // Mettre à jour la référence de la position de défilement
+  // Save current scroll position
   const saveScrollPosition = useCallback(() => {
-    if (gridRef.current) {
+    if (gridRef.current && gridReadyRef.current) {
       scrollPositionRef.current = gridRef.current.state.scrollTop;
     }
   }, []);
   
-  // Restaurer la position de défilement
+  // Restore saved scroll position
   const restoreScrollPosition = useCallback(() => {
-    if (gridRef.current && scrollPositionRef.current > 0) {
+    if (gridRef.current && gridReadyRef.current && scrollPositionRef.current > 0) {
       gridRef.current.scrollTo({ scrollTop: scrollPositionRef.current });
     }
   }, []);
 
-  // Gérer le redimensionnement avec debounce
+  // Handle resize events with debouncing
   const handleResize = useCallback((width: number, height: number) => {
-    // Vérifier si le changement de taille est significatif
+    // Check if size change is significant
     const isSignificantChange = 
       Math.abs(previousSizeRef.current.width - width) > 5 || 
       Math.abs(previousSizeRef.current.height - height) > 5;
       
-    if (isSignificantChange) {
+    if (isSignificantChange && gridReadyRef.current) {
       try {
-        // Sauvegarder la position avant la mise à jour
+        // Save position before update
         saveScrollPosition();
         
-        // Mettre à jour la référence de taille
+        // Update size reference
         previousSizeRef.current = { width, height };
         
-        // Forcer le rafraîchissement de la grille
+        // Force grid refresh
         refreshGrid();
         
-        // Restaurer la position après la mise à jour
-        setTimeout(restoreScrollPosition, 100);
+        // Restore position after update
+        const timeoutId = setTimeout(restoreScrollPosition, 100);
+        return () => clearTimeout(timeoutId);
       } catch (error) {
         console.error('Error handling resize:', error);
       }
     }
   }, [saveScrollPosition, restoreScrollPosition, refreshGrid]);
+
+  // Mark grid as ready after initial render
+  const handleGridInitialized = useCallback(() => {
+    gridReadyRef.current = true;
+  }, []);
 
   return {
     gridRef,
@@ -134,6 +149,8 @@ export function useGalleryGrid(props?: UseGalleryGridProps) {
     refreshGrid,
     saveScrollPosition,
     restoreScrollPosition,
-    handleResize
+    handleResize,
+    handleGridInitialized,
+    gridReadyRef
   };
 }

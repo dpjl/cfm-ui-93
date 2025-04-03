@@ -1,5 +1,5 @@
 
-import React, { memo, useMemo, useCallback } from 'react';
+import React, { memo, useMemo, useCallback, useEffect } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DetailedMediaInfo } from '@/api/imageApi';
@@ -46,7 +46,9 @@ const VirtualizedGalleryGrid = memo(({
   const {
     gridRef,
     gridKey,
-    scrollPositionRef
+    scrollPositionRef,
+    handleGridInitialized,
+    gridReadyRef
   } = useGalleryGrid({
     columnsCount,
     mediaItemsCount: mediaIds.length,
@@ -61,11 +63,22 @@ const VirtualizedGalleryGrid = memo(({
   
   useGalleryMediaTracking(mediaResponse, gridRef);
   
+  // Ensure grid is marked as ready after mount
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      handleGridInitialized();
+    }, 200); // Add a small delay to ensure grid is fully mounted
+    
+    return () => clearTimeout(timeoutId);
+  }, [handleGridInitialized, gridKey]);
+  
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
   
   const handleSelectYearMonth = useCallback((year: number, month: number) => {
-    scrollToYearMonth(year, month, gridRef);
-  }, [scrollToYearMonth, gridRef]);
+    if (gridReadyRef.current) {
+      scrollToYearMonth(year, month, gridRef);
+    }
+  }, [scrollToYearMonth, gridRef, gridReadyRef]);
   
   const rowCount = useMemo(() => {
     return Math.ceil(enrichedGalleryItems.length / columnsCount);
@@ -139,7 +152,7 @@ const VirtualizedGalleryGrid = memo(({
               columnCount={columnsCount}
               columnWidth={columnWidth}
               height={height}
-              rowCount={rowCount}
+              rowCount={Math.max(1, rowCount)} // Ensure at least 1 row to prevent errors
               rowHeight={itemHeight + gap}
               width={width}
               itemData={itemData}
@@ -147,9 +160,11 @@ const VirtualizedGalleryGrid = memo(({
               overscanColumnCount={2}
               itemKey={getItemKey}
               onScroll={({ scrollTop }) => {
-                scrollPositionRef.current = scrollTop;
+                if (gridReadyRef.current) {
+                  scrollPositionRef.current = scrollTop;
+                }
               }}
-              initialScrollTop={scrollPositionRef.current}
+              initialScrollTop={0} // Start at top, will be updated by our hook when ready
               className="scrollbar-vertical"
               style={{ 
                 overflowX: 'hidden',

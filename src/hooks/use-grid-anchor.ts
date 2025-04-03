@@ -37,8 +37,9 @@ export function useGridAnchor() {
     try {
       const grid = gridRef.current;
       
-      // Get current scroll metrics
-      const { scrollTop, scrollHeight } = grid.state;
+      // Safely access scroll metrics with optional chaining
+      const scrollTop = grid.state?.scrollTop || 0;
+      const scrollHeight = grid.state?.scrollHeight || 1; // Avoid division by zero
       
       // Calculate scroll percentage (handle edge case of zero height)
       const scrollPercentage = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
@@ -79,13 +80,15 @@ export function useGridAnchor() {
       if (!gridRef.current) return;
       
       try {
+        // Safely access grid state
         const grid = gridRef.current;
+        if (!grid.state) return;
         
         // Get the saved scroll percentage
         const { scrollPercentage } = previousScrollRef.current;
         
-        // Get current scroll height
-        const { scrollHeight } = grid.state;
+        // Safely get current scroll height with a fallback
+        const scrollHeight = grid.state.scrollHeight || 1;
         
         // Calculate the new scroll position based on percentage
         const newScrollTop = scrollHeight * scrollPercentage;
@@ -94,7 +97,7 @@ export function useGridAnchor() {
         
         // Apply the scroll position with a slight delay to ensure layout is complete
         setTimeout(() => {
-          if (gridRef.current) {
+          if (gridRef.current && gridRef.current.state) {
             gridRef.current.scrollTo({ scrollTop: newScrollTop });
           }
         }, 50);
