@@ -1,3 +1,4 @@
+
 import { MediaItem, MediaListResponse } from '@/types/gallery';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -146,39 +147,88 @@ export async function fetchMediaIds(directory: string, position: 'source' | 'des
   } catch (error) {
     console.error("Error fetching media data:", error);
     
-    // Génère environ 200 IDs de média mock avec leurs dates
+    // Génération des données mock améliorées
     console.log("Using mock media data due to error");
-    const mockCount = 200 + Math.floor(Math.random() * 20); // Entre 200 et 220 médias
     
-    // Générer des IDs uniques pour éviter les conflits
-    // Ajout du directory (folder) dans le préfixe pour les données mock
+    // Définir la structure des années et mois que nous voulons inclure
+    // Nous voulons 10 mois répartis sur 5 ans avec environ 100 photos par mois
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 4; // 5 ans incluant l'année courante
+    
+    // Créer la structure des années et mois disponibles
+    // Format: { 2023: [1, 5, 11], 2022: [2, 7], ... }
+    const yearMonthStructure: Record<number, number[]> = {};
+    
+    // Distribution des 10 mois sur 5 ans de manière aléatoire mais équilibrée
+    let remainingMonths = 10;
+    for (let year = startYear; year <= currentYear; year++) {
+      const monthsPerYear = Math.min(Math.max(1, Math.floor(remainingMonths / (currentYear - year + 1))), 12);
+      const availableMonths = Array.from({ length: 12 }, (_, i) => i + 1);
+      const selectedMonths: number[] = [];
+      
+      // Sélectionner aléatoirement des mois pour cette année
+      for (let i = 0; i < monthsPerYear && availableMonths.length > 0; i++) {
+        const randomIndex = Math.floor(Math.random() * availableMonths.length);
+        selectedMonths.push(availableMonths.splice(randomIndex, 1)[0]);
+        remainingMonths--;
+      }
+      
+      // Trier les mois dans l'ordre croissant
+      yearMonthStructure[year] = selectedMonths.sort((a, b) => a - b);
+    }
+    
+    // Si nous n'avons pas utilisé tous nos mois, ajouter les restants à l'année courante
+    if (remainingMonths > 0 && yearMonthStructure[currentYear]) {
+      const availableMonths = Array.from({ length: 12 }, (_, i) => i + 1)
+        .filter(m => !yearMonthStructure[currentYear].includes(m));
+      
+      for (let i = 0; i < Math.min(remainingMonths, availableMonths.length); i++) {
+        const randomIndex = Math.floor(Math.random() * availableMonths.length);
+        yearMonthStructure[currentYear].push(availableMonths.splice(randomIndex, 1)[0]);
+      }
+      
+      yearMonthStructure[currentYear].sort((a, b) => a - b);
+    }
+    
+    // Préfixe pour les IDs
     const prefix = `${position}-${directory}-${filter === 'all' ? '' : filter + '-'}`;
     
-    // Générer des IDs pour les images (80% du total)
-    const imageCount = Math.floor(mockCount * 0.8);
-    const imageIds = Array.from({ length: imageCount }, (_, i) => 
-      `${prefix}img-${i + 1000}`
-    );
+    const mockMediaIds: string[] = [];
+    const mockMediaDates: string[] = [];
     
-    // Générer des IDs pour les vidéos (20% du total)
-    const videoCount = mockCount - imageCount;
-    const videoIds = Array.from({ length: videoCount }, (_, i) => 
-      `${prefix}vid-${i + 2000}`
-    );
+    // Pour chaque année et mois, générer environ 100 médias
+    const years = Object.keys(yearMonthStructure).map(Number).sort((a, b) => b - a); // Tri décroissant pour l'ordre chronologique inverse
     
-    // Combiner et mélanger les IDs
-    const mockMediaIds = [...imageIds, ...videoIds].sort(() => Math.random() - 0.5);
+    for (const year of years) {
+      const months = yearMonthStructure[year].sort((a, b) => b - a); // Tri décroissant pour l'ordre chronologique inverse
+      
+      for (const month of months) {
+        const mediaCount = 80 + Math.floor(Math.random() * 40); // Entre 80 et 120 médias par mois
+        
+        for (let i = 0; i < mediaCount; i++) {
+          const isVideo = Math.random() < 0.15; // 15% de chances d'être une vidéo
+          const day = Math.floor(Math.random() * 28) + 1; // Jour entre 1 et 28
+          const id = `${prefix}${isVideo ? 'vid' : 'img'}-${year}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}-${i.toString().padStart(4, '0')}`;
+          const date = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+          
+          mockMediaIds.push(id);
+          mockMediaDates.push(date);
+        }
+      }
+    }
     
-    // Générer les dates correspondantes
-    const mockMediaDates = mockMediaIds.map(() => {
-      const date = randomDate();
-      return date.substring(0, 10); // Format YYYY-MM-DD
-    });
+    // Trier le tout par date décroissante pour respecter l'ordre chronologique inverse
+    const combined = mockMediaIds.map((id, index) => ({ id, date: mockMediaDates[index] }));
+    combined.sort((a, b) => b.date.localeCompare(a.date));
     
-    console.log(`Generated ${mockMediaIds.length} mock media IDs with directory ${directory}`);
+    const sortedMediaIds = combined.map(item => item.id);
+    const sortedMediaDates = combined.map(item => item.date);
+    
+    console.log(`Generated ${sortedMediaIds.length} mock media IDs across ${Object.keys(yearMonthStructure).length} years and 10 months`);
+    
     return {
-      mediaIds: mockMediaIds,
-      mediaDates: mockMediaDates
+      mediaIds: sortedMediaIds,
+      mediaDates: sortedMediaDates
     };
   }
 }
