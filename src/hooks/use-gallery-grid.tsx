@@ -1,91 +1,66 @@
 
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { FixedSizeGrid } from 'react-window';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useScrollPercentage } from './use-scroll-percentage';
 
-// Type pour la position de défilement
-interface ScrollPosition {
-  top: number;
-  left: number;
-}
-
-// Props pour le hook
 interface UseGalleryGridProps {
   position: 'source' | 'destination';
-  viewModeType: string;
 }
 
-export function useGalleryGrid({ position, viewModeType }: UseGalleryGridProps) {
+export function useGalleryGrid({ position }: UseGalleryGridProps) {
   const gridRef = useRef<FixedSizeGrid>(null);
   const [gridKey, setGridKey] = useState(0);
   const previousSizeRef = useRef({ width: 0, height: 0 });
-  
-  // Stocker la position de défilement dans localStorage pour persister entre les sessions
-  // Format de clé: 'scroll-position-{position}-{viewModeType}'
-  const storageKey = `scroll-position-${position}-${viewModeType}`;
-  const [savedScrollPosition, setSavedScrollPosition] = useLocalStorage<ScrollPosition>(
-    storageKey, 
-    { top: 0, left: 0 }
-  );
-
   const lastResetTimeRef = useRef(0);
-  const isRestoringRef = useRef(false);
-
-  // Incrémenter la clé de la grille pour forcer le rendu
+  const isResettingRef = useRef(false);
+  
+  // Utiliser notre nouveau hook pour gérer le pourcentage de défilement
+  const { 
+    saveScrollPercentage, 
+    restoreScrollPercentage 
+  } = useScrollPercentage({ position });
+  
+  // Fonction pour incrémenter la clé de la grille et forcer un nouveau rendu
   const refreshGrid = useCallback(() => {
     // Éviter les resets trop fréquents (throttling)
     const now = Date.now();
     if (now - lastResetTimeRef.current < 500) {
+      console.log(`[${position}] Grid refresh throttled (< 500ms)`);
       return;
     }
     
+    console.log(`[${position}] Refreshing grid (key ${gridKey} -> ${gridKey + 1})`);
+    
+    // Sauvegarder la position actuelle de défilement avant le refresh
+    if (gridRef.current) {
+      console.log(`[${position}] Saving scroll before grid refresh`);
+      saveScrollPercentage(gridRef);
+    } else {
+      console.log(`[${position}] Cannot save scroll before refresh: gridRef is null`);
+    }
+    
+    // Marquer que nous sommes en train de reset
+    isResettingRef.current = true;
+    
+    // Mettre à jour la clé pour forcer un nouveau rendu
     setGridKey(prev => prev + 1);
     lastResetTimeRef.current = now;
-  }, []);
+  }, [saveScrollPercentage, gridKey, position]);
   
-  // Sauvegarder la position de défilement actuelle
-  const saveScrollPosition = useCallback(() => {
-    if (gridRef.current && !isRestoringRef.current) {
-      const { scrollTop, scrollLeft } = gridRef.current.state;
-      setSavedScrollPosition({ top: scrollTop, left: scrollLeft });
-    }
-  }, [setSavedScrollPosition]);
-  
-  // Gérer le défilement dans la grille
-  const handleScroll = useCallback(({ scrollTop, scrollLeft }: { scrollTop: number, scrollLeft: number }) => {
-    // Ne pas sauvegarder pendant une restauration pour éviter les boucles
-    if (!isRestoringRef.current) {
-      setSavedScrollPosition({ top: scrollTop, left: scrollLeft });
-    }
-  }, [setSavedScrollPosition]);
-  
-  // Restaurer la position de défilement sauvegardée
-  const restoreScrollPosition = useCallback(() => {
-    if (gridRef.current && savedScrollPosition) {
-      // Marquer que nous sommes en train de restaurer pour éviter de sauvegarder pendant la restauration
-      isRestoringRef.current = true;
-      gridRef.current.scrollTo({ 
-        scrollTop: savedScrollPosition.top,
-        scrollLeft: savedScrollPosition.left
-      });
-      
-      // Remettre le flag à false après la restauration
-      setTimeout(() => {
-        isRestoringRef.current = false;
-      }, 100);
-    }
-  }, [savedScrollPosition]);
-
-  // Appliquer la restauration de la position après l'initialisation complète de la grille
-  useEffect(() => {
-    // Attendre que la grille soit complètement rendue
-    const timer = setTimeout(() => {
-      restoreScrollPosition();
-    }, 200);
+  // Fonction à appeler quand la grille est prête après un refresh
+  const handleGridReady = useCallback(() => {
+    console.log(`[${position}] Grid ready called, isResetting:`, isResettingRef.current);
     
-    return () => clearTimeout(timer);
-  }, [restoreScrollPosition, gridKey]);
-
+    // Ne restaurer que si nous sommes en train de reset
+    if (isResettingRef.current) {
+      console.log(`[${position}] Grid is ready after reset, restoring scroll position`);
+      restoreScrollPercentage(gridRef);
+      isResettingRef.current = false;
+    } else {
+      console.log(`[${position}] Grid ready but not after reset, skipping restoration`);
+    }
+  }, [restoreScrollPercentage, position]);
+  
   // Gérer le redimensionnement avec debounce
   const handleResize = useCallback((width: number, height: number) => {
     // Vérifier si le changement de taille est significatif
@@ -93,9 +68,14 @@ export function useGalleryGrid({ position, viewModeType }: UseGalleryGridProps) 
       Math.abs(previousSizeRef.current.width - width) > 5 || 
       Math.abs(previousSizeRef.current.height - height) > 5;
       
+    console.log(`[${position}] Resize event: ${width}x${height}, previous: ${previousSizeRef.current.width}x${previousSizeRef.current.height}, significant:`, isSignificantChange);
+      
     if (isSignificantChange) {
       // Sauvegarder la position avant la mise à jour
-      saveScrollPosition();
+      if (gridRef.current) {
+        console.log(`[${position}] Saving scroll position before resize`);
+        saveScrollPercentage(gridRef);
+      }
       
       // Mettre à jour la référence de taille
       previousSizeRef.current = { width, height };
@@ -103,15 +83,28 @@ export function useGalleryGrid({ position, viewModeType }: UseGalleryGridProps) 
       // Forcer le rafraîchissement de la grille
       refreshGrid();
     }
-  }, [saveScrollPosition, refreshGrid]);
+  }, [saveScrollPercentage, refreshGrid, position]);
+  
+  // Sauvegarder la position avant démontage
+  useEffect(() => {
+    // Log au montage
+    console.log(`[${position}] Gallery grid hook mounted with key:`, gridKey);
+    
+    // Effet de nettoyage (démontage)
+    return () => {
+      console.log(`[${position}] Gallery grid hook unmounting, saving final scroll position`);
+      if (gridRef.current) {
+        saveScrollPercentage(gridRef);
+      }
+    };
+  }, [saveScrollPercentage, gridKey, position]);
 
   return {
     gridRef,
     gridKey,
-    handleScroll,
     refreshGrid,
-    saveScrollPosition,
-    restoreScrollPosition,
-    handleResize
+    handleResize,
+    handleGridReady,
+    saveScrollPercentage
   };
 }
